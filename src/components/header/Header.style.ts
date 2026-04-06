@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { HEADER_HEIGHT } from '@/styles/constants';
+import { HEADER_HEIGHT, Z_INDEX } from '@/styles/constants';
 import { text } from '@/styles/text';
 
 export const HeaderWrapper = styled.header`
@@ -10,7 +10,7 @@ export const HeaderWrapper = styled.header`
   height: ${HEADER_HEIGHT};
   background-color: ${({ theme }) => theme.colors.bg.primary};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border.primary};
-  z-index: 100;
+  z-index: ${Z_INDEX.LOW};
 `;
 
 export const HeaderInner = styled.div`

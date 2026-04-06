@@ -1,11 +1,50 @@
-import styled from '@emotion/styled';
+import styled, { type CSSObject } from '@emotion/styled';
 import { text } from '@/styles/text';
+import type { Theme } from '@/styles/theme';
 import type { ButtonVariant, ButtonSize } from './Button.type';
 
 type StyledButtonProps = {
   $variant: ButtonVariant;
   $size: ButtonSize;
   $fullWidth: boolean;
+};
+
+const variantStyles: Record<ButtonVariant, (theme: Theme) => CSSObject> = {
+  primary: (theme) => ({
+    backgroundColor: theme.colors.accent.primary,
+    color: theme.colors.accent.fg,
+    '&:hover:not(:disabled)': { backgroundColor: theme.colors.accent.hover },
+  }),
+  secondary: (theme) => ({
+    backgroundColor: 'transparent',
+    color: theme.colors.accent.primary,
+    border: `1px solid ${theme.colors.accent.primary}`,
+    '&:hover:not(:disabled)': { backgroundColor: theme.colors.bg.secondary },
+  }),
+  ghost: (theme) => ({
+    backgroundColor: 'transparent',
+    color: theme.colors.fg.secondary,
+    border: `1px solid ${theme.colors.border.primary}`,
+    '&:hover:not(:disabled)': { backgroundColor: theme.colors.bg.secondary },
+  }),
+};
+
+const sizeStyles: Record<ButtonSize, (theme: Theme) => CSSObject> = {
+  sm: (theme) => ({
+    height: '2rem',
+    padding: `0 ${theme.spacing.sm}`,
+    borderRadius: theme.borderRadius.sm,
+  }),
+  md: (theme) => ({
+    height: '2.75rem',
+    padding: `0 ${theme.spacing.lg}`,
+    borderRadius: theme.borderRadius.md,
+  }),
+  lg: (theme) => ({
+    height: '3.25rem',
+    padding: `0 ${theme.spacing.xl}`,
+    borderRadius: theme.borderRadius.lg,
+  }),
 };
 
 export const StyledButton = styled.button<StyledButtonProps>`
@@ -17,61 +56,9 @@ export const StyledButton = styled.button<StyledButtonProps>`
     opacity 0.15s;
   width: ${({ $fullWidth }) => ($fullWidth ? '100%' : 'auto')};
 
-  ${({ $variant, theme }) => {
-    const { accent, bg, border, fg } = theme.colors;
-    switch ($variant) {
-      case 'primary':
-        return `
-          background-color: ${accent.primary};
-          color: ${accent.fg};
-          &:hover:not(:disabled) { background-color: ${accent.hover}; }
-        `;
-      case 'secondary':
-        return `
-          background-color: transparent;
-          color: ${accent.primary};
-          border: 1px solid ${accent.primary};
-          &:hover:not(:disabled) { background-color: ${bg.secondary}; }
-        `;
-      case 'ghost':
-        return `
-          background-color: transparent;
-          color: ${fg.secondary};
-          border: 1px solid ${border.primary};
-          &:hover:not(:disabled) { background-color: ${bg.secondary}; }
-        `;
-    }
-  }}
-
-  ${({ $size, theme }) => {
-    const { borderRadius } = theme;
-    switch ($size) {
-      case 'sm':
-        return `
-          height: 2rem;
-          padding: 0 ${theme.spacing.sm};
-          border-radius: ${borderRadius.sm};
-        `;
-      case 'md':
-        return `
-          height: 2.75rem;
-          padding: 0 ${theme.spacing.lg};
-          border-radius: ${borderRadius.md};
-        `;
-      case 'lg':
-        return `
-          height: 3.25rem;
-          padding: 0 ${theme.spacing.xl};
-          border-radius: ${borderRadius.lg};
-        `;
-    }
-  }}
-
-  ${({ $size }) =>
-    text({
-      size: $size === 'lg' ? 'lg' : $size === 'sm' ? 'sm' : 'md',
-      weight: 'semibold',
-    })}
+  ${({ $variant, theme }) => variantStyles[$variant](theme)}
+  ${({ $size, theme }) => sizeStyles[$size](theme)}
+  ${({ $size }) => text({ size: $size, weight: 'semibold' })}
 
   &:disabled {
     opacity: 0.4;
