@@ -1,4 +1,12 @@
-export type Category = '게임' | '음악' | '문화' | '방송' | '기타';
+export const CATEGORIES = [
+  { value: 'game', label: '게임' },
+  { value: 'music', label: '음악' },
+  { value: 'culture', label: '문화' },
+  { value: 'broadcast', label: '방송' },
+  { value: 'etc', label: '기타' },
+] as const;
+
+export type Category = (typeof CATEGORIES)[number]['value'];
 
 export type Quiz = {
   id: number;

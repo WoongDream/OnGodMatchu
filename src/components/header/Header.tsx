@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '@/store/authStore';
 import { HeaderWrapper, HeaderInner, Logo, NavActions } from './Header.style';
+import { memo } from 'react';
 
-const Header = () => {
+const Header = memo(() => {
   const navigate = useNavigate();
   const { isLoggedIn, logout } = useAuthStore();
 
@@ -40,6 +41,7 @@ const Header = () => {
       </HeaderInner>
     </HeaderWrapper>
   );
-};
+});
 
+Header.displayName = 'Header';
 export default Header;
