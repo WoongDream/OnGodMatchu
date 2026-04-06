@@ -30,11 +30,15 @@
 ```
 src/
 ├── api/                      # axios 인스턴스 + API 함수
-├── components/
-│   ├── common/               # 공통 컴포넌트 (Header, Layout 등)
-│   └── quiz/                 # 퀴즈 관련 컴포넌트
+├── components/               # 공통 컴포넌트 (Button, Input, Layout 등)
+├── features/                 # 페이지별 UI 구성 컴포넌트
+│   ├── quiz-list/            # 메인 (퀴즈 목록 + 카테고리 필터)
+│   ├── quiz-play/            # 퀴즈 풀기
+│   ├── quiz-result/          # 결과 화면
+│   ├── quiz-create/          # 퀴즈 만들기
+│   └── auth/                 # 로그인 / 회원가입
 ├── hooks/                    # 커스텀 훅
-├── pages/                    # 페이지 컴포넌트
+├── pages/                    # 라우트 단위 페이지 컴포넌트
 ├── store/                    # Zustand 스토어
 ├── types/                    # 공통 타입 정의
 ├── App.tsx
