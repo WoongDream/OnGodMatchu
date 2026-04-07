@@ -1,0 +1,103 @@
+import { memo, useCallback } from 'react';
+import Button from '@/components/button';
+import QuestionItem from './QuestionItem';
+import { ListSection, SectionTitle, QuestionListWrapper } from './QuestionList.style';
+
+export type DraftQuestion = {
+  id: string;
+  questionText: string;
+  answer: string;
+  imageFile: File | null;
+  imagePreviewUrl: string | null;
+};
+
+type QuestionListProps = {
+  questions: DraftQuestion[];
+  onChange: (questions: DraftQuestion[]) => void;
+};
+
+const createEmptyQuestion = (): DraftQuestion => ({
+  id: crypto.randomUUID(),
+  questionText: '',
+  answer: '',
+  imageFile: null,
+  imagePreviewUrl: null,
+});
+
+const QuestionList = memo(({ questions, onChange }: QuestionListProps) => {
+  const handleAdd = useCallback(() => {
+    onChange([...questions, createEmptyQuestion()]);
+  }, [questions, onChange]);
+
+  const handleChange = useCallback(
+    (id: string, partial: Partial<DraftQuestion>) => {
+      onChange(questions.map((q) => (q.id === id ? { ...q, ...partial } : q)));
+    },
+    [questions, onChange],
+  );
+
+  const handleDelete = useCallback(
+    (id: string) => {
+      onChange(questions.filter((q) => q.id !== id));
+    },
+    [questions, onChange],
+  );
+
+  const handleMoveUp = useCallback(
+    (index: number) => {
+      if (index === 0) {
+        return;
+      }
+      const next = [...questions];
+      [next[index - 1], next[index]] = [next[index], next[index - 1]];
+      onChange(next);
+    },
+    [questions, onChange],
+  );
+
+  const handleMoveDown = useCallback(
+    (index: number) => {
+      if (index === questions.length - 1) {
+        return;
+      }
+      const next = [...questions];
+      [next[index], next[index + 1]] = [next[index + 1], next[index]];
+      onChange(next);
+    },
+    [questions, onChange],
+  );
+
+  return (
+    <ListSection>
+      <SectionTitle>문제 목록</SectionTitle>
+      <QuestionListWrapper>
+        {questions.map((q, index) => (
+          <QuestionItem
+            key={q.id}
+            index={index}
+            questionText={q.questionText}
+            answer={q.answer}
+            imagePreviewUrl={q.imagePreviewUrl}
+            onQuestionChange={(value) => handleChange(q.id, { questionText: value })}
+            onAnswerChange={(value) => handleChange(q.id, { answer: value })}
+            onImageChange={(file, url) =>
+              handleChange(q.id, { imageFile: file, imagePreviewUrl: url })
+            }
+            onImageRemove={() => handleChange(q.id, { imageFile: null, imagePreviewUrl: null })}
+            onMoveUp={() => handleMoveUp(index)}
+            onMoveDown={() => handleMoveDown(index)}
+            onDelete={() => handleDelete(q.id)}
+            isFirst={index === 0}
+            isLast={index === questions.length - 1}
+          />
+        ))}
+      </QuestionListWrapper>
+      <Button variant="secondary" onClick={handleAdd}>
+        + 문제 추가
+      </Button>
+    </ListSection>
+  );
+});
+
+QuestionList.displayName = 'QuestionList';
+export default QuestionList;
