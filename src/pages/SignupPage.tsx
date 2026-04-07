@@ -1,5 +1,12 @@
+import SignupForm from '@/features/auth/SignupForm';
+import { PageWrapper } from './SignupPage.style';
+
 const SignupPage = () => {
-  return <main>SignupPage</main>;
+  return (
+    <PageWrapper>
+      <SignupForm />
+    </PageWrapper>
+  );
 };
 
 export default SignupPage;

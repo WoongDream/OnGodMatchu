@@ -8,6 +8,7 @@ import QuizResultPage from './pages/QuizResultPage';
 import QuizCreatePage from './pages/QuizCreatePage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import ProtectedRoute from '@/components/protected-route/ProtectedRoute';
 
 const App = () => {
   return (
@@ -16,7 +17,14 @@ const App = () => {
         <Layout>
           <Routes>
             <Route path="/" element={<MainPage />} />
-            <Route path="/quiz/create" element={<QuizCreatePage />} />
+            <Route
+              path="/quiz/create"
+              element={
+                <ProtectedRoute>
+                  <QuizCreatePage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/quiz/:id" element={<QuizPlayPage />} />
             <Route path="/quiz/:id/result" element={<QuizResultPage />} />
             <Route path="/login" element={<LoginPage />} />

@@ -1,0 +1,29 @@
+import { memo } from 'react';
+import { SocialWrapper, Divider, DividerText, SocialButton } from './SocialLoginButtons.style';
+
+const SocialLoginButtons = memo(() => {
+  const handleSocialLogin = (provider: 'google' | 'naver' | 'kakao') => {
+    // TODO: 소셜 로그인 API 연동
+    alert(`${provider} 로그인 (API 연동 전)`);
+  };
+
+  return (
+    <SocialWrapper>
+      <Divider>
+        <DividerText>또는</DividerText>
+      </Divider>
+      <SocialButton $provider="google" onClick={() => handleSocialLogin('google')}>
+        Google로 계속하기
+      </SocialButton>
+      <SocialButton $provider="naver" onClick={() => handleSocialLogin('naver')}>
+        네이버로 계속하기
+      </SocialButton>
+      <SocialButton $provider="kakao" onClick={() => handleSocialLogin('kakao')}>
+        카카오로 계속하기
+      </SocialButton>
+    </SocialWrapper>
+  );
+});
+
+SocialLoginButtons.displayName = 'SocialLoginButtons';
+export default SocialLoginButtons;
