@@ -8,7 +8,7 @@ export const UploadWrapper = styled.div`
   width: 100%;
 `;
 
-export const UploadLabel = styled.label`
+export const UploadLabel = styled.span`
   ${text({ size: 'sm', weight: 'medium' })}
   color: ${({ theme }) => theme.colors.fg.primary};
 `;

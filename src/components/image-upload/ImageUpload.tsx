@@ -1,4 +1,4 @@
-import { memo, useRef } from 'react';
+import { memo, useId, useRef } from 'react';
 import type { ImageUploadProps } from './ImageUpload.type';
 import {
   UploadWrapper,
@@ -12,6 +12,7 @@ import {
 } from './ImageUpload.style';
 
 const ImageUpload = memo(({ previewUrl, onChange, onRemove, label }: ImageUploadProps) => {
+  const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,8 +35,12 @@ const ImageUpload = memo(({ previewUrl, onChange, onRemove, label }: ImageUpload
 
   return (
     <UploadWrapper>
-      {label && <UploadLabel>{label}</UploadLabel>}
-      <UploadArea $hasPreview={!!previewUrl}>
+      {label && <UploadLabel id={`${id}-label`}>{label}</UploadLabel>}
+      <UploadArea
+        htmlFor={id}
+        $hasPreview={!!previewUrl}
+        aria-labelledby={label ? `${id}-label` : undefined}
+      >
         {previewUrl ? (
           <>
             <PreviewImage src={previewUrl} alt="업로드 이미지 미리보기" />
@@ -47,7 +52,7 @@ const ImageUpload = memo(({ previewUrl, onChange, onRemove, label }: ImageUpload
             <UploadPlaceholderText>JPG, PNG, WEBP</UploadPlaceholderText>
           </UploadPlaceholder>
         )}
-        <HiddenInput ref={inputRef} type="file" accept="image/*" onChange={handleChange} />
+        <HiddenInput ref={inputRef} id={id} type="file" accept="image/*" onChange={handleChange} />
       </UploadArea>
     </UploadWrapper>
   );
