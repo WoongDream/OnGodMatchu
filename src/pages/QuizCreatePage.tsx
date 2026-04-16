@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import Button from '@/components/button';
+import { PageWrapper } from '@/styles/layout';
 import QuizInfoForm from '@/features/quiz-create/QuizInfoForm';
 import QuestionList, { type DraftQuestion } from '@/features/quiz-create/QuestionList';
 import type { Category } from '@/types';
@@ -47,7 +48,7 @@ const QuizCreatePage = () => {
   }, [navigate]);
 
   return (
-    <PageWrapper>
+    <PageWrapper gap="xl">
       <QuizInfoForm
         title={form.title}
         description={form.description}
@@ -76,13 +77,6 @@ const QuizCreatePage = () => {
 };
 
 export default QuizCreatePage;
-
-const PageWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xl};
-  padding: ${({ theme }) => theme.spacing.lg} 0;
-`;
 
 const Divider = styled.hr`
   border: none;

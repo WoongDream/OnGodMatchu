@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import styled from '@emotion/styled';
 import Button from '@/components/button';
+import { PageWrapper } from '@/styles/layout';
 import QuizProgress from '@/features/quiz-play/QuizProgress';
 import QuizQuestion from '@/features/quiz-play/QuizQuestion';
 import QuizAnswer from '@/features/quiz-play/QuizAnswer';
@@ -47,7 +47,7 @@ const QuizPlayPage = () => {
   }, [isLastQuestion, navigate, quiz.id, scores, total]);
 
   return (
-    <PageWrapper>
+    <PageWrapper gap="lg">
       <QuizProgress current={currentIndex + 1} total={total} />
       <QuizQuestion question={currentQuestion} />
       <QuizAnswer
@@ -72,10 +72,3 @@ const QuizPlayPage = () => {
 };
 
 export default QuizPlayPage;
-
-const PageWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.lg};
-  padding: ${({ theme }) => theme.spacing.lg} 0;
-`;

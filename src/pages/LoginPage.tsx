@@ -1,5 +1,12 @@
+import LoginForm from '@/features/auth/LoginForm';
+import { PageWrapper } from '@/styles/layout';
+
 const LoginPage = () => {
-  return <main>LoginPage</main>;
+  return (
+    <PageWrapper>
+      <LoginForm />
+    </PageWrapper>
+  );
 };
 
 export default LoginPage;
