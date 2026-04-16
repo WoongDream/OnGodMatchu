@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import styled from '@emotion/styled';
+import { PageWrapper } from '@/styles/layout';
 import ResultScore from '@/features/quiz-result/ResultScore';
 import ResultActions from '@/features/quiz-result/ResultActions';
 
@@ -34,7 +34,7 @@ const QuizResultPage = () => {
   };
 
   return (
-    <PageWrapper>
+    <PageWrapper gap="xl">
       <ResultScore scores={state.scores} total={state.total} />
       <ResultActions quizId={Number(id)} onRetry={handleRetry} onHome={handleHome} />
     </PageWrapper>
@@ -42,10 +42,3 @@ const QuizResultPage = () => {
 };
 
 export default QuizResultPage;
-
-const PageWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xl};
-  padding: ${({ theme }) => theme.spacing.lg} 0;
-`;

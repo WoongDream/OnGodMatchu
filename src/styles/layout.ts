@@ -1,4 +1,5 @@
 import styled from '@emotion/styled';
+import type { Theme } from '@/styles/theme';
 import { HEADER_HEIGHT } from '@/styles/constants';
 
 export const AppShell = styled.div`
@@ -24,4 +25,11 @@ export const PageContent = styled.main`
     padding-left: ${({ theme }) => theme.spacing.xl};
     padding-right: ${({ theme }) => theme.spacing.xl};
   }
+`;
+
+export const PageWrapper = styled.div<{ gap?: keyof Theme['spacing'] }>`
+  display: flex;
+  flex-direction: column;
+  padding: ${({ theme }) => theme.spacing.lg} 0;
+  gap: ${({ gap, theme }) => (gap ? theme.spacing[gap] : 0)};
 `;

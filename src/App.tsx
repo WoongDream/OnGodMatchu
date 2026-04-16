@@ -1,7 +1,8 @@
 import { ThemeProvider } from '@emotion/react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import Layout from '@/components/layout';
+import Header from '@/components/header';
 import { theme } from '@/styles/theme';
+import { AppShell, PageContent } from '@/styles/layout';
 import MainPage from './pages/MainPage';
 import QuizPlayPage from './pages/QuizPlayPage';
 import QuizResultPage from './pages/QuizResultPage';
@@ -14,23 +15,26 @@ const App = () => {
   return (
     <ThemeProvider theme={theme}>
       <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<MainPage />} />
-            <Route
-              path="/quiz/create"
-              element={
-                <ProtectedRoute>
-                  <QuizCreatePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/quiz/:id" element={<QuizPlayPage />} />
-            <Route path="/quiz/:id/result" element={<QuizResultPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-          </Routes>
-        </Layout>
+        <AppShell>
+          <Header />
+          <PageContent>
+            <Routes>
+              <Route path="/" element={<MainPage />} />
+              <Route
+                path="/quiz/create"
+                element={
+                  <ProtectedRoute>
+                    <QuizCreatePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/quiz/:id" element={<QuizPlayPage />} />
+              <Route path="/quiz/:id/result" element={<QuizResultPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+            </Routes>
+          </PageContent>
+        </AppShell>
       </BrowserRouter>
     </ThemeProvider>
   );

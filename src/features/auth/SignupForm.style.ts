@@ -5,6 +5,9 @@ export const FormWrapper = styled.form`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto;
 `;
 
 export const FormTitle = styled.h1`
