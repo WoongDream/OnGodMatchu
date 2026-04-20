@@ -1,0 +1,15 @@
+- [Vitest Setup & Configuration](vitest_config_reference.md) — Vitest 4.1.2 with jsdom, @testing-library/react, test patterns
+- [Button Component Testing](button_component_testing.md) — 430-line test suite with 55+ cases for variant/size/fullWidth props, disabled state, onClick forwarding
+- [QuizFeedback Component Testing](testing_quizfeedback.md) — Conditional rendering and styling tests, 60+ cases
+- [QuizCard Component Test Generation](quizcard_test_generated.md) — 621-line comprehensive test suite for QuizCard with 60+ cases covering onClick, toLocaleString, thumbnail rendering
+- [QuizInfoForm Component Testing](quizinfoform_testing.md) — 700-line test suite with 59 cases covering form inputs, category selection, thumbnail handling, and state management
+- [Vitest Project Setup & Known Issues](vitest_project_setup.md) — ESM/CJS compatibility issue blocking test execution, TypeScript passes
+- [QuestionItem Component Testing](testing_questionitem.md) — Index numbering, button disabled states, input handlers, image upload
+- [ChipButton Component Test Generation](chipbutton_test_generated.md) — 290-line test suite with 50+ cases for active prop, onClick callback, accessibility
+- [ProtectedRoute Component Testing](testing_protectedroute.md) — 442-line test suite with 40+ cases for auth guard, isLoggedIn state, Navigate redirect
+- [Header Component Unit Tests](header_component_testing.md) — 27 test cases covering logo, auth state, button visibility, navigation, edge cases
+- [ImageUpload Complete Rewrite](imageupload_complete_rewrite.md) — 57-test suite, URL.createObjectURL in beforeAll, RemoveButton queried by textContent
+- [ImageUpload Component Testing](testing_imageupload.md) — 820-line test suite with 55 cases for file upload, URL.createObjectURL, preview lifecycle, remove button (deprecated)
+- [App Component Testing](app_component_testing.md) — 180+ test cases covering ThemeProvider, routing, ProtectedRoute, layout structure
+- [Component Mock Patterns](testing_mock_patterns.md) — Input mock with htmlFor label association, vi.hoisted for useNavigate mocks, renderWithTheme single import
+- [LoginForm Test Fixes](loginform_test_fixes.md) — Hoisted mocks, form submission with happy-dom, mock call count tracking

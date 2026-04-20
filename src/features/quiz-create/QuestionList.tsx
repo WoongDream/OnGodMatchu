@@ -16,7 +16,8 @@ type QuestionListProps = {
   onChange: (questions: DraftQuestion[]) => void;
 };
 
-const createEmptyQuestion = (): DraftQuestion => ({
+// eslint-disable-next-line react-refresh/only-export-components
+export const createEmptyQuestion = (): DraftQuestion => ({
   id: crypto.randomUUID(),
   questionText: '',
   answer: '',
