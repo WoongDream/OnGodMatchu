@@ -11,9 +11,12 @@ type ResultActionsProps = {
 const ResultActions = memo(({ quizId, onRetry, onHome }: ResultActionsProps) => {
   const handleShare = useCallback(() => {
     const url = `${window.location.origin}/quiz/${quizId}`;
-    navigator.clipboard.writeText(url).then(() => {
-      alert('링크가 복사됐어요!');
-    });
+    navigator.clipboard
+      .writeText(url)
+      .then(() => {
+        alert('링크가 복사됐어요!');
+      })
+      .catch(() => {});
   }, [quizId]);
 
   return (
