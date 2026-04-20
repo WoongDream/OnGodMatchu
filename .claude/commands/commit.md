@@ -4,7 +4,7 @@ description: lint/format 자동 수정 후 [type] message 형식으로 커밋 �
 
 Run the following steps in order:
 1. Run `npm run lint:fix` and `npm run format` to fix all lint and formatting issues
-2. Run `git add -u` to re-stage any files changed by lint/format
+2. Run `git add .` to stage all changes including any files fixed by lint/format
 3. Run `git diff --staged` to review what will be committed
 4. Run related tests for the staged files:
    - Identify staged source files (`.ts`, `.tsx`, excluding test files)
