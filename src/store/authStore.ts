@@ -14,6 +14,7 @@ const useAuthStore = create<AuthStore>((set) => ({
   setUser: (user) => set({ user, isLoggedIn: true }),
   logout: () => {
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
     set({ user: null, isLoggedIn: false });
   },
 }));

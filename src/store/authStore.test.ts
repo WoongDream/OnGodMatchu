@@ -46,7 +46,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        createdAt: '2024-01-01T00:00:00Z',
+        provider: 'local',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -61,14 +61,14 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'user1@example.com',
         nickname: 'user1',
-        createdAt: '2024-01-01T00:00:00Z',
+        provider: 'local',
       };
 
       const user2: User = {
         id: 2,
         email: 'user2@example.com',
         nickname: 'user2',
-        createdAt: '2024-01-02T00:00:00Z',
+        provider: 'local',
       };
 
       useAuthStore.getState().setUser(user1);
@@ -84,7 +84,7 @@ describe('useAuthStore', () => {
         id: 42,
         email: 'complex@example.com',
         nickname: 'complexuser',
-        createdAt: '2024-03-15T14:30:00Z',
+        provider: 'local',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -93,7 +93,7 @@ describe('useAuthStore', () => {
       expect(user?.id).toBe(42);
       expect(user?.email).toBe('complex@example.com');
       expect(user?.nickname).toBe('complexuser');
-      expect(user?.createdAt).toBe('2024-03-15T14:30:00Z');
+      expect(user?.provider).toBe('local');
     });
 
     it('triggers store subscribers on setUser', () => {
@@ -104,7 +104,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        createdAt: '2024-01-01T00:00:00Z',
+        provider: 'local',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -119,7 +119,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        createdAt: '2024-01-01T00:00:00Z',
+        provider: 'local',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -163,7 +163,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        createdAt: '2024-01-01T00:00:00Z',
+        provider: 'local',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -188,7 +188,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        createdAt: '2024-01-01T00:00:00Z',
+        provider: 'local',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -200,7 +200,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        createdAt: '2024-01-01T00:00:00Z',
+        provider: 'local',
       };
 
       expect(useAuthStore.getState().isLoggedIn).toBe(false);
@@ -213,7 +213,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        createdAt: '2024-01-01T00:00:00Z',
+        provider: 'local',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -230,7 +230,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        createdAt: '2024-01-01T00:00:00Z',
+        provider: 'local',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -263,7 +263,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        createdAt: '2024-01-01T00:00:00Z',
+        provider: 'local',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -280,7 +280,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        createdAt: '2024-01-01T00:00:00Z',
+        provider: 'local',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -299,7 +299,7 @@ describe('useAuthStore', () => {
         id: i,
         email: `user${i}@example.com`,
         nickname: `user${i}`,
-        createdAt: '2024-01-01T00:00:00Z',
+        provider: 'local',
       }));
 
       users.forEach((user) => useAuthStore.getState().setUser(user));
@@ -313,7 +313,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        createdAt: '2024-01-01T00:00:00Z',
+        provider: 'local',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -330,14 +330,14 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'user1@example.com',
         nickname: 'user1',
-        createdAt: '2024-01-01T00:00:00Z',
+        provider: 'local',
       };
 
       const user2: User = {
         id: 2,
         email: 'user2@example.com',
         nickname: 'user2',
-        createdAt: '2024-01-02T00:00:00Z',
+        provider: 'local',
       };
 
       useAuthStore.getState().setUser(user1);
