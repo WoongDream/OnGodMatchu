@@ -10,6 +10,11 @@ vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
+vi.mock('@/api/auth', () => ({
+  signup: vi.fn().mockResolvedValue(undefined),
+  verifyEmail: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock('./SocialLoginButtons', () => ({
   default: () => <div data-testid="social-login-buttons">Social Login Buttons</div>,
 }));
@@ -42,7 +47,7 @@ vi.mock('@/components/button', () => ({
   }: {
     fullWidth?: boolean;
     variant?: string;
-    type?: string;
+    type?: 'button' | 'submit' | 'reset';
     disabled?: boolean;
     children: React.ReactNode;
     onClick?: () => void;
@@ -110,15 +115,15 @@ describe('SignupForm', () => {
       expect(sendEmailButton).toBeDisabled();
     });
 
-    it('should enable send email button when email has value', async () => {
+    it('should enable send email button when all fields have value', async () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
-      const emailInput = screen.getByLabelText('이메일') as HTMLInputElement;
 
-      await user.type(emailInput, 'test@example.com');
+      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
+      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+      await user.type(screen.getByLabelText('비밀번호'), 'password123');
 
-      const sendEmailButton = screen.getByRole('button', { name: '인증 코드 발송' });
-      expect(sendEmailButton).toBeEnabled();
+      expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeEnabled();
     });
 
     it('should disable send email button when email is only whitespace', async () => {
@@ -138,20 +143,18 @@ describe('SignupForm', () => {
       expect(signupButton).toBeDisabled();
     });
 
-    it('should enable signup button when all required fields are filled', async () => {
+    it('should enable signup button after email sent and verification code entered', async () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
 
-      const emailInput = screen.getByLabelText('이메일');
-      const nicknameInput = screen.getByLabelText('닉네임');
-      const passwordInput = screen.getByLabelText('비밀번호');
+      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
+      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+      await user.type(screen.getByLabelText('비밀번호'), 'password123');
 
-      await user.type(emailInput, 'test@example.com');
-      await user.type(nicknameInput, 'testuser');
-      await user.type(passwordInput, 'password123');
+      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
+      await user.type(await screen.findByLabelText('인증 코드'), '123456');
 
-      const signupButton = screen.getByRole('button', { name: '가입하기' });
-      expect(signupButton).toBeEnabled();
+      expect(screen.getByRole('button', { name: '가입하기' })).toBeEnabled();
     });
 
     it('should disable signup button when email is empty', async () => {
@@ -200,63 +203,40 @@ describe('SignupForm', () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
 
-      const emailInput = screen.getByLabelText('이메일');
-      const nicknameInput = screen.getByLabelText('닉네임');
-      const passwordInput = screen.getByLabelText('비밀번호');
+      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
+      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+      await user.type(screen.getByLabelText('비밀번호'), 'password123');
 
-      await user.type(emailInput, 'test@example.com');
-      await user.type(nicknameInput, 'testuser');
-      await user.type(passwordInput, 'password123');
+      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
 
-      const sendEmailButton = screen.getByRole('button', { name: '인증 코드 발송' });
-      await user.click(sendEmailButton);
-
-      const signupButton = screen.getByRole('button', { name: '가입하기' });
-      expect(signupButton).toBeDisabled();
+      await screen.findByLabelText('인증 코드');
+      expect(screen.getByRole('button', { name: '가입하기' })).toBeDisabled();
     });
 
     it('should enable signup button when verification code is provided after email sent', async () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
 
-      const emailInput = screen.getByLabelText('이메일');
-      const nicknameInput = screen.getByLabelText('닉네임');
-      const passwordInput = screen.getByLabelText('비밀번호');
+      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
+      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
+      await user.type(await screen.findByLabelText('인증 코드'), '123456');
 
-      await user.type(emailInput, 'test@example.com');
-      await user.type(nicknameInput, 'testuser');
-      await user.type(passwordInput, 'password123');
-
-      const sendEmailButton = screen.getByRole('button', { name: '인증 코드 발송' });
-      await user.click(sendEmailButton);
-
-      const verificationInput = screen.getByLabelText('인증 코드');
-      await user.type(verificationInput, '123456');
-
-      const signupButton = screen.getByRole('button', { name: '가입하기' });
-      expect(signupButton).toBeEnabled();
+      expect(screen.getByRole('button', { name: '가입하기' })).toBeEnabled();
     });
 
     it('should disable signup button when verification code is only whitespace', async () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
 
-      const emailInput = screen.getByLabelText('이메일');
-      const nicknameInput = screen.getByLabelText('닉네임');
-      const passwordInput = screen.getByLabelText('비밀번호');
+      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
+      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
+      await user.type(await screen.findByLabelText('인증 코드'), '   ');
 
-      await user.type(emailInput, 'test@example.com');
-      await user.type(nicknameInput, 'testuser');
-      await user.type(passwordInput, 'password123');
-
-      const sendEmailButton = screen.getByRole('button', { name: '인증 코드 발송' });
-      await user.click(sendEmailButton);
-
-      const verificationInput = screen.getByLabelText('인증 코드');
-      await user.type(verificationInput, '   ');
-
-      const signupButton = screen.getByRole('button', { name: '가입하기' });
-      expect(signupButton).toBeDisabled();
+      expect(screen.getByRole('button', { name: '가입하기' })).toBeDisabled();
     });
   });
 
@@ -270,56 +250,52 @@ describe('SignupForm', () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
 
-      const emailInput = screen.getByLabelText('이메일');
-      await user.type(emailInput, 'test@example.com');
+      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
+      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
 
-      const sendEmailButton = screen.getByRole('button', { name: '인증 코드 발송' });
-      await user.click(sendEmailButton);
-
-      expect(screen.getByLabelText('인증 코드')).toBeInTheDocument();
+      expect(await screen.findByLabelText('인증 코드')).toBeInTheDocument();
     });
 
-    it('should display alert when send email button is clicked', async () => {
+    it('should call signup API when send email button is clicked', async () => {
+      const { signup } = await import('@/api/auth');
       const user = userEvent.setup();
-      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
       renderWithTheme(<SignupForm />);
 
-      const emailInput = screen.getByLabelText('이메일');
-      await user.type(emailInput, 'test@example.com');
+      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
+      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
 
-      const sendEmailButton = screen.getByRole('button', { name: '인증 코드 발송' });
-      await user.click(sendEmailButton);
-
-      expect(alertSpy).toHaveBeenCalledWith('인증 코드가 발송됐어요! (API 연동 전)');
-      alertSpy.mockRestore();
+      expect(signup).toHaveBeenCalledWith('test@example.com', 'testuser', 'password123');
     });
 
     it('should toggle emailSent state to true when send email button is clicked', async () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
 
-      const emailInput = screen.getByLabelText('이메일');
-      await user.type(emailInput, 'test@example.com');
+      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
+      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+      await user.type(screen.getByLabelText('비밀번호'), 'password123');
 
-      const sendEmailButton = screen.getByRole('button', { name: '인증 코드 발송' });
       expect(screen.queryByLabelText('인증 코드')).not.toBeInTheDocument();
 
-      await user.click(sendEmailButton);
+      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
 
-      expect(screen.getByLabelText('인증 코드')).toBeInTheDocument();
+      expect(await screen.findByLabelText('인증 코드')).toBeInTheDocument();
     });
 
     it('should allow user to input verification code after sending email', async () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
 
-      const emailInput = screen.getByLabelText('이메일');
-      await user.type(emailInput, 'test@example.com');
+      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
+      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
 
-      const sendEmailButton = screen.getByRole('button', { name: '인증 코드 발송' });
-      await user.click(sendEmailButton);
-
-      const verificationInput = screen.getByLabelText('인증 코드') as HTMLInputElement;
+      const verificationInput = (await screen.findByLabelText('인증 코드')) as HTMLInputElement;
       await user.type(verificationInput, 'ABC123');
 
       expect(verificationInput.value).toBe('ABC123');
@@ -379,88 +355,64 @@ describe('SignupForm', () => {
       expect(emailInput.value).toBe(longEmail);
     });
 
-    it('should trim whitespace in validation for email', async () => {
+    it('should trim whitespace in validation for send code button', async () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
 
-      const emailInput = screen.getByLabelText('이메일');
-      const nicknameInput = screen.getByLabelText('닉네임');
-      const passwordInput = screen.getByLabelText('비밀번호');
+      await user.type(screen.getByLabelText('이메일'), '   test@example.com   ');
+      await user.type(screen.getByLabelText('닉네임'), '   testuser   ');
+      await user.type(screen.getByLabelText('비밀번호'), '   password123   ');
 
-      await user.type(emailInput, '   test@example.com   ');
-      await user.type(nicknameInput, '   testuser   ');
-      await user.type(passwordInput, '   password123   ');
-
-      const signupButton = screen.getByRole('button', { name: '가입하기' });
-      expect(signupButton).toBeEnabled();
+      expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeEnabled();
     });
   });
 
   describe('Form Submission', () => {
     it('should prevent default form submission behavior', async () => {
       const user = userEvent.setup();
-      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
       renderWithTheme(<SignupForm />);
 
-      const emailInput = screen.getByLabelText('이메일');
-      const nicknameInput = screen.getByLabelText('닉네임');
-      const passwordInput = screen.getByLabelText('비밀번호');
-
-      await user.type(emailInput, 'test@example.com');
-      await user.type(nicknameInput, 'testuser');
-      await user.type(passwordInput, 'password123');
+      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
+      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
+      await user.type(await screen.findByLabelText('인증 코드'), '123456');
 
       const signupButton = screen.getByRole('button', { name: '가입하기' });
       await user.click(signupButton);
 
-      expect(alertSpy).toHaveBeenCalled();
-      alertSpy.mockRestore();
+      expect(mockNavigate).toHaveBeenCalledWith('/login');
     });
 
-    it('should display alert when signup button is clicked with valid data', async () => {
+    it('should call verifyEmail API when signup button is clicked with valid data', async () => {
+      const { verifyEmail } = await import('@/api/auth');
       const user = userEvent.setup();
-      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
       renderWithTheme(<SignupForm />);
 
-      const emailInput = screen.getByLabelText('이메일');
-      const nicknameInput = screen.getByLabelText('닉네임');
-      const passwordInput = screen.getByLabelText('비밀번호');
+      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
+      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
+      await user.type(await screen.findByLabelText('인증 코드'), '123456');
 
-      await user.type(emailInput, 'test@example.com');
-      await user.type(nicknameInput, 'testuser');
-      await user.type(passwordInput, 'password123');
+      await user.click(screen.getByRole('button', { name: '가입하기' }));
 
-      const signupButton = screen.getByRole('button', { name: '가입하기' });
-      await user.click(signupButton);
-
-      expect(alertSpy).toHaveBeenCalledWith('회원가입 (API 연동 전)');
-      alertSpy.mockRestore();
+      expect(verifyEmail).toHaveBeenCalledWith('test@example.com', '123456');
     });
 
-    it('should allow form submission with all required fields and verification code', async () => {
+    it('should navigate to login after successful verification', async () => {
       const user = userEvent.setup();
-      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
       renderWithTheme(<SignupForm />);
 
-      const emailInput = screen.getByLabelText('이메일');
-      const nicknameInput = screen.getByLabelText('닉네임');
-      const passwordInput = screen.getByLabelText('비밀번호');
+      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
+      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
+      await user.type(await screen.findByLabelText('인증 코드'), '123456');
 
-      await user.type(emailInput, 'test@example.com');
-      await user.type(nicknameInput, 'testuser');
-      await user.type(passwordInput, 'password123');
+      await user.click(screen.getByRole('button', { name: '가입하기' }));
 
-      const sendEmailButton = screen.getByRole('button', { name: '인증 코드 발송' });
-      await user.click(sendEmailButton);
-
-      const verificationInput = screen.getByLabelText('인증 코드');
-      await user.type(verificationInput, '123456');
-
-      const signupButton = screen.getByRole('button', { name: '가입하기' });
-      await user.click(signupButton);
-
-      expect(alertSpy).toHaveBeenCalledWith('회원가입 (API 연동 전)');
-      alertSpy.mockRestore();
+      expect(mockNavigate).toHaveBeenCalledWith('/login');
     });
   });
 
@@ -515,35 +467,31 @@ describe('SignupForm', () => {
       expect(passwordInput.value).toBe('pass!@#$%');
     });
 
-    it('should handle rapid clicks on send email button', async () => {
+    it('should disable send email button after first send to prevent duplicates', async () => {
       const user = userEvent.setup();
-      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
       renderWithTheme(<SignupForm />);
 
-      const emailInput = screen.getByLabelText('이메일');
-      await user.type(emailInput, 'test@example.com');
+      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
+      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+      await user.type(screen.getByLabelText('비밀번호'), 'password123');
 
       const sendEmailButton = screen.getByRole('button', { name: '인증 코드 발송' });
       await user.click(sendEmailButton);
-      await user.click(sendEmailButton);
-      await user.click(sendEmailButton);
 
-      expect(screen.getByLabelText('인증 코드')).toBeInTheDocument();
-      expect(alertSpy).toHaveBeenCalledTimes(3);
-      alertSpy.mockRestore();
+      expect(await screen.findByLabelText('인증 코드')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: '코드 발송됨' })).toBeDisabled();
     });
 
     it('should handle clearing and re-entering verification code', async () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
 
-      const emailInput = screen.getByLabelText('이메일');
-      await user.type(emailInput, 'test@example.com');
+      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
+      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
 
-      const sendEmailButton = screen.getByRole('button', { name: '인증 코드 발송' });
-      await user.click(sendEmailButton);
-
-      const verificationInput = screen.getByLabelText('인증 코드') as HTMLInputElement;
+      const verificationInput = (await screen.findByLabelText('인증 코드')) as HTMLInputElement;
       await user.type(verificationInput, '123456');
       expect(verificationInput.value).toBe('123456');
 
@@ -559,18 +507,14 @@ describe('SignupForm', () => {
       renderWithTheme(<SignupForm />);
 
       const emailInput = screen.getByLabelText('이메일');
-      const nicknameInput = screen.getByLabelText('닉네임');
-      const passwordInput = screen.getByLabelText('비밀번호');
-
       await user.type(emailInput, 'test@example.com');
-      await user.type(nicknameInput, 'testuser');
-      await user.type(passwordInput, 'password123');
+      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+      await user.type(screen.getByLabelText('비밀번호'), 'password123');
 
-      const signupButton = screen.getByRole('button', { name: '가입하기' });
-      expect(signupButton).toBeEnabled();
+      expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeEnabled();
 
       await user.clear(emailInput);
-      expect(signupButton).toBeDisabled();
+      expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeDisabled();
     });
 
     it('should handle numeric-only input in email field', async () => {
@@ -579,9 +523,10 @@ describe('SignupForm', () => {
 
       const emailInput = screen.getByLabelText('이메일') as HTMLInputElement;
       await user.type(emailInput, '12345');
+      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+      await user.type(screen.getByLabelText('비밀번호'), 'password123');
 
-      const sendEmailButton = screen.getByRole('button', { name: '인증 코드 발송' });
-      expect(sendEmailButton).toBeEnabled();
+      expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeEnabled();
       expect(emailInput.value).toBe('12345');
     });
 
@@ -631,13 +576,12 @@ describe('SignupForm', () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
 
-      const emailInput = screen.getByLabelText('이메일');
-      await user.type(emailInput, 'test@example.com');
+      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
+      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
 
-      const sendEmailButton = screen.getByRole('button', { name: '인증 코드 발송' });
-      await user.click(sendEmailButton);
-
-      expect(screen.getByPlaceholderText('이메일로 받은 코드 입력')).toBeInTheDocument();
+      expect(await screen.findByPlaceholderText('이메일로 받은 코드 입력')).toBeInTheDocument();
     });
   });
 });
