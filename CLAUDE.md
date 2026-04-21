@@ -9,6 +9,9 @@
 ## Domain
 Korean quiz app — create & share image/text short-answer quizzes
 
+## Agents
+- Test writing → always use `unit-test-generator` agent
+
 ## References
 Architecture: `docs/architecture.md`
 Conventions: `docs/conventions.md`
