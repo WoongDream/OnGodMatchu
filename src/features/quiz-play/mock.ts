@@ -2,7 +2,7 @@ import type { Quiz, Question } from '@/types';
 
 const MOCK_QUIZ_1: Quiz = {
   id: 1,
-  userId: 1,
+  authorNickname: '운영자',
   title: '90년대 명곡 맞추기',
   description: '들으면 다 알지만 제목은 모르는 그 노래들',
   category: 'music',
@@ -56,7 +56,7 @@ const MOCK_QUESTIONS_1: Question[] = [
 
 const MOCK_QUIZ_2: Quiz = {
   id: 2,
-  userId: 1,
+  authorNickname: '운영자',
   title: '롤 챔피언 스킬 맞추기',
   description: '진짜 롤 고수만 맞출 수 있는 스킬 퀴즈',
   category: 'game',

@@ -3,7 +3,7 @@ import type { Quiz } from '@/types';
 export const MOCK_QUIZZES: Quiz[] = [
   {
     id: 1,
-    userId: 1,
+    authorNickname: '운영자',
     title: '90년대 명곡 맞추기',
     description: '들으면 다 알지만 제목은 모르는 그 노래들',
     category: 'music',
@@ -13,7 +13,7 @@ export const MOCK_QUIZZES: Quiz[] = [
   },
   {
     id: 2,
-    userId: 1,
+    authorNickname: '운영자',
     title: '롤 챔피언 스킬 맞추기',
     description: '진짜 롤 고수만 맞출 수 있는 스킬 퀴즈',
     category: 'game',
@@ -23,7 +23,7 @@ export const MOCK_QUIZZES: Quiz[] = [
   },
   {
     id: 3,
-    userId: 2,
+    authorNickname: '운영자',
     title: '무한도전 명장면 퀴즈',
     description: '무도 팬이라면 무조건 만점!',
     category: 'broadcast',
@@ -33,7 +33,7 @@ export const MOCK_QUIZZES: Quiz[] = [
   },
   {
     id: 4,
-    userId: 2,
+    authorNickname: '운영자',
     title: '세계 나라 수도 맞추기',
     description: '지리 덕후만 도전하세요',
     category: 'culture',
@@ -43,7 +43,7 @@ export const MOCK_QUIZZES: Quiz[] = [
   },
   {
     id: 5,
-    userId: 3,
+    authorNickname: '운영자',
     title: '한국어 맞춤법 퀴즈',
     description: '틀리면 부끄러운 맞춤법 모음',
     category: 'etc',
@@ -53,7 +53,7 @@ export const MOCK_QUIZZES: Quiz[] = [
   },
   {
     id: 6,
-    userId: 3,
+    authorNickname: '운영자',
     title: '아이돌 노래 도입부 맞추기',
     description: '1초만 들어도 알 수 있어?',
     category: 'music',
@@ -63,7 +63,7 @@ export const MOCK_QUIZZES: Quiz[] = [
   },
   {
     id: 7,
-    userId: 3,
+    authorNickname: '운영자',
     title: '줄임말 맞추기 퀴즈',
     description: '당신도 MZ 인가',
     category: 'etc',
@@ -73,7 +73,7 @@ export const MOCK_QUIZZES: Quiz[] = [
   },
   {
     id: 8,
-    userId: 3,
+    authorNickname: '운영자',
     title: '국기 보고 나라 맞추기',
     description: '어디까지 맞출 수 있어 ?',
     category: 'culture',

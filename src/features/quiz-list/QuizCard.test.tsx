@@ -1,29 +1,43 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { Mock } from 'vitest';
 import { renderWithTheme, screen } from '@/test/renderWithTheme';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import QuizCard from './QuizCard';
 import type { Quiz } from '@/types';
 
 // Mock styled components
 vi.mock('./QuizCard.style', () => ({
-  CardWrapper: ({ children, onClick }: any) => (
+  CardWrapper: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
     <article onClick={onClick} data-testid="card-wrapper">
       {children}
     </article>
   ),
-  Thumbnail: ({ children }: any) => <div data-testid="thumbnail">{children}</div>,
-  CardTitle: ({ children }: any) => <h3 data-testid="card-title">{children}</h3>,
-  CardDescription: ({ children }: any) => <p data-testid="card-description">{children}</p>,
-  CardMeta: ({ children }: any) => <div data-testid="card-meta">{children}</div>,
-  Category: ({ children }: any) => <span data-testid="category">{children}</span>,
-  PlayCount: ({ children }: any) => <span data-testid="play-count">{children}</span>,
+  Thumbnail: ({ children }: { children: ReactNode }) => (
+    <div data-testid="thumbnail">{children}</div>
+  ),
+  CardTitle: ({ children }: { children: ReactNode }) => (
+    <h3 data-testid="card-title">{children}</h3>
+  ),
+  CardDescription: ({ children }: { children: ReactNode }) => (
+    <p data-testid="card-description">{children}</p>
+  ),
+  CardMeta: ({ children }: { children: ReactNode }) => (
+    <div data-testid="card-meta">{children}</div>
+  ),
+  Category: ({ children }: { children: ReactNode }) => (
+    <span data-testid="category">{children}</span>
+  ),
+  PlayCount: ({ children }: { children: ReactNode }) => (
+    <span data-testid="play-count">{children}</span>
+  ),
 }));
 
 describe('QuizCard', () => {
-  let mockOnClick: ReturnType<typeof vi.fn>;
+  let mockOnClick: Mock<(id: number) => void>;
   const mockQuiz: Quiz = {
     id: 1,
-    userId: 100,
+    authorNickname: 'testuser',
     title: 'Test Quiz Title',
     description: 'Test quiz description',
     category: 'game',
@@ -34,7 +48,7 @@ describe('QuizCard', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockOnClick = vi.fn();
+    mockOnClick = vi.fn<(id: number) => void>();
   });
 
   describe('rendering', () => {

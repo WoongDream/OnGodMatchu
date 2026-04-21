@@ -10,7 +10,7 @@ export type Category = (typeof CATEGORIES)[number]['value'];
 
 export type Quiz = {
   id: number;
-  userId: number;
+  authorNickname: string;
   title: string;
   description: string;
   category: Category;
