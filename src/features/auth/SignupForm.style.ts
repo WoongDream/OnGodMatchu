@@ -27,6 +27,11 @@ export const LinkText = styled.span`
   color: ${({ theme }) => theme.colors.fg.secondary};
 `;
 
+export const ErrorText = styled.p`
+  ${text({ size: 'sm' })}
+  color: ${({ theme }) => theme.colors.status.error};
+`;
+
 export const LinkButton = styled.button`
   ${text({ size: 'sm', weight: 'medium' })}
   color: ${({ theme }) => theme.colors.accent.primary};

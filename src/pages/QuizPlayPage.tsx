@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Button from '@/components/button';
 import { PageWrapper } from '@/styles/layout';
@@ -6,37 +6,49 @@ import QuizProgress from '@/features/quiz-play/QuizProgress';
 import QuizQuestion from '@/features/quiz-play/QuizQuestion';
 import QuizAnswer from '@/features/quiz-play/QuizAnswer';
 import QuizFeedback from '@/features/quiz-play/QuizFeedback';
-import { getMockDataById } from '@/features/quiz-play/mock';
+import useQuizDetail from '@/hooks/useQuizDetail';
+import { incrementPlayCount, gradeAnswer } from '@/api/quiz';
 
 type SubmitState = { status: 'idle' } | { status: 'correct' } | { status: 'wrong'; answer: string };
 
-const QuizPlayPage = () => {
+const QuizPlayPage = memo(() => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const quizId = Number(id);
 
-  const { quiz, questions } = getMockDataById(Number(id));
+  const { quiz, isLoading } = useQuizDetail(quizId);
+  const questions = quiz?.questions ?? [];
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [inputValue, setInputValue] = useState('');
   const [submitState, setSubmitState] = useState<SubmitState>({ status: 'idle' });
   const [scores, setScores] = useState(0);
 
+  useEffect(() => {
+    if (quizId) {
+      incrementPlayCount(quizId);
+    }
+  }, [quizId]);
+
+  if (isLoading || !quiz) {
+    return <div>로딩 중...</div>;
+  }
+
   const currentQuestion = questions[currentIndex];
   const total = questions.length;
   const isLastQuestion = currentIndex === total - 1;
 
-  const handleSubmit = useCallback(() => {
-    const correct = inputValue.trim().toLowerCase() === currentQuestion.answer.trim().toLowerCase();
-
-    if (correct) {
+  const handleSubmit = async () => {
+    const res = await gradeAnswer(currentQuestion.id, inputValue.trim());
+    if (res.correct) {
       setScores((prev) => prev + 1);
       setSubmitState({ status: 'correct' });
     } else {
-      setSubmitState({ status: 'wrong', answer: currentQuestion.answer });
+      setSubmitState({ status: 'wrong', answer: res.correctAnswer });
     }
-  }, [inputValue, currentQuestion.answer]);
+  };
 
-  const handleNext = useCallback(() => {
+  const handleNext = () => {
     if (isLastQuestion) {
       navigate(`/quiz/${quiz.id}/result`, { state: { scores, total } });
       return;
@@ -44,7 +56,7 @@ const QuizPlayPage = () => {
     setCurrentIndex((prev) => prev + 1);
     setInputValue('');
     setSubmitState({ status: 'idle' });
-  }, [isLastQuestion, navigate, quiz.id, scores, total]);
+  };
 
   return (
     <PageWrapper gap="lg">
@@ -69,6 +81,6 @@ const QuizPlayPage = () => {
       )}
     </PageWrapper>
   );
-};
+});
 
 export default QuizPlayPage;

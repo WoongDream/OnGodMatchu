@@ -3,32 +3,34 @@ import { useNavigate } from 'react-router-dom';
 import Input from '@/components/input';
 import Button from '@/components/button';
 import SocialLoginButtons from './SocialLoginButtons';
-import { FormWrapper, FormTitle, LinkRow, LinkText, LinkButton } from './SignupForm.style';
+import {
+  FormWrapper,
+  FormTitle,
+  LinkRow,
+  LinkText,
+  LinkButton,
+  ErrorText,
+} from './SignupForm.style';
+import useSignup from '@/hooks/useSignup';
 
 const SignupForm = memo(() => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
-  const [emailSent, setEmailSent] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
+  const { handleSendCode, handleVerify, isSending, isVerifying, emailSent, error } = useSignup();
 
-  const isValid =
-    email.trim() !== '' &&
-    nickname.trim() !== '' &&
-    password.trim() !== '' &&
-    (!emailSent || verificationCode.trim() !== '');
+  const canSendCode = email.trim() !== '' && nickname.trim() !== '' && password.trim() !== '';
+  const canSubmit = emailSent && verificationCode.trim() !== '';
 
-  const handleSendEmail = () => {
-    // TODO: 이메일 인증 API 연동
-    setEmailSent(true);
-    alert('인증 코드가 발송됐어요! (API 연동 전)');
+  const handleSendEmail = async () => {
+    await handleSendCode(email, nickname, password);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: 회원가입 API 연동
-    alert('회원가입 (API 연동 전)');
+    await handleVerify(email, verificationCode);
   };
 
   return (
@@ -41,14 +43,22 @@ const SignupForm = memo(() => {
         onChange={setEmail}
         placeholder="example@email.com"
       />
+      <Input label="닉네임" value={nickname} onChange={setNickname} placeholder="닉네임 입력" />
+      <Input
+        label="비밀번호"
+        type="password"
+        value={password}
+        onChange={setPassword}
+        placeholder="비밀번호 입력"
+      />
       <Button
         type="button"
         variant="secondary"
         fullWidth
         onClick={handleSendEmail}
-        disabled={email.trim() === ''}
+        disabled={!canSendCode || isSending || emailSent}
       >
-        인증 코드 발송
+        {isSending ? '발송 중...' : emailSent ? '코드 발송됨' : '인증 코드 발송'}
       </Button>
       {emailSent && (
         <Input
@@ -58,16 +68,9 @@ const SignupForm = memo(() => {
           placeholder="이메일로 받은 코드 입력"
         />
       )}
-      <Input label="닉네임" value={nickname} onChange={setNickname} placeholder="닉네임 입력" />
-      <Input
-        label="비밀번호"
-        type="password"
-        value={password}
-        onChange={setPassword}
-        placeholder="비밀번호 입력"
-      />
-      <Button fullWidth type="submit" disabled={!isValid}>
-        가입하기
+      {error && <ErrorText>{error}</ErrorText>}
+      <Button fullWidth type="submit" disabled={!canSubmit || isVerifying}>
+        {isVerifying ? '인증 중...' : '가입하기'}
       </Button>
       <SocialLoginButtons />
       <LinkRow>

@@ -27,6 +27,12 @@ describe('axios instance', () => {
       length: 0,
     } as Storage;
 
+    // Mock window.location to prevent jsdom navigation errors
+    Object.defineProperty(window, 'location', {
+      value: { href: '' },
+      writable: true,
+    });
+
     // Reset mocks
     vi.clearAllMocks();
 
@@ -325,6 +331,7 @@ describe('axios instance', () => {
       await import('./instance');
 
       const error = {
+        config: { _retry: false, headers: {} },
         response: {
           status: 401,
           data: { error: 'Unauthorized' },
@@ -355,6 +362,7 @@ describe('axios instance', () => {
       await import('./instance');
 
       const error = {
+        config: { _retry: false, headers: {} },
         response: {
           status: 401,
           data: { error: 'Unauthorized' },
@@ -524,6 +532,7 @@ describe('axios instance', () => {
       await import('./instance');
 
       const error = {
+        config: { _retry: false, headers: {} },
         response: {
           status: 401,
           data: { error: 'Unauthorized' },
@@ -532,7 +541,6 @@ describe('axios instance', () => {
 
       await expect(responseErrorHandler(error)).rejects.toBe(error);
 
-      // removeItem should still be called even if token doesn't exist
       expect(localStorage.removeItem).toHaveBeenCalledWith('accessToken');
     });
 
@@ -677,6 +685,7 @@ describe('axios instance', () => {
       await import('./instance');
 
       const error = {
+        config: { _retry: false, headers: {} },
         response: {
           status: 401,
         },

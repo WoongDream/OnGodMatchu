@@ -1,23 +1,19 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import type { Category } from '@/types';
 import CategoryFilter from '@/features/quiz-list/CategoryFilter';
 import QuizList from '@/features/quiz-list/QuizList';
-import { MOCK_QUIZZES } from '@/features/quiz-list/mock';
+import useQuizzes from '@/hooks/useQuizzes';
 
-const MainPage = () => {
+const MainPage = memo(() => {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-
-  const filteredQuizzes =
-    selectedCategory === null
-      ? MOCK_QUIZZES
-      : MOCK_QUIZZES.filter((quiz) => quiz.category === selectedCategory);
+  const { quizzes, isLoading } = useQuizzes({ category: selectedCategory ?? undefined });
 
   return (
     <>
       <CategoryFilter selected={selectedCategory} onSelect={setSelectedCategory} />
-      <QuizList quizzes={filteredQuizzes} />
+      {isLoading ? <div>로딩 중...</div> : <QuizList quizzes={quizzes} />}
     </>
   );
-};
+});
 
 export default MainPage;

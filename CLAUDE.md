@@ -9,6 +9,13 @@
 ## Domain
 Korean quiz app — create & share image/text short-answer quizzes
 
+## Agents
+- Test writing → always use `unit-test-generator` agent
+
+## Git Workflow
+- Commit → always use `/commit` skill
+- PR → always use `/pr` skill
+
 ## References
 Architecture: `docs/architecture.md`
 Conventions: `docs/conventions.md`

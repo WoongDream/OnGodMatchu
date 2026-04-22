@@ -20,7 +20,7 @@ vi.mock('./QuizCard', () => ({
 
 const createMockQuiz = (overrides?: Partial<Quiz>): Quiz => ({
   id: 1,
-  userId: 1,
+  authorNickname: 'testuser',
   title: 'Sample Quiz',
   description: 'A sample quiz for testing',
   category: 'game',

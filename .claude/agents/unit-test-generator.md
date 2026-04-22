@@ -88,12 +88,14 @@ When given a source code file, you will:
 
 ## Quality Standards
 
+- **Focus on critical paths only** — core logic, meaningful edge cases, API contracts
+- Skip trivial rendering checks (does it render?), obvious prop-passthrough tests, and exhaustive permutation tests
+- Prefer fewer meaningful tests over broad coverage for its own sake
 - Every test must have a single, clear assertion focus
 - Avoid testing implementation details — test behavior and contracts
 - Prefer `toEqual` over `toBe` for objects/arrays
 - Use `async/await` for asynchronous tests, never raw Promise chains
 - Parameterize repetitive tests with `test.each` / `it.each` where appropriate
-- Aim for ≥ 80% branch coverage as a baseline
 
 ## Self-Verification Checklist
 

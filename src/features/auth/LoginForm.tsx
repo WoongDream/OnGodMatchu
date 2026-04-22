@@ -3,19 +3,27 @@ import { useNavigate } from 'react-router-dom';
 import Input from '@/components/input';
 import Button from '@/components/button';
 import SocialLoginButtons from './SocialLoginButtons';
-import { FormWrapper, FormTitle, LinkRow, LinkText, LinkButton } from './LoginForm.style';
+import {
+  FormWrapper,
+  FormTitle,
+  LinkRow,
+  LinkText,
+  LinkButton,
+  ErrorText,
+} from './LoginForm.style';
+import useLogin from '@/hooks/useLogin';
 
 const LoginForm = memo(() => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const { handleLogin, isLoading, error } = useLogin();
 
   const isValid = email.trim() !== '' && password.trim() !== '';
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: 로그인 API 연동
-    alert('로그인 (API 연동 전)');
+    await handleLogin(email, password);
   };
 
   return (
@@ -35,8 +43,9 @@ const LoginForm = memo(() => {
         onChange={setPassword}
         placeholder="비밀번호 입력"
       />
-      <Button fullWidth type="submit" disabled={!isValid}>
-        로그인
+      {error && <ErrorText>{error}</ErrorText>}
+      <Button fullWidth type="submit" disabled={!isValid || isLoading}>
+        {isLoading ? '로그인 중...' : '로그인'}
       </Button>
       <SocialLoginButtons />
       <LinkRow>

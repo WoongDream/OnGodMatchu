@@ -5,9 +5,18 @@ import userEvent from '@testing-library/user-event';
 import LoginForm from './LoginForm';
 
 const mockNavigate = vi.hoisted(() => vi.fn());
+const mockHandleLogin = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
+}));
+
+vi.mock('@/hooks/useLogin', () => ({
+  default: () => ({
+    handleLogin: mockHandleLogin,
+    isLoading: false,
+    error: null,
+  }),
 }));
 
 vi.mock('./SocialLoginButtons', () => ({
@@ -37,7 +46,7 @@ vi.mock('@/components/button', () => ({
     onClick,
   }: {
     fullWidth?: boolean;
-    type?: string;
+    type?: 'button' | 'submit' | 'reset';
     disabled?: boolean;
     children: React.ReactNode;
     onClick?: () => void;
@@ -341,9 +350,7 @@ describe('LoginForm', () => {
       expect(spy).toHaveBeenCalled();
     });
 
-    it('shows alert with message when form is submitted', async () => {
-      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
-
+    it('calls handleLogin with email and password on submit', async () => {
       renderWithTheme(<LoginForm />);
       const emailInput = screen.getByTestId('input-email');
       const passwordInput = screen.getByTestId('input-password');
@@ -354,31 +361,20 @@ describe('LoginForm', () => {
 
       await userEvent.click(submitBtn);
 
-      expect(alertSpy).toHaveBeenCalledWith('로그인 (API 연동 전)');
-      alertSpy.mockRestore();
+      expect(mockHandleLogin).toHaveBeenCalledWith('test@example.com', 'password123');
     });
 
-    it('shows alert regardless of email value when password is provided', async () => {
-      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
-
+    it('calls handleLogin when valid credentials provided', async () => {
       renderWithTheme(<LoginForm />);
       const emailInput = screen.getByTestId('input-email');
       const passwordInput = screen.getByTestId('input-password');
-      const submitBtn = screen.getByTestId('button-submit') as HTMLButtonElement;
+      const submitBtn = screen.getByTestId('button-submit');
 
-      await userEvent.type(emailInput, 'any-email-value');
+      await userEvent.type(emailInput, 'user@test.com');
       await userEvent.type(passwordInput, 'any-password');
+      await userEvent.click(submitBtn);
 
-      // Simulate form submission by clicking the submit button or dispatching submit event
-      const form = submitBtn.closest('form');
-      if (form) {
-        form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-      } else {
-        await userEvent.click(submitBtn);
-      }
-
-      expect(alertSpy).toHaveBeenCalledWith('로그인 (API 연동 전)');
-      alertSpy.mockRestore();
+      expect(mockHandleLogin).toHaveBeenCalledWith('user@test.com', 'any-password');
     });
 
     it('does not show alert when submit button is disabled', async () => {
@@ -395,9 +391,7 @@ describe('LoginForm', () => {
       alertSpy.mockRestore();
     });
 
-    it('shows alert once per submission', async () => {
-      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
-
+    it('calls handleLogin once per submission click', async () => {
       renderWithTheme(<LoginForm />);
       const emailInput = screen.getByTestId('input-email');
       const passwordInput = screen.getByTestId('input-password');
@@ -407,10 +401,8 @@ describe('LoginForm', () => {
       await userEvent.type(passwordInput, 'password123');
 
       await userEvent.click(submitBtn);
-      await userEvent.click(submitBtn);
 
-      expect(alertSpy).toHaveBeenCalledTimes(2);
-      alertSpy.mockRestore();
+      expect(mockHandleLogin).toHaveBeenCalledTimes(1);
     });
 
     it('clears form state after submission', async () => {
