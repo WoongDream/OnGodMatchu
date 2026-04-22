@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import type { Category } from '@/types';
 import CategoryFilter from '@/features/quiz-list/CategoryFilter';
 import QuizList from '@/features/quiz-list/QuizList';
 import useQuizzes from '@/hooks/useQuizzes';
 
-const MainPage = () => {
+const MainPage = memo(() => {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const { quizzes, isLoading } = useQuizzes({ category: selectedCategory ?? undefined });
 
@@ -14,6 +14,6 @@ const MainPage = () => {
       {isLoading ? <div>로딩 중...</div> : <QuizList quizzes={quizzes} />}
     </>
   );
-};
+});
 
 export default MainPage;

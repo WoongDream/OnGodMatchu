@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Button from '@/components/button';
 import { PageWrapper } from '@/styles/layout';
@@ -11,7 +11,7 @@ import { incrementPlayCount, gradeAnswer } from '@/api/quiz';
 
 type SubmitState = { status: 'idle' } | { status: 'correct' } | { status: 'wrong'; answer: string };
 
-const QuizPlayPage = () => {
+const QuizPlayPage = memo(() => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const quizId = Number(id);
@@ -81,6 +81,6 @@ const QuizPlayPage = () => {
       )}
     </PageWrapper>
   );
-};
+});
 
 export default QuizPlayPage;
