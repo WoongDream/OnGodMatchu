@@ -30,8 +30,8 @@ vi.mock('./ResultActions.style', () => ({
 }));
 
 describe('ResultActions', () => {
-  let mockOnRetry: ReturnType<typeof vi.fn>;
-  let mockOnHome: ReturnType<typeof vi.fn>;
+  let mockOnRetry: () => void;
+  let mockOnHome: () => void;
   let mockAlert: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {

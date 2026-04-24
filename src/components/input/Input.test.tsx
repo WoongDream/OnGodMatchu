@@ -358,7 +358,7 @@ describe('Input', () => {
       renderWithTheme(<Input {...defaultProps} onChange={onChange} />);
       const input = screen.getByRole('textbox');
 
-      await user.type(input, 'rapid', { delay: 1 });
+      await user.type(input, 'rapid');
 
       expect(onChange).toHaveBeenCalled();
       expect(onChange.mock.calls.length).toBeGreaterThan(0);

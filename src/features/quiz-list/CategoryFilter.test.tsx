@@ -219,7 +219,7 @@ describe('CategoryFilter', () => {
     it('handles rapid successive clicks on same button', async () => {
       const user = userEvent.setup();
       const onSelect = vi.fn();
-      let selected: typeof null | 'game' = null;
+      let selected: Category | null = null;
 
       const { rerender } = renderWithTheme(
         <CategoryFilter

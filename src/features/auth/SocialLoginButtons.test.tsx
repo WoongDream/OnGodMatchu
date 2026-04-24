@@ -41,7 +41,7 @@ describe('SocialLoginButtons', () => {
     it('renders all buttons as interactive elements', () => {
       renderWithTheme(<SocialLoginButtons />);
       const buttons = screen.getAllByRole('button');
-      expect(buttons.every((btn) => !btn.disabled)).toBe(true);
+      expect(buttons.every((btn) => !(btn as HTMLButtonElement).disabled)).toBe(true);
     });
   });
 
