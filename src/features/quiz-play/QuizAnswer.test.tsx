@@ -35,8 +35,8 @@ vi.mock('@/components/button', () => ({
 }));
 
 describe('QuizAnswer', () => {
-  let mockOnChange: ReturnType<typeof vi.fn>;
-  let mockOnSubmit: ReturnType<typeof vi.fn>;
+  let mockOnChange: (value: string) => void;
+  let mockOnSubmit: () => void;
 
   beforeEach(() => {
     mockOnChange = vi.fn();
@@ -588,7 +588,7 @@ describe('QuizAnswer', () => {
       renderWithTheme(<QuizAnswer value="" onChange={mockOnChange} onSubmit={mockOnSubmit} />);
 
       const input = screen.getByTestId('quiz-answer-input');
-      await user.type(input, 'test', { delay: 1 });
+      await user.type(input, 'test');
 
       expect(mockOnChange).toHaveBeenCalledTimes(4);
     });

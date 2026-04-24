@@ -321,7 +321,7 @@ describe('axios instance', () => {
         interceptors: {
           request: { use: vi.fn() },
           response: {
-            use: vi.fn((successHandler, errorHandler) => {
+            use: vi.fn((_successHandler, errorHandler) => {
               responseErrorHandler = errorHandler;
             }),
           },
@@ -352,7 +352,7 @@ describe('axios instance', () => {
         interceptors: {
           request: { use: vi.fn() },
           response: {
-            use: vi.fn((successHandler, errorHandler) => {
+            use: vi.fn((_successHandler, errorHandler) => {
               responseErrorHandler = errorHandler;
             }),
           },
@@ -383,7 +383,7 @@ describe('axios instance', () => {
         interceptors: {
           request: { use: vi.fn() },
           response: {
-            use: vi.fn((successHandler, errorHandler) => {
+            use: vi.fn((_successHandler, errorHandler) => {
               responseErrorHandler = errorHandler;
             }),
           },
@@ -413,7 +413,7 @@ describe('axios instance', () => {
         interceptors: {
           request: { use: vi.fn() },
           response: {
-            use: vi.fn((successHandler, errorHandler) => {
+            use: vi.fn((_successHandler, errorHandler) => {
               responseErrorHandler = errorHandler;
             }),
           },
@@ -439,7 +439,7 @@ describe('axios instance', () => {
         interceptors: {
           request: { use: vi.fn() },
           response: {
-            use: vi.fn((successHandler, errorHandler) => {
+            use: vi.fn((_successHandler, errorHandler) => {
               responseErrorHandler = errorHandler;
             }),
           },
@@ -464,7 +464,7 @@ describe('axios instance', () => {
         interceptors: {
           request: { use: vi.fn() },
           response: {
-            use: vi.fn((successHandler, errorHandler) => {
+            use: vi.fn((_successHandler, errorHandler) => {
               responseErrorHandler = errorHandler;
             }),
           },
@@ -492,7 +492,7 @@ describe('axios instance', () => {
         interceptors: {
           request: { use: vi.fn() },
           response: {
-            use: vi.fn((successHandler, errorHandler) => {
+            use: vi.fn((_successHandler, errorHandler) => {
               responseErrorHandler = errorHandler;
             }),
           },
@@ -522,7 +522,7 @@ describe('axios instance', () => {
         interceptors: {
           request: { use: vi.fn() },
           response: {
-            use: vi.fn((successHandler, errorHandler) => {
+            use: vi.fn((_successHandler, errorHandler) => {
               responseErrorHandler = errorHandler;
             }),
           },
@@ -551,7 +551,7 @@ describe('axios instance', () => {
         interceptors: {
           request: { use: vi.fn() },
           response: {
-            use: vi.fn((successHandler, errorHandler) => {
+            use: vi.fn((_successHandler, errorHandler) => {
               responseErrorHandler = errorHandler;
             }),
           },
@@ -675,7 +675,7 @@ describe('axios instance', () => {
         interceptors: {
           request: { use: vi.fn() },
           response: {
-            use: vi.fn((successHandler, errorHandler) => {
+            use: vi.fn((_successHandler, errorHandler) => {
               responseErrorHandler = errorHandler;
             }),
           },

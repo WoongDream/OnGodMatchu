@@ -21,7 +21,7 @@ describe('ChipButton', () => {
     });
 
     it('renders with empty children string', () => {
-      const { container } = renderWithTheme(<ChipButton></ChipButton>);
+      const { container } = renderWithTheme(<ChipButton>{''}</ChipButton>);
       expect(container.querySelector('button')).toBeInTheDocument();
     });
 
