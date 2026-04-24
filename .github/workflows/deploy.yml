@@ -1,0 +1,70 @@
+name: Deploy Frontend to S3 + CloudFront
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  # 수동 실행도 가능 (GitHub Actions 탭에서 버튼으로)
+
+# 동시 배포 방지: 배포 중에 또 push되면 이전 것 취소
+concurrency:
+  group: frontend-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 소스 코드 체크아웃
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Node.js 설정 + npm 캐시
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # 3. 의존성 설치 (package-lock.json 기반으로 정확히 설치)
+      - name: Install dependencies
+        run: npm ci
+
+      # 4. 프로덕션 빌드
+      - name: Build
+        run: npm run build
+
+      # 5. AWS 자격 증명 설정
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      # 6. S3에 업로드 (변경된 파일만, 삭제된 파일 정리)
+      - name: Deploy to S3
+        run: |
+          aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }} \
+            --delete \
+            --cache-control "public, max-age=31536000, immutable" \
+            --exclude "index.html" \
+            --exclude "*.map"
+          
+          # index.html은 캐시 짧게 (즉시 반영되도록)
+          aws s3 cp dist/index.html s3://${{ secrets.S3_BUCKET_NAME }}/index.html \
+            --cache-control "public, max-age=0, must-revalidate" \
+            --content-type "text/html"
+
+      # 7. CloudFront 캐시 무효화
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+
+      # 8. 배포 완료 메시지
+      - name: Deployment summary
+        run: |
+          echo "✅ 배포 완료!"
+          echo "🌐 https://ongodmatchu.com"
