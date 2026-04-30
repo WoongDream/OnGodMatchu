@@ -1,7 +1,10 @@
-import { memo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Input from '@/components/input';
 import Button from '@/components/button';
+import PasswordInput from '@/components/password-input';
+import type { PasswordRuleStatus, PasswordStrength } from '@/components/password-input';
+import { canSubmitByStrength, isLengthValid } from '@/lib/password';
 import SocialLoginButtons from './SocialLoginButtons';
 import {
   FormWrapper,
@@ -19,9 +22,40 @@ const SignupForm = memo(() => {
   const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
-  const { handleSendCode, handleVerify, isSending, isVerifying, emailSent, error } = useSignup();
+  const [strength, setStrength] = useState<PasswordStrength | null>(null);
+  const {
+    handleSendCode,
+    handleVerify,
+    clearError,
+    isSending,
+    isVerifying,
+    emailSent,
+    error,
+    signupErrorCode,
+  } = useSignup();
 
-  const canSendCode = email.trim() !== '' && nickname.trim() !== '' && password.trim() !== '';
+  useEffect(() => {
+    if (signupErrorCode === 'BREACH') {
+      clearError();
+    }
+    // password 가 바뀌면 직전에 받은 BREACH 표시를 자동 해제 (clearError 는 stable 하지 않으므로 deps 에서 제외)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [password]);
+
+  const userInputs = useMemo(() => [email, nickname].filter(Boolean), [email, nickname]);
+
+  const ruleStatus: PasswordRuleStatus = {
+    lengthOk: isLengthValid(password),
+    notBreached: signupErrorCode === 'BREACH' ? false : emailSent ? true : null,
+  };
+
+  const canSendCode =
+    email.trim() !== '' &&
+    nickname.trim() !== '' &&
+    isLengthValid(password) &&
+    canSubmitByStrength(strength?.score ?? 0) &&
+    signupErrorCode !== 'BREACH';
+
   const canSubmit = emailSent && verificationCode.trim() !== '';
 
   const handleSendEmail = async () => {
@@ -44,12 +78,15 @@ const SignupForm = memo(() => {
         placeholder="example@email.com"
       />
       <Input label="닉네임" value={nickname} onChange={setNickname} placeholder="닉네임 입력" />
-      <Input
+      <PasswordInput
         label="비밀번호"
-        type="password"
         value={password}
         onChange={setPassword}
         placeholder="비밀번호 입력"
+        ruleStatus={ruleStatus}
+        userInputs={userInputs}
+        onStrengthChange={setStrength}
+        error={signupErrorCode === 'BREACH' && error ? error : undefined}
       />
       <Button
         type="button"
@@ -68,7 +105,7 @@ const SignupForm = memo(() => {
           placeholder="이메일로 받은 코드 입력"
         />
       )}
-      {error && <ErrorText>{error}</ErrorText>}
+      {error && signupErrorCode !== 'BREACH' && <ErrorText>{error}</ErrorText>}
       <Button fullWidth type="submit" disabled={!canSubmit || isVerifying}>
         {isVerifying ? '인증 중...' : '가입하기'}
       </Button>

@@ -15,6 +15,7 @@ Korean quiz app — create & share image/text short-answer quizzes
 ## Git Workflow
 - Commit → always use `/commit` skill
 - PR → always use `/pr` skill
+- TODO 정리 → `/todo` skill (구현 금지, TODO.md 갱신 전용)
 
 ## References
 Architecture: `docs/architecture.md`

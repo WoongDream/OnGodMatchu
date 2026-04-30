@@ -26,7 +26,8 @@
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.14.0",
     "swr": "^2.4.1",
-    "zustand": "^5.0.12"
+    "zustand": "^5.0.12",
+    "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.1.1",
@@ -43,6 +44,7 @@
     "@types/node": "^24.12.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@types/zxcvbn": "^4.4.5",
     "@vitejs/plugin-react": "^6.0.1",
     "@vitest/browser-playwright": "^4.1.2",
     "@vitest/coverage-v8": "^4.1.2",

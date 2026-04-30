@@ -22,7 +22,15 @@ export const theme = {
     },
     status: {
       error: '#ef4444',
+      warning: '#f59e0b',
       success: '#22c55e',
+    },
+    strength: {
+      veryWeak: '#ef4444',
+      weak: '#f97316',
+      fair: '#f59e0b',
+      good: '#84cc16',
+      strong: '#22c55e',
     },
   },
   spacing: {

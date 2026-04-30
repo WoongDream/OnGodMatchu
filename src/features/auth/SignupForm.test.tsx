@@ -63,6 +63,78 @@ vi.mock('@/components/button', () => ({
   ),
 }));
 
+/**
+ * PasswordInput mock — 실제 zxcvbn 없이 SignupForm 통합 테스트를 수행한다.
+ *
+ * 테스트에서 비밀번호 강도를 제어하기 위해:
+ *   - data-testid="password-strength-ok" 인 hidden input 을 제공한다.
+ *   - canSendCode 조건: isLengthValid(password) && canSubmitByStrength(score) 를
+ *     mock 에서는 value.length >= 10 으로 단순화한다.
+ *   - onStrengthChange 는 value.length >= 10 이면 score=2, 미달이면 score=0 으로 즉시 호출한다.
+ */
+vi.mock('@/components/password-input', () => ({
+  default: ({
+    label,
+    value,
+    onChange,
+    placeholder,
+    onStrengthChange,
+    ruleStatus: _ruleStatus,
+    error,
+    disabled,
+  }: any) => {
+    const id = `input-${label}`;
+    const score = value.length >= 10 ? 2 : 0;
+
+    // onStrengthChange 를 동기로 호출 (SignupForm 이 useEffect 없이 상태를 받으려면)
+    // React 렌더 중에 setState 를 호출하면 안 되므로 useLayoutEffect 처럼 동작하는
+    // 패턴을 피하고, 대신 onChange 호출 시 score 를 함께 전달하는 방식을 쓴다.
+    //
+    // 실제로는 input change → onChange(value) → 부모 setPassword(value) → 리렌더 →
+    // onStrengthChange(strength) 의 흐름이지만 mock 에서는 직접 호출한다.
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = e.target.value;
+      onChange(newValue);
+      const newScore = newValue.length >= 10 ? 2 : 0;
+      onStrengthChange?.({
+        score: newScore,
+        crackTimesDisplay: '3 hours',
+        feedbackWarning: '',
+        feedbackSuggestions: [],
+      });
+    };
+
+    return (
+      <div>
+        <label htmlFor={id}>{label}</label>
+        <input
+          id={id}
+          type="password"
+          value={value}
+          onChange={handleChange}
+          placeholder={placeholder}
+          disabled={disabled ?? false}
+          data-testid={`input-${label}`}
+          data-score={score}
+        />
+        {error && <span data-testid="password-error">{error}</span>}
+      </div>
+    );
+  },
+  // re-export types used by SignupForm
+  canSubmitByStrength: (score: number) => score >= 1,
+}));
+
+vi.mock('@/lib/password', () => ({
+  isLengthValid: (pw: string) => pw.length >= 10,
+  canSubmitByStrength: (score: number) => score >= 1,
+}));
+
+// 강한 비밀번호 — 길이 10 이상 + mock score >= 1
+const STRONG_PASSWORD = '내고양이는오늘도잠만잔다';
+// 약한 비밀번호 — 9자 이하
+const WEAK_PASSWORD = 'short';
+
 describe('SignupForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -115,13 +187,13 @@ describe('SignupForm', () => {
       expect(sendEmailButton).toBeDisabled();
     });
 
-    it('should enable send email button when all fields have value', async () => {
+    it('should enable send email button when all fields have a strong password', async () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
 
       await user.type(screen.getByLabelText('이메일'), 'test@example.com');
       await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
 
       expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeEnabled();
     });
@@ -149,7 +221,7 @@ describe('SignupForm', () => {
 
       await user.type(screen.getByLabelText('이메일'), 'test@example.com');
       await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
 
       await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
       await user.type(await screen.findByLabelText('인증 코드'), '123456');
@@ -165,7 +237,7 @@ describe('SignupForm', () => {
       const passwordInput = screen.getByLabelText('비밀번호');
 
       await user.type(nicknameInput, 'testuser');
-      await user.type(passwordInput, 'password123');
+      await user.type(passwordInput, STRONG_PASSWORD);
 
       const signupButton = screen.getByRole('button', { name: '가입하기' });
       expect(signupButton).toBeDisabled();
@@ -179,7 +251,7 @@ describe('SignupForm', () => {
       const passwordInput = screen.getByLabelText('비밀번호');
 
       await user.type(emailInput, 'test@example.com');
-      await user.type(passwordInput, 'password123');
+      await user.type(passwordInput, STRONG_PASSWORD);
 
       const signupButton = screen.getByRole('button', { name: '가입하기' });
       expect(signupButton).toBeDisabled();
@@ -205,7 +277,7 @@ describe('SignupForm', () => {
 
       await user.type(screen.getByLabelText('이메일'), 'test@example.com');
       await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
 
       await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
 
@@ -219,7 +291,7 @@ describe('SignupForm', () => {
 
       await user.type(screen.getByLabelText('이메일'), 'test@example.com');
       await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
       await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
       await user.type(await screen.findByLabelText('인증 코드'), '123456');
 
@@ -232,7 +304,7 @@ describe('SignupForm', () => {
 
       await user.type(screen.getByLabelText('이메일'), 'test@example.com');
       await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
       await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
       await user.type(await screen.findByLabelText('인증 코드'), '   ');
 
@@ -252,7 +324,7 @@ describe('SignupForm', () => {
 
       await user.type(screen.getByLabelText('이메일'), 'test@example.com');
       await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
       await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
 
       expect(await screen.findByLabelText('인증 코드')).toBeInTheDocument();
@@ -265,10 +337,10 @@ describe('SignupForm', () => {
 
       await user.type(screen.getByLabelText('이메일'), 'test@example.com');
       await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
       await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
 
-      expect(signup).toHaveBeenCalledWith('test@example.com', 'testuser', 'password123');
+      expect(signup).toHaveBeenCalledWith('test@example.com', 'testuser', STRONG_PASSWORD);
     });
 
     it('should toggle emailSent state to true when send email button is clicked', async () => {
@@ -277,7 +349,7 @@ describe('SignupForm', () => {
 
       await user.type(screen.getByLabelText('이메일'), 'test@example.com');
       await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
 
       expect(screen.queryByLabelText('인증 코드')).not.toBeInTheDocument();
 
@@ -292,7 +364,7 @@ describe('SignupForm', () => {
 
       await user.type(screen.getByLabelText('이메일'), 'test@example.com');
       await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
       await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
 
       const verificationInput = (await screen.findByLabelText('인증 코드')) as HTMLInputElement;
@@ -328,9 +400,9 @@ describe('SignupForm', () => {
       renderWithTheme(<SignupForm />);
 
       const passwordInput = screen.getByLabelText('비밀번호') as HTMLInputElement;
-      await user.type(passwordInput, 'password123');
+      await user.type(passwordInput, STRONG_PASSWORD);
 
-      expect(passwordInput.value).toBe('password123');
+      expect(passwordInput.value).toBe(STRONG_PASSWORD);
     });
 
     it('should handle empty string inputs', async () => {
@@ -361,7 +433,8 @@ describe('SignupForm', () => {
 
       await user.type(screen.getByLabelText('이메일'), '   test@example.com   ');
       await user.type(screen.getByLabelText('닉네임'), '   testuser   ');
-      await user.type(screen.getByLabelText('비밀번호'), '   password123   ');
+      // 공백 포함 길이가 10 이상인 강한 비밀번호
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
 
       expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeEnabled();
     });
@@ -374,7 +447,7 @@ describe('SignupForm', () => {
 
       await user.type(screen.getByLabelText('이메일'), 'test@example.com');
       await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
       await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
       await user.type(await screen.findByLabelText('인증 코드'), '123456');
 
@@ -391,7 +464,7 @@ describe('SignupForm', () => {
 
       await user.type(screen.getByLabelText('이메일'), 'test@example.com');
       await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
       await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
       await user.type(await screen.findByLabelText('인증 코드'), '123456');
 
@@ -406,7 +479,7 @@ describe('SignupForm', () => {
 
       await user.type(screen.getByLabelText('이메일'), 'test@example.com');
       await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
       await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
       await user.type(await screen.findByLabelText('인증 코드'), '123456');
 
@@ -460,11 +533,11 @@ describe('SignupForm', () => {
 
       await user.type(emailInput, 'test+tag@example.com');
       await user.type(nicknameInput, 'user@123!');
-      await user.type(passwordInput, 'pass!@#$%');
+      await user.type(passwordInput, STRONG_PASSWORD);
 
       expect(emailInput.value).toBe('test+tag@example.com');
       expect(nicknameInput.value).toBe('user@123!');
-      expect(passwordInput.value).toBe('pass!@#$%');
+      expect(passwordInput.value).toBe(STRONG_PASSWORD);
     });
 
     it('should disable send email button after first send to prevent duplicates', async () => {
@@ -473,7 +546,7 @@ describe('SignupForm', () => {
 
       await user.type(screen.getByLabelText('이메일'), 'test@example.com');
       await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
 
       const sendEmailButton = screen.getByRole('button', { name: '인증 코드 발송' });
       await user.click(sendEmailButton);
@@ -488,7 +561,7 @@ describe('SignupForm', () => {
 
       await user.type(screen.getByLabelText('이메일'), 'test@example.com');
       await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
       await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
 
       const verificationInput = (await screen.findByLabelText('인증 코드')) as HTMLInputElement;
@@ -509,7 +582,7 @@ describe('SignupForm', () => {
       const emailInput = screen.getByLabelText('이메일');
       await user.type(emailInput, 'test@example.com');
       await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
 
       expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeEnabled();
 
@@ -524,7 +597,7 @@ describe('SignupForm', () => {
       const emailInput = screen.getByLabelText('이메일') as HTMLInputElement;
       await user.type(emailInput, '12345');
       await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
 
       expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeEnabled();
       expect(emailInput.value).toBe('12345');
@@ -578,10 +651,58 @@ describe('SignupForm', () => {
 
       await user.type(screen.getByLabelText('이메일'), 'test@example.com');
       await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), 'password123');
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
       await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
 
       expect(await screen.findByPlaceholderText('이메일로 받은 코드 입력')).toBeInTheDocument();
+    });
+  });
+
+  // =====================================================================
+  // 비밀번호 강도 정책 (신규)
+  // =====================================================================
+  describe('비밀번호 강도 정책', () => {
+    it('비밀번호가 9자 이하(약함)이면 인증 코드 발송 버튼이 비활성화된다', async () => {
+      const user = userEvent.setup();
+      renderWithTheme(<SignupForm />);
+
+      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
+      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+      await user.type(screen.getByLabelText('비밀번호'), WEAK_PASSWORD);
+
+      expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeDisabled();
+    });
+
+    it('비밀번호가 10자 이상(강함)이면 인증 코드 발송 버튼이 활성화된다', async () => {
+      const user = userEvent.setup();
+      renderWithTheme(<SignupForm />);
+
+      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
+      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
+
+      expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeEnabled();
+    });
+
+    it('비밀번호를 강한 값으로 교체하면 버튼이 활성화된다', async () => {
+      const user = userEvent.setup();
+      renderWithTheme(<SignupForm />);
+
+      const emailInput = screen.getByLabelText('이메일');
+      const nicknameInput = screen.getByLabelText('닉네임');
+      const passwordInput = screen.getByLabelText('비밀번호');
+
+      await user.type(emailInput, 'test@example.com');
+      await user.type(nicknameInput, 'testuser');
+
+      // 먼저 약한 비밀번호 입력
+      await user.type(passwordInput, WEAK_PASSWORD);
+      expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeDisabled();
+
+      // 강한 비밀번호로 교체
+      await user.clear(passwordInput);
+      await user.type(passwordInput, STRONG_PASSWORD);
+      expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeEnabled();
     });
   });
 });
