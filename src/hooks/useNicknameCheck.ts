@@ -11,6 +11,10 @@ export type UseNicknameCheckReturn = {
   message: string | undefined;
 };
 
+export type UseNicknameCheckOptions = {
+  enabled?: boolean;
+};
+
 export const NICKNAME_DEBOUNCE_MS = 350;
 
 const MESSAGES: Record<NicknameStatus, string | undefined> = {
@@ -22,7 +26,12 @@ const MESSAGES: Record<NicknameStatus, string | undefined> = {
   error: '닉네임 확인에 실패했습니다.',
 };
 
-const useNicknameCheck = (raw: string): UseNicknameCheckReturn => {
+const useNicknameCheck = (
+  raw: string,
+  options?: UseNicknameCheckOptions,
+): UseNicknameCheckReturn => {
+  const enabled = options?.enabled ?? true;
+
   const normalized = normalizeNickname(raw);
   const isEmpty = normalized.length === 0;
   const isPolicyOk = matchesNicknamePolicy(normalized);
@@ -31,11 +40,18 @@ const useNicknameCheck = (raw: string): UseNicknameCheckReturn => {
   const isSettled = debounced === normalized;
 
   const swrKey =
-    !isEmpty && isPolicyOk && isSettled ? (['check-nickname', debounced] as const) : null;
+    enabled && !isEmpty && isPolicyOk && isSettled
+      ? (['check-nickname', debounced] as const)
+      : null;
 
-  const { data, error, isLoading } = useSWR(swrKey, ([, n]) => checkNicknameAvailability(n));
+  const { data, error, isLoading } = useSWR(swrKey, ([, n]) => checkNicknameAvailability(n), {
+    revalidateOnFocus: false,
+  });
 
   const status: NicknameStatus = useMemo(() => {
+    if (!enabled) {
+      return 'idle';
+    }
     if (isEmpty) {
       return 'idle';
     }
@@ -61,7 +77,7 @@ const useNicknameCheck = (raw: string): UseNicknameCheckReturn => {
       return 'invalid';
     }
     return 'error';
-  }, [isEmpty, isPolicyOk, isSettled, error, isLoading, data]);
+  }, [enabled, isEmpty, isPolicyOk, isSettled, error, isLoading, data]);
 
   return { status, message: MESSAGES[status] };
 };

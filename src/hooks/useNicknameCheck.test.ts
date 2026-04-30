@@ -112,6 +112,34 @@ describe('useNicknameCheck', () => {
     });
   });
 
+  describe('enabled 옵션', () => {
+    it('enabled=false 면 정책 통과한 닉네임이라도 idle 이고 fetch 가 일어나지 않는다', async () => {
+      mockCheck.mockResolvedValue({ available: true });
+      const { result } = renderHook(() => useNicknameCheck('hong', { enabled: false }), {
+        wrapper,
+      });
+
+      await act(async () => {
+        vi.advanceTimersByTime(NICKNAME_DEBOUNCE_MS);
+      });
+
+      expect(result.current.status).toBe('idle');
+      expect(result.current.message).toBeUndefined();
+      expect(mockCheck).not.toHaveBeenCalled();
+    });
+
+    it('enabled 미지정 시 기본은 true 로 동작한다', async () => {
+      mockCheck.mockResolvedValue({ available: true });
+      const { result } = renderHook(() => useNicknameCheck('hong'), { wrapper });
+
+      await act(async () => {
+        vi.advanceTimersByTime(NICKNAME_DEBOUNCE_MS);
+      });
+
+      await waitFor(() => expect(result.current.status).toBe('available'));
+    });
+  });
+
   describe('message 매핑', () => {
     it('available 상태일 때 message 는 "사용 가능한 닉네임입니다."', async () => {
       mockCheck.mockResolvedValue({ available: true });

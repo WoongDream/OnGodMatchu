@@ -56,7 +56,9 @@ const SignupForm = memo(() => {
 
   const userInputs = useMemo(() => [email, nickname].filter(Boolean), [email, nickname]);
 
-  const { status: nicknameStatus, message: nicknameMessage } = useNicknameCheck(nickname);
+  const { status: nicknameStatus, message: nicknameMessage } = useNicknameCheck(nickname, {
+    enabled: !emailSent,
+  });
 
   const ruleStatus: PasswordRuleStatus = {
     lengthOk: isLengthValid(password),
@@ -98,6 +100,7 @@ const SignupForm = memo(() => {
         value={email}
         onChange={setEmail}
         placeholder="example@email.com"
+        disabled={emailSent}
       />
       <PasswordInput
         label="비밀번호"
@@ -108,8 +111,15 @@ const SignupForm = memo(() => {
         userInputs={userInputs}
         onStrengthChange={setStrength}
         error={signupErrorCode === 'BREACH' && error ? error : undefined}
+        disabled={emailSent}
       />
-      <Input label="닉네임" value={nickname} onChange={setNickname} placeholder="닉네임 입력" />
+      <Input
+        label="닉네임"
+        value={nickname}
+        onChange={setNickname}
+        placeholder="닉네임 입력"
+        disabled={emailSent}
+      />
       {effectiveNicknameMessage && (
         <NicknameStatusText $tone={nicknameTone}>{effectiveNicknameMessage}</NicknameStatusText>
       )}

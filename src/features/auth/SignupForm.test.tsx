@@ -28,7 +28,7 @@ vi.mock('./SocialLoginButtons', () => ({
 }));
 
 vi.mock('@/components/input', () => ({
-  default: ({ label, type, value, onChange, placeholder }: any) => {
+  default: ({ label, type, value, onChange, placeholder, disabled }: any) => {
     const id = `input-${label}`;
     return (
       <div>
@@ -39,6 +39,7 @@ vi.mock('@/components/input', () => ({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
+          disabled={disabled ?? false}
           data-testid={`input-${label}`}
         />
       </div>
@@ -364,6 +365,22 @@ describe('SignupForm', () => {
       await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
 
       expect(await screen.findByLabelText('인증 코드')).toBeInTheDocument();
+    });
+
+    it('인증 코드 발송 후 이메일·닉네임·비밀번호 입력 필드가 모두 disabled 된다', async () => {
+      const user = userEvent.setup();
+      renderWithTheme(<SignupForm />);
+
+      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
+      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
+      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
+
+      // emailSent 가 true 가 되면 인증 코드 input 이 나타남 — 그 직후 다른 필드 잠금 검증
+      await screen.findByLabelText('인증 코드');
+      expect(screen.getByLabelText('이메일')).toBeDisabled();
+      expect(screen.getByLabelText('닉네임')).toBeDisabled();
+      expect(screen.getByLabelText('비밀번호')).toBeDisabled();
     });
 
     it('should allow user to input verification code after sending email', async () => {
