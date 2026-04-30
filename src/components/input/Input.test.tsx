@@ -379,7 +379,7 @@ describe('Input', () => {
       expect(input).toBeInTheDocument();
     });
 
-    it('maintains correct element order: label -> input -> error', () => {
+    it('maintains correct element order: labelRow -> input -> error', () => {
       const { container } = renderWithTheme(
         <Input {...defaultProps} label="Test Label" error="Test Error" />,
       );
@@ -387,7 +387,9 @@ describe('Input', () => {
       const children = wrapper?.childNodes;
 
       expect(children?.length).toBe(3);
-      expect((children?.[0] as HTMLElement).tagName).toBe('LABEL');
+      // 첫 번째 자식은 LabelRow(div) 로 그 안에 label 이 있음
+      expect((children?.[0] as HTMLElement).tagName).toBe('DIV');
+      expect((children?.[0] as HTMLElement).querySelector('label')).not.toBeNull();
       expect((children?.[1] as HTMLElement).tagName).toBe('INPUT');
       expect((children?.[2] as HTMLElement).tagName).toBe('SPAN');
     });
@@ -407,7 +409,9 @@ describe('Input', () => {
       const children = wrapper?.childNodes;
 
       expect(children?.length).toBe(2);
-      expect((children?.[0] as HTMLElement).tagName).toBe('LABEL');
+      // 첫 번째 자식은 LabelRow(div); 그 안에 label
+      expect((children?.[0] as HTMLElement).tagName).toBe('DIV');
+      expect((children?.[0] as HTMLElement).querySelector('label')).not.toBeNull();
       expect((children?.[1] as HTMLElement).tagName).toBe('INPUT');
     });
   });

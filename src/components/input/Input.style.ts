@@ -8,6 +8,13 @@ export const InputWrapper = styled.div`
   width: 100%;
 `;
 
+export const LabelRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
 export const Label = styled.label`
   ${text({ size: 'sm', weight: 'medium' })}
   color: ${({ theme }) => theme.colors.fg.primary};

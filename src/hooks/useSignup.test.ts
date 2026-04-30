@@ -5,16 +5,10 @@ import React from 'react';
 import { AxiosError } from 'axios';
 import useSignup from './useSignup';
 
-// -----------------------------------------------------------------------
-// Hoisted mock variables
-// -----------------------------------------------------------------------
 const mockNavigate = vi.hoisted(() => vi.fn());
 const mockSignup = vi.hoisted(() => vi.fn());
-const mockVerifyEmail = vi.hoisted(() => vi.fn());
+const mockSetAuthSession = vi.hoisted(() => vi.fn());
 
-// -----------------------------------------------------------------------
-// Module mocks
-// -----------------------------------------------------------------------
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>();
   return {
@@ -25,22 +19,16 @@ vi.mock('react-router-dom', async (importOriginal) => {
 
 vi.mock('@/api/auth', () => ({
   signup: mockSignup,
-  verifyEmail: mockVerifyEmail,
 }));
 
-// -----------------------------------------------------------------------
-// Helpers
-// -----------------------------------------------------------------------
+vi.mock('@/lib/auth', () => ({
+  setAuthSession: mockSetAuthSession,
+}));
+
 function makeAxiosError(status: number, data: unknown = {}): AxiosError {
   const err = new AxiosError('Request failed');
   err.response = { status, data, headers: {}, config: {} as never, statusText: '' };
   return err;
-}
-
-async function flushPromises() {
-  await act(async () => {
-    await new Promise<void>((resolve) => setTimeout(resolve, 0));
-  });
 }
 
 function renderUseSignup() {
@@ -49,371 +37,211 @@ function renderUseSignup() {
   return renderHook(() => useSignup(), { wrapper });
 }
 
-// -----------------------------------------------------------------------
-// Tests
-// -----------------------------------------------------------------------
+const PARAMS = {
+  email: 'a@b.com',
+  password: 'StrongPass1!extra',
+  nickname: 'nick',
+  code: '123456',
+};
+
 describe('useSignup', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSetAuthSession.mockResolvedValue(undefined);
   });
 
-  // =====================================================================
-  // 초기 상태
-  // =====================================================================
   describe('초기 상태', () => {
-    it('error 는 null 이다', () => {
+    it('error 는 null', () => {
       const { result } = renderUseSignup();
       expect(result.current.error).toBeNull();
     });
 
-    it('signupErrorCode 는 null 이다', () => {
+    it('errorCode 는 null', () => {
       const { result } = renderUseSignup();
-      expect(result.current.signupErrorCode).toBeNull();
+      expect(result.current.errorCode).toBeNull();
     });
 
-    it('isSending 은 false 다', () => {
+    it('isSubmitting 은 false', () => {
       const { result } = renderUseSignup();
-      expect(result.current.isSending).toBe(false);
+      expect(result.current.isSubmitting).toBe(false);
     });
 
-    it('emailSent 는 false 다', () => {
+    it('retryAfter 는 0', () => {
       const { result } = renderUseSignup();
-      expect(result.current.emailSent).toBe(false);
+      expect(result.current.retryAfter).toBe(0);
     });
   });
 
-  // =====================================================================
-  // handleSendCode — 성공
-  // =====================================================================
-  describe('handleSendCode — 성공', () => {
+  describe('submit 성공', () => {
     beforeEach(() => {
-      mockSignup.mockResolvedValue(undefined);
+      mockSignup.mockResolvedValue({ accessToken: 'A', refreshToken: 'R' });
     });
 
-    it('signup API 를 올바른 인수로 호출한다', async () => {
+    it('signup API 를 (email, password, nickname, code) 순서로 호출한다', async () => {
       const { result } = renderUseSignup();
-
       await act(async () => {
-        await result.current.handleSendCode('a@b.com', 'nick', 'StrongPass1!');
+        await result.current.submit(PARAMS);
       });
-
-      expect(mockSignup).toHaveBeenCalledWith('a@b.com', 'nick', 'StrongPass1!');
-    });
-
-    it('성공 후 emailSent 가 true 가 된다', async () => {
-      const { result } = renderUseSignup();
-
-      await act(async () => {
-        await result.current.handleSendCode('a@b.com', 'nick', 'StrongPass1!');
-      });
-
-      expect(result.current.emailSent).toBe(true);
-    });
-
-    it('성공 후 error 는 null 이다', async () => {
-      const { result } = renderUseSignup();
-
-      await act(async () => {
-        await result.current.handleSendCode('a@b.com', 'nick', 'StrongPass1!');
-      });
-
-      expect(result.current.error).toBeNull();
-    });
-
-    it('성공 후 isSending 은 false 다', async () => {
-      const { result } = renderUseSignup();
-
-      await act(async () => {
-        await result.current.handleSendCode('a@b.com', 'nick', 'StrongPass1!');
-      });
-
-      expect(result.current.isSending).toBe(false);
-    });
-  });
-
-  // =====================================================================
-  // handleSendCode — 422 (BREACH)
-  // =====================================================================
-  describe('handleSendCode — 422 응답 (BREACH)', () => {
-    beforeEach(() => {
-      mockSignup.mockRejectedValue(makeAxiosError(422));
-    });
-
-    it('signupErrorCode 가 "BREACH" 로 설정된다', async () => {
-      const { result } = renderUseSignup();
-
-      await act(async () => {
-        await result.current.handleSendCode('a@b.com', 'nick', 'breached');
-      });
-
-      expect(result.current.signupErrorCode).toBe('BREACH');
-    });
-
-    it('error 메시지가 "이 비밀번호는 외부 유출 이력이 있어요. 다른 비밀번호를 사용해주세요." 로 설정된다', async () => {
-      const { result } = renderUseSignup();
-
-      await act(async () => {
-        await result.current.handleSendCode('a@b.com', 'nick', 'breached');
-      });
-
-      expect(result.current.error).toBe(
-        '이 비밀번호는 외부 유출 이력이 있어요. 다른 비밀번호를 사용해주세요.',
+      expect(mockSignup).toHaveBeenCalledWith(
+        PARAMS.email,
+        PARAMS.password,
+        PARAMS.nickname,
+        PARAMS.code,
       );
     });
 
-    it('emailSent 는 false 를 유지한다', async () => {
+    it('signup 응답 토큰을 setAuthSession 으로 전달한다', async () => {
       const { result } = renderUseSignup();
-
       await act(async () => {
-        await result.current.handleSendCode('a@b.com', 'nick', 'breached');
+        await result.current.submit(PARAMS);
       });
+      expect(mockSetAuthSession).toHaveBeenCalledWith({
+        accessToken: 'A',
+        refreshToken: 'R',
+      });
+    });
 
-      expect(result.current.emailSent).toBe(false);
+    it('성공 후 / 로 navigate 한다', async () => {
+      const { result } = renderUseSignup();
+      await act(async () => {
+        await result.current.submit(PARAMS);
+      });
+      expect(mockNavigate).toHaveBeenCalledWith('/');
+    });
+
+    it('성공 시 true 를 반환한다', async () => {
+      const { result } = renderUseSignup();
+      let returned: boolean | undefined;
+      await act(async () => {
+        returned = await result.current.submit(PARAMS);
+      });
+      expect(returned).toBe(true);
     });
   });
 
-  // =====================================================================
-  // handleSendCode — 400 (POLICY)
-  // =====================================================================
-  describe('handleSendCode — 400 응답 (POLICY)', () => {
-    beforeEach(() => {
-      mockSignup.mockRejectedValue(makeAxiosError(400));
-    });
+  describe('에러 코드 매핑', () => {
+    type Case = {
+      name: string;
+      err: AxiosError;
+      expectedCode: string;
+      expectedRetryAfter?: number;
+    };
 
-    it('signupErrorCode 가 "POLICY" 로 설정된다', async () => {
-      const { result } = renderUseSignup();
+    const cases: Case[] = [
+      {
+        name: 'INVALID_CODE',
+        err: makeAxiosError(400, { error: { code: 'INVALID_CODE' } }),
+        expectedCode: 'INVALID_CODE',
+      },
+      {
+        name: 'EXPIRED_CODE',
+        err: makeAxiosError(400, { error: { code: 'EXPIRED_CODE' } }),
+        expectedCode: 'EXPIRED_CODE',
+      },
+      {
+        name: 'EMAIL_ALREADY_EXISTS via error.code',
+        err: makeAxiosError(409, { error: { code: 'EMAIL_ALREADY_EXISTS' } }),
+        expectedCode: 'EMAIL_ALREADY_EXISTS',
+      },
+      {
+        name: 'EMAIL_ALREADY_EXISTS via 409 status fallback',
+        err: makeAxiosError(409),
+        expectedCode: 'EMAIL_ALREADY_EXISTS',
+      },
+      {
+        name: 'INVALID_EMAIL_FORMAT',
+        err: makeAxiosError(400, { error: { code: 'INVALID_EMAIL_FORMAT' } }),
+        expectedCode: 'INVALID_EMAIL_FORMAT',
+      },
+      {
+        name: 'RATE_LIMITED with retryAfter',
+        err: makeAxiosError(429, { error: { code: 'RATE_LIMITED', retryAfter: 12 } }),
+        expectedCode: 'RATE_LIMITED',
+        expectedRetryAfter: 12,
+      },
+      {
+        name: 'RATE_LIMITED via 429 fallback',
+        err: makeAxiosError(429),
+        expectedCode: 'RATE_LIMITED',
+      },
+      {
+        name: 'NICKNAME_TAKEN via NICKNAME_ALREADY_EXISTS code',
+        err: makeAxiosError(409, { error: { code: 'NICKNAME_ALREADY_EXISTS' } }),
+        expectedCode: 'NICKNAME_TAKEN',
+      },
+      {
+        name: 'BREACH (422)',
+        err: makeAxiosError(422),
+        expectedCode: 'BREACH',
+      },
+      {
+        name: 'POLICY (400)',
+        err: makeAxiosError(400),
+        expectedCode: 'POLICY',
+      },
+    ];
 
-      await act(async () => {
-        await result.current.handleSendCode('a@b.com', 'nick', 'short');
-      });
-
-      expect(result.current.signupErrorCode).toBe('POLICY');
-    });
-
-    it('error 메시지가 설정된다', async () => {
-      const { result } = renderUseSignup();
-
-      await act(async () => {
-        await result.current.handleSendCode('a@b.com', 'nick', 'short');
-      });
-
-      expect(result.current.error).toBeTruthy();
-    });
-  });
-
-  // =====================================================================
-  // handleSendCode — 409 (CONFLICT)
-  // =====================================================================
-  describe('handleSendCode — 409 응답 (CONFLICT)', () => {
-    beforeEach(() => {
-      mockSignup.mockRejectedValue(makeAxiosError(409));
-    });
-
-    it('signupErrorCode 가 "CONFLICT" 로 설정된다', async () => {
-      const { result } = renderUseSignup();
-
-      await act(async () => {
-        await result.current.handleSendCode('a@b.com', 'nick', 'pw');
-      });
-
-      expect(result.current.signupErrorCode).toBe('CONFLICT');
-    });
-  });
-
-  // =====================================================================
-  // handleSendCode — 409 + NICKNAME_ALREADY_EXISTS (NICKNAME_TAKEN)
-  // =====================================================================
-  describe('handleSendCode — 409 + NICKNAME_ALREADY_EXISTS (NICKNAME_TAKEN)', () => {
-    it('error.code 가 NICKNAME_ALREADY_EXISTS 면 signupErrorCode 가 "NICKNAME_TAKEN" 으로 설정된다', async () => {
-      mockSignup.mockRejectedValue(
-        makeAxiosError(409, { error: { code: 'NICKNAME_ALREADY_EXISTS' } }),
-      );
-      const { result } = renderUseSignup();
-
-      await act(async () => {
-        await result.current.handleSendCode('a@b.com', 'nick', 'pw');
-      });
-
-      expect(result.current.signupErrorCode).toBe('NICKNAME_TAKEN');
-      expect(result.current.error).toBe('이미 사용 중인 닉네임입니다.');
-    });
-
-    it('error.code 가 다른 값이면 기존 CONFLICT 분기로 떨어진다', async () => {
-      mockSignup.mockRejectedValue(makeAxiosError(409, { error: { code: 'EMAIL_EXISTS' } }));
-      const { result } = renderUseSignup();
-
-      await act(async () => {
-        await result.current.handleSendCode('a@b.com', 'nick', 'pw');
-      });
-
-      expect(result.current.signupErrorCode).toBe('CONFLICT');
-    });
-  });
-
-  // =====================================================================
-  // handleSendCode — 네트워크/기타 오류 (NETWORK)
-  // =====================================================================
-  describe('handleSendCode — 네트워크 오류 (NETWORK)', () => {
-    it('axios 오류가 아니면 signupErrorCode 가 "NETWORK" 로 설정된다', async () => {
-      mockSignup.mockRejectedValue(new Error('Network error'));
-      const { result } = renderUseSignup();
-
-      await act(async () => {
-        await result.current.handleSendCode('a@b.com', 'nick', 'pw');
-      });
-
-      expect(result.current.signupErrorCode).toBe('NETWORK');
-    });
-
-    it('상태 코드가 없는 axios 오류는 NETWORK 로 처리된다', async () => {
-      const err = new AxiosError('timeout');
-      // response 없음
-      mockSignup.mockRejectedValue(err);
-      const { result } = renderUseSignup();
-
-      await act(async () => {
-        await result.current.handleSendCode('a@b.com', 'nick', 'pw');
-      });
-
-      expect(result.current.signupErrorCode).toBe('NETWORK');
-    });
-
-    it('NETWORK 에러 메시지가 설정된다', async () => {
-      mockSignup.mockRejectedValue(new Error('fail'));
-      const { result } = renderUseSignup();
-
-      await act(async () => {
-        await result.current.handleSendCode('a@b.com', 'nick', 'pw');
-      });
-
-      expect(result.current.error).toBeTruthy();
-    });
-  });
-
-  // =====================================================================
-  // clearError
-  // =====================================================================
-  describe('clearError', () => {
-    it('error 를 null 로 초기화한다', async () => {
-      mockSignup.mockRejectedValue(makeAxiosError(422));
-      const { result } = renderUseSignup();
-
-      await act(async () => {
-        await result.current.handleSendCode('a@b.com', 'nick', 'pw');
-      });
-      expect(result.current.error).not.toBeNull();
-
-      act(() => {
-        result.current.clearError();
-      });
-
-      expect(result.current.error).toBeNull();
-    });
-
-    it('signupErrorCode 를 null 로 초기화한다', async () => {
-      mockSignup.mockRejectedValue(makeAxiosError(422));
-      const { result } = renderUseSignup();
-
-      await act(async () => {
-        await result.current.handleSendCode('a@b.com', 'nick', 'pw');
-      });
-      expect(result.current.signupErrorCode).not.toBeNull();
-
-      act(() => {
-        result.current.clearError();
-      });
-
-      expect(result.current.signupErrorCode).toBeNull();
-    });
-
-    it('에러가 없는 상태에서도 안전하게 호출된다', () => {
-      const { result } = renderUseSignup();
-
-      expect(() => {
-        act(() => {
-          result.current.clearError();
+    cases.forEach(({ name, err, expectedCode, expectedRetryAfter }) => {
+      it(`${name}`, async () => {
+        mockSignup.mockRejectedValueOnce(err);
+        const { result } = renderUseSignup();
+        await act(async () => {
+          await result.current.submit(PARAMS);
         });
-      }).not.toThrow();
-    });
-  });
-
-  // =====================================================================
-  // handleVerify — 성공
-  // =====================================================================
-  describe('handleVerify — 성공', () => {
-    beforeEach(() => {
-      mockVerifyEmail.mockResolvedValue(undefined);
-    });
-
-    it('verifyEmail API 를 올바른 인수로 호출한다', async () => {
-      const { result } = renderUseSignup();
-
-      await act(async () => {
-        await result.current.handleVerify('a@b.com', '123456');
+        expect(result.current.errorCode).toBe(expectedCode);
+        if (expectedRetryAfter !== undefined) {
+          expect(result.current.retryAfter).toBe(expectedRetryAfter);
+        }
       });
-
-      expect(mockVerifyEmail).toHaveBeenCalledWith('a@b.com', '123456');
     });
 
-    it('성공 후 /login 으로 navigate 한다', async () => {
+    it('axios 외 에러는 NETWORK', async () => {
+      mockSignup.mockRejectedValueOnce(new Error('boom'));
       const { result } = renderUseSignup();
-
       await act(async () => {
-        await result.current.handleVerify('a@b.com', '123456');
+        await result.current.submit(PARAMS);
       });
-
-      expect(mockNavigate).toHaveBeenCalledWith('/login');
+      expect(result.current.errorCode).toBe('NETWORK');
     });
 
-    it('성공 후 isVerifying 은 false 다', async () => {
+    it('실패 시 setAuthSession 과 navigate 가 호출되지 않는다', async () => {
+      mockSignup.mockRejectedValueOnce(makeAxiosError(400, { error: { code: 'INVALID_CODE' } }));
       const { result } = renderUseSignup();
-
       await act(async () => {
-        await result.current.handleVerify('a@b.com', '123456');
+        await result.current.submit(PARAMS);
       });
-
-      expect(result.current.isVerifying).toBe(false);
-    });
-  });
-
-  // =====================================================================
-  // handleVerify — 실패
-  // =====================================================================
-  describe('handleVerify — 실패', () => {
-    beforeEach(() => {
-      mockVerifyEmail.mockRejectedValue(new Error('invalid code'));
-    });
-
-    it('실패 시 error 메시지가 설정된다', async () => {
-      const { result } = renderUseSignup();
-
-      await act(async () => {
-        await result.current.handleVerify('a@b.com', 'wrong');
-      });
-
-      expect(result.current.error).toBeTruthy();
-    });
-
-    it('실패 시 navigate 가 호출되지 않는다', async () => {
-      const { result } = renderUseSignup();
-
-      await act(async () => {
-        await result.current.handleVerify('a@b.com', 'wrong');
-      });
-
+      expect(mockSetAuthSession).not.toHaveBeenCalled();
       expect(mockNavigate).not.toHaveBeenCalled();
     });
 
-    it('실패 후 isVerifying 은 false 다', async () => {
+    it('실패 시 false 를 반환한다', async () => {
+      mockSignup.mockRejectedValueOnce(makeAxiosError(400));
       const { result } = renderUseSignup();
-
-      await flushPromises();
-
+      let returned: boolean | undefined;
       await act(async () => {
-        await result.current.handleVerify('a@b.com', 'wrong');
+        returned = await result.current.submit(PARAMS);
       });
+      expect(returned).toBe(false);
+    });
+  });
 
-      expect(result.current.isVerifying).toBe(false);
+  describe('clearError', () => {
+    it('error / errorCode / retryAfter 를 모두 초기화한다', async () => {
+      mockSignup.mockRejectedValueOnce(
+        makeAxiosError(429, { error: { code: 'RATE_LIMITED', retryAfter: 10 } }),
+      );
+      const { result } = renderUseSignup();
+      await act(async () => {
+        await result.current.submit(PARAMS);
+      });
+      expect(result.current.errorCode).toBe('RATE_LIMITED');
+
+      act(() => {
+        result.current.clearError();
+      });
+      expect(result.current.error).toBeNull();
+      expect(result.current.errorCode).toBeNull();
+      expect(result.current.retryAfter).toBe(0);
     });
   });
 });

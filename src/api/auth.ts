@@ -19,12 +19,23 @@ export const login = async (email: string, password: string): Promise<TokenRespo
   return res.data.data;
 };
 
-export const signup = async (email: string, nickname: string, password: string): Promise<void> => {
-  await instance.post('/api/auth/signup', { email, nickname, password });
+export const sendVerificationCode = async (email: string): Promise<void> => {
+  await instance.post('/api/auth/send-verification-code', { email });
 };
 
-export const verifyEmail = async (email: string, code: string): Promise<void> => {
-  await instance.post('/api/auth/verify-email', { email, code });
+export const signup = async (
+  email: string,
+  password: string,
+  nickname: string,
+  code: string,
+): Promise<TokenResponse> => {
+  const res = await instance.post<ApiResponse<TokenResponse>>('/api/auth/signup', {
+    email,
+    password,
+    nickname,
+    code,
+  });
+  return res.data.data;
 };
 
 export type NicknameAvailability = {

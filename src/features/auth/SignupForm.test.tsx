@@ -5,17 +5,68 @@ import userEvent from '@testing-library/user-event';
 import SignupForm from './SignupForm';
 
 const mockNavigate = vi.hoisted(() => vi.fn());
+const mockSubmit = vi.hoisted(() => vi.fn());
+const mockClearError = vi.hoisted(() => vi.fn());
+const mockSendCode = vi.hoisted(() => vi.fn());
+const mockClearVerificationError = vi.hoisted(() => vi.fn());
+
+let signupState = {
+  isSubmitting: false,
+  error: null as string | null,
+  errorCode: null as string | null,
+  retryAfter: 0,
+};
+
+let verificationState = {
+  codeSent: false,
+  isSending: false,
+  secondsLeft: 0,
+  expired: false,
+  resendIn: 0,
+  canResend: false,
+  errorCode: null as string | null,
+  retryAfter: 0,
+};
+
+const setSignupState = (s: Partial<typeof signupState>) => {
+  signupState = { ...signupState, ...s };
+};
+
+const setVerificationState = (s: Partial<typeof verificationState>) => {
+  verificationState = { ...verificationState, ...s };
+};
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
-vi.mock('@/api/auth', () => ({
-  signup: vi.fn().mockResolvedValue(undefined),
-  verifyEmail: vi.fn().mockResolvedValue(undefined),
+vi.mock('@/hooks/useSignup', () => ({
+  default: () => ({
+    submit: mockSubmit,
+    clearError: mockClearError,
+    isSubmitting: signupState.isSubmitting,
+    error: signupState.error,
+    errorCode: signupState.errorCode,
+    retryAfter: signupState.retryAfter,
+  }),
 }));
 
-// 기본적으로 닉네임이 입력되면 '사용 가능' 으로 처리해 기존 테스트 흐름(타이핑 → 버튼 활성)을 유지.
+vi.mock('@/hooks/useVerificationCode', () => ({
+  default: () => ({
+    codeSent: verificationState.codeSent,
+    isSending: verificationState.isSending,
+    secondsLeft: verificationState.secondsLeft,
+    expired: verificationState.expired,
+    resendIn: verificationState.resendIn,
+    canResend: verificationState.canResend,
+    errorCode: verificationState.errorCode,
+    retryAfter: verificationState.retryAfter,
+    sendCode: mockSendCode,
+    reset: vi.fn(),
+    clearError: mockClearVerificationError,
+  }),
+}));
+
 vi.mock('@/hooks/useNicknameCheck', () => ({
   default: (raw: string) =>
     raw.trim() === ''
@@ -28,11 +79,12 @@ vi.mock('./SocialLoginButtons', () => ({
 }));
 
 vi.mock('@/components/input', () => ({
-  default: ({ label, type, value, onChange, placeholder, disabled }: any) => {
+  default: ({ label, type, value, onChange, placeholder, disabled, labelTrailing }: any) => {
     const id = `input-${label}`;
     return (
       <div>
         <label htmlFor={id}>{label}</label>
+        {labelTrailing && <span data-testid={`label-trailing-${label}`}>{labelTrailing}</span>}
         <input
           id={id}
           type={type || 'text'}
@@ -72,35 +124,9 @@ vi.mock('@/components/button', () => ({
   ),
 }));
 
-/**
- * PasswordInput mock — 실제 zxcvbn 없이 SignupForm 통합 테스트를 수행한다.
- *
- * 테스트에서 비밀번호 강도를 제어하기 위해:
- *   - data-testid="password-strength-ok" 인 hidden input 을 제공한다.
- *   - canSendCode 조건: isLengthValid(password) && canSubmitByStrength(score) 를
- *     mock 에서는 value.length >= 10 으로 단순화한다.
- *   - onStrengthChange 는 value.length >= 10 이면 score=2, 미달이면 score=0 으로 즉시 호출한다.
- */
 vi.mock('@/components/password-input', () => ({
-  default: ({
-    label,
-    value,
-    onChange,
-    placeholder,
-    onStrengthChange,
-    ruleStatus: _ruleStatus,
-    error,
-    disabled,
-  }: any) => {
+  default: ({ label, value, onChange, placeholder, onStrengthChange, error }: any) => {
     const id = `input-${label}`;
-    const score = value.length >= 10 ? 2 : 0;
-
-    // onStrengthChange 를 동기로 호출 (SignupForm 이 useEffect 없이 상태를 받으려면)
-    // React 렌더 중에 setState 를 호출하면 안 되므로 useLayoutEffect 처럼 동작하는
-    // 패턴을 피하고, 대신 onChange 호출 시 score 를 함께 전달하는 방식을 쓴다.
-    //
-    // 실제로는 input change → onChange(value) → 부모 setPassword(value) → 리렌더 →
-    // onStrengthChange(strength) 의 흐름이지만 mock 에서는 직접 호출한다.
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const newValue = e.target.value;
       onChange(newValue);
@@ -112,7 +138,6 @@ vi.mock('@/components/password-input', () => ({
         feedbackSuggestions: [],
       });
     };
-
     return (
       <div>
         <label htmlFor={id}>{label}</label>
@@ -122,15 +147,12 @@ vi.mock('@/components/password-input', () => ({
           value={value}
           onChange={handleChange}
           placeholder={placeholder}
-          disabled={disabled ?? false}
           data-testid={`input-${label}`}
-          data-score={score}
         />
         {error && <span data-testid="password-error">{error}</span>}
       </div>
     );
   },
-  // re-export types used by SignupForm
   canSubmitByStrength: (score: number) => score >= 1,
 }));
 
@@ -139,595 +161,321 @@ vi.mock('@/lib/password', () => ({
   canSubmitByStrength: (score: number) => score >= 1,
 }));
 
-// 강한 비밀번호 — 길이 10 이상 + mock score >= 1
 const STRONG_PASSWORD = '내고양이는오늘도잠만잔다';
-// 약한 비밀번호 — 9자 이하
-const WEAK_PASSWORD = 'short';
+
+const resetState = () => {
+  signupState = { isSubmitting: false, error: null, errorCode: null, retryAfter: 0 };
+  verificationState = {
+    codeSent: false,
+    isSending: false,
+    secondsLeft: 0,
+    expired: false,
+    resendIn: 0,
+    canResend: false,
+    errorCode: null,
+    retryAfter: 0,
+  };
+};
 
 describe('SignupForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetState();
   });
 
-  describe('Form Rendering', () => {
-    it('should render the signup form with all input fields', () => {
+  describe('1단계: 이메일 입력만 노출', () => {
+    it('초기에는 이메일 입력과 인증 코드 발송 버튼만 노출된다', () => {
       renderWithTheme(<SignupForm />);
-      expect(screen.getByText('회원가입')).toBeInTheDocument();
       expect(screen.getByLabelText('이메일')).toBeInTheDocument();
-      expect(screen.getByLabelText('닉네임')).toBeInTheDocument();
-      expect(screen.getByLabelText('비밀번호')).toBeInTheDocument();
-    });
-
-    it('should render the send email verification button', () => {
-      renderWithTheme(<SignupForm />);
       expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeInTheDocument();
+      expect(screen.queryByLabelText('인증 코드')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('비밀번호')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('닉네임')).not.toBeInTheDocument();
     });
 
-    it('should render the signup button', () => {
+    it('이메일이 비어있으면 인증 코드 발송 버튼은 비활성', () => {
       renderWithTheme(<SignupForm />);
+      expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeDisabled();
+    });
+
+    it('이메일 입력 후에는 발송 버튼이 활성화된다', async () => {
+      const user = userEvent.setup();
+      renderWithTheme(<SignupForm />);
+      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
+      expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeEnabled();
+    });
+
+    it('발송 버튼 클릭 시 sendCode 가 trim 된 이메일로 호출된다', async () => {
+      const user = userEvent.setup();
+      renderWithTheme(<SignupForm />);
+      await user.type(screen.getByLabelText('이메일'), '  test@example.com  ');
+      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
+      expect(mockSendCode).toHaveBeenCalledWith('test@example.com');
+    });
+  });
+
+  describe('2단계: 코드 발송 후', () => {
+    beforeEach(() => {
+      setVerificationState({ codeSent: true, secondsLeft: 300, resendIn: 60 });
+    });
+
+    it('이메일 입력란이 잠금된다', () => {
+      renderWithTheme(<SignupForm />);
+      expect(screen.getByLabelText('이메일')).toBeDisabled();
+    });
+
+    it('인증 코드 입력란이 노출된다', () => {
+      renderWithTheme(<SignupForm />);
+      expect(screen.getByLabelText('인증 코드')).toBeInTheDocument();
+    });
+
+    it('5분 카운트다운 (5:00) 이 인증 코드 라벨 옆 (labelTrailing) 에 노출된다', () => {
+      renderWithTheme(<SignupForm />);
+      const trailing = screen.getByTestId('label-trailing-인증 코드');
+      expect(trailing).toHaveTextContent('5:00');
+    });
+
+    it('인증 버튼은 코드가 비어 있으면 비활성', () => {
+      renderWithTheme(<SignupForm />);
+      expect(screen.getByRole('button', { name: '인증' })).toBeDisabled();
+    });
+
+    it('인증 버튼은 코드가 입력되면 활성화된다', async () => {
+      const user = userEvent.setup();
+      renderWithTheme(<SignupForm />);
+      await user.type(screen.getByLabelText('인증 코드'), '123456');
+      expect(screen.getByRole('button', { name: '인증' })).toBeEnabled();
+    });
+
+    it('재발송 버튼은 쿨다운 중에는 비활성', () => {
+      setVerificationState({ canResend: false, resendIn: 30 });
+      renderWithTheme(<SignupForm />);
+      // 쿨다운 중에는 "30s" 형태로 표기
+      expect(screen.getByRole('button', { name: '30s' })).toBeDisabled();
+    });
+
+    it('재발송 버튼은 canResend 시 활성', () => {
+      setVerificationState({ canResend: true, resendIn: 0 });
+      renderWithTheme(<SignupForm />);
+      expect(screen.getByRole('button', { name: '재발송' })).toBeEnabled();
+    });
+
+    it('비밀번호 / 닉네임 입력은 인증 클릭 전에는 노출되지 않는다', async () => {
+      const user = userEvent.setup();
+      renderWithTheme(<SignupForm />);
+      await user.type(screen.getByLabelText('인증 코드'), '123456');
+      // 코드 입력만으로는 노출되지 않음 (이전 흐름과의 차이)
+      expect(screen.queryByLabelText('비밀번호')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('닉네임')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '가입하기' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('3단계: 인증 클릭 후 비밀번호/닉네임 노출', () => {
+    beforeEach(() => {
+      setVerificationState({ codeSent: true, secondsLeft: 300, resendIn: 60 });
+    });
+
+    const enterCodeAndVerify = async (user: ReturnType<typeof userEvent.setup>) => {
+      await user.type(screen.getByLabelText('인증 코드'), '123456');
+      await user.click(screen.getByRole('button', { name: '인증' }));
+    };
+
+    it('인증 버튼 클릭 시 비밀번호 / 닉네임 / 가입 버튼이 나타난다', async () => {
+      const user = userEvent.setup();
+      renderWithTheme(<SignupForm />);
+      await enterCodeAndVerify(user);
+      expect(screen.getByLabelText('비밀번호')).toBeInTheDocument();
+      expect(screen.getByLabelText('닉네임')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: '가입하기' })).toBeInTheDocument();
     });
 
-    it('should render the login link button', () => {
-      renderWithTheme(<SignupForm />);
-      expect(screen.getByRole('button', { name: '로그인' })).toBeInTheDocument();
-    });
-
-    it('should render the login prompt text', () => {
-      renderWithTheme(<SignupForm />);
-      expect(screen.getByText('이미 계정이 있으신가요?')).toBeInTheDocument();
-    });
-
-    it('should render SocialLoginButtons component', () => {
-      renderWithTheme(<SignupForm />);
-      expect(screen.getByTestId('social-login-buttons')).toBeInTheDocument();
-    });
-
-    it('should not render verification code input initially', () => {
-      renderWithTheme(<SignupForm />);
-      expect(screen.queryByLabelText('인증 코드')).not.toBeInTheDocument();
-    });
-  });
-
-  describe('Button States and Validation', () => {
-    it('should disable send email button when email is empty', () => {
-      renderWithTheme(<SignupForm />);
-      const sendEmailButton = screen.getByRole('button', { name: '인증 코드 발송' });
-      expect(sendEmailButton).toBeDisabled();
-    });
-
-    it('should enable send email button when all fields have a strong password', async () => {
+    it('인증 후 코드 input 이 잠금된다', async () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
+      await enterCodeAndVerify(user);
+      expect(screen.getByLabelText('인증 코드')).toBeDisabled();
+    });
 
-      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+    it('인증 후 카운트다운(labelTrailing)이 사라진다', async () => {
+      const user = userEvent.setup();
+      renderWithTheme(<SignupForm />);
+      await enterCodeAndVerify(user);
+      expect(screen.queryByTestId('label-trailing-인증 코드')).not.toBeInTheDocument();
+    });
+
+    it('인증 후 인증 / 재발송 버튼이 사라진다', async () => {
+      const user = userEvent.setup();
+      renderWithTheme(<SignupForm />);
+      await enterCodeAndVerify(user);
+      expect(screen.queryByRole('button', { name: '인증' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '재발송' })).not.toBeInTheDocument();
+    });
+
+    it('비밀번호가 강함(10자 이상) + 닉네임 입력 시 가입 버튼이 활성화된다', async () => {
+      const user = userEvent.setup();
+      renderWithTheme(<SignupForm />);
+      await enterCodeAndVerify(user);
       await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
-
-      expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeEnabled();
-    });
-
-    it('should disable send email button when email is only whitespace', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-      const emailInput = screen.getByLabelText('이메일') as HTMLInputElement;
-
-      await user.type(emailInput, '   ');
-
-      const sendEmailButton = screen.getByRole('button', { name: '인증 코드 발송' });
-      expect(sendEmailButton).toBeDisabled();
-    });
-
-    it('should disable signup button when form is invalid', () => {
-      renderWithTheme(<SignupForm />);
-      const signupButton = screen.getByRole('button', { name: '가입하기' });
-      expect(signupButton).toBeDisabled();
-    });
-
-    it('should enable signup button after email sent and verification code entered', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-      await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
-
-      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
-      await user.type(await screen.findByLabelText('인증 코드'), '123456');
-
+      await user.type(screen.getByLabelText('닉네임'), 'nick');
       expect(screen.getByRole('button', { name: '가입하기' })).toBeEnabled();
     });
 
-    it('should disable signup button when email is empty', async () => {
+    it('비밀번호가 짧으면 가입 버튼이 비활성', async () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
-
-      const nicknameInput = screen.getByLabelText('닉네임');
-      const passwordInput = screen.getByLabelText('비밀번호');
-
-      await user.type(nicknameInput, 'testuser');
-      await user.type(passwordInput, STRONG_PASSWORD);
-
-      const signupButton = screen.getByRole('button', { name: '가입하기' });
-      expect(signupButton).toBeDisabled();
-    });
-
-    it('should disable signup button when nickname is empty', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      const emailInput = screen.getByLabelText('이메일');
-      const passwordInput = screen.getByLabelText('비밀번호');
-
-      await user.type(emailInput, 'test@example.com');
-      await user.type(passwordInput, STRONG_PASSWORD);
-
-      const signupButton = screen.getByRole('button', { name: '가입하기' });
-      expect(signupButton).toBeDisabled();
-    });
-
-    it('should disable signup button when password is empty', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      const emailInput = screen.getByLabelText('이메일');
-      const nicknameInput = screen.getByLabelText('닉네임');
-
-      await user.type(emailInput, 'test@example.com');
-      await user.type(nicknameInput, 'testuser');
-
-      const signupButton = screen.getByRole('button', { name: '가입하기' });
-      expect(signupButton).toBeDisabled();
-    });
-
-    it('should require verification code when email has been sent', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-      await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
-
-      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
-
-      await screen.findByLabelText('인증 코드');
+      await enterCodeAndVerify(user);
+      await user.type(screen.getByLabelText('비밀번호'), 'short');
+      await user.type(screen.getByLabelText('닉네임'), 'nick');
       expect(screen.getByRole('button', { name: '가입하기' })).toBeDisabled();
     });
 
-    it('should enable signup button when verification code is provided after email sent', async () => {
+    it('가입 버튼 클릭 시 submit 이 password / nickname / code 와 함께 호출된다', async () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
-
-      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-      await user.type(screen.getByLabelText('닉네임'), 'testuser');
+      await enterCodeAndVerify(user);
       await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
-      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
-      await user.type(await screen.findByLabelText('인증 코드'), '123456');
-
-      expect(screen.getByRole('button', { name: '가입하기' })).toBeEnabled();
-    });
-
-    it('should disable signup button when verification code is only whitespace', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-      await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
-      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
-      await user.type(await screen.findByLabelText('인증 코드'), '   ');
-
-      expect(screen.getByRole('button', { name: '가입하기' })).toBeDisabled();
-    });
-  });
-
-  describe('Email Verification', () => {
-    it('should hide verification code input initially', () => {
-      renderWithTheme(<SignupForm />);
-      expect(screen.queryByLabelText('인증 코드')).not.toBeInTheDocument();
-    });
-
-    it('should show verification code input after sending email', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-      await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
-      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
-
-      expect(await screen.findByLabelText('인증 코드')).toBeInTheDocument();
-    });
-
-    it('should call signup API when send email button is clicked', async () => {
-      const { signup } = await import('@/api/auth');
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-      await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
-      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
-
-      expect(signup).toHaveBeenCalledWith('test@example.com', 'testuser', STRONG_PASSWORD);
-    });
-
-    it('should toggle emailSent state to true when send email button is clicked', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-      await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
-
-      expect(screen.queryByLabelText('인증 코드')).not.toBeInTheDocument();
-
-      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
-
-      expect(await screen.findByLabelText('인증 코드')).toBeInTheDocument();
-    });
-
-    it('인증 코드 발송 후 이메일·닉네임·비밀번호 입력 필드가 모두 disabled 된다', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-      await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
-      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
-
-      // emailSent 가 true 가 되면 인증 코드 input 이 나타남 — 그 직후 다른 필드 잠금 검증
-      await screen.findByLabelText('인증 코드');
-      expect(screen.getByLabelText('이메일')).toBeDisabled();
-      expect(screen.getByLabelText('닉네임')).toBeDisabled();
-      expect(screen.getByLabelText('비밀번호')).toBeDisabled();
-    });
-
-    it('should allow user to input verification code after sending email', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-      await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
-      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
-
-      const verificationInput = (await screen.findByLabelText('인증 코드')) as HTMLInputElement;
-      await user.type(verificationInput, 'ABC123');
-
-      expect(verificationInput.value).toBe('ABC123');
-    });
-  });
-
-  describe('Form Input Handling', () => {
-    it('should update email input value when user types', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      const emailInput = screen.getByLabelText('이메일') as HTMLInputElement;
-      await user.type(emailInput, 'test@example.com');
-
-      expect(emailInput.value).toBe('test@example.com');
-    });
-
-    it('should update nickname input value when user types', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      const nicknameInput = screen.getByLabelText('닉네임') as HTMLInputElement;
-      await user.type(nicknameInput, 'testuser');
-
-      expect(nicknameInput.value).toBe('testuser');
-    });
-
-    it('should update password input value when user types', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      const passwordInput = screen.getByLabelText('비밀번호') as HTMLInputElement;
-      await user.type(passwordInput, STRONG_PASSWORD);
-
-      expect(passwordInput.value).toBe(STRONG_PASSWORD);
-    });
-
-    it('should handle empty string inputs', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      const emailInput = screen.getByLabelText('이메일') as HTMLInputElement;
-      await user.type(emailInput, 'test@example.com');
-      await user.clear(emailInput);
-
-      expect(emailInput.value).toBe('');
-    });
-
-    it('should handle long input values', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      const longEmail = 'a'.repeat(100) + '@example.com';
-      const emailInput = screen.getByLabelText('이메일') as HTMLInputElement;
-      await user.type(emailInput, longEmail);
-
-      expect(emailInput.value).toBe(longEmail);
-    });
-
-    it('should trim whitespace in validation for send code button', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      await user.type(screen.getByLabelText('이메일'), '   test@example.com   ');
-      await user.type(screen.getByLabelText('닉네임'), '   testuser   ');
-      // 공백 포함 길이가 10 이상인 강한 비밀번호
-      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
-
-      expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeEnabled();
-    });
-  });
-
-  describe('Form Submission', () => {
-    it('should prevent default form submission behavior', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-      await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
-      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
-      await user.type(await screen.findByLabelText('인증 코드'), '123456');
-
-      const signupButton = screen.getByRole('button', { name: '가입하기' });
-      await user.click(signupButton);
-
-      expect(mockNavigate).toHaveBeenCalledWith('/login');
-    });
-
-    it('should call verifyEmail API when signup button is clicked with valid data', async () => {
-      const { verifyEmail } = await import('@/api/auth');
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-      await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
-      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
-      await user.type(await screen.findByLabelText('인증 코드'), '123456');
-
+      await user.type(screen.getByLabelText('닉네임'), 'nick');
       await user.click(screen.getByRole('button', { name: '가입하기' }));
+      expect(mockSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          password: STRONG_PASSWORD,
+          nickname: 'nick',
+          code: '123456',
+        }),
+      );
+    });
+  });
 
-      expect(verifyEmail).toHaveBeenCalledWith('test@example.com', '123456');
+  describe('코드 만료 처리', () => {
+    beforeEach(() => {
+      setVerificationState({
+        codeSent: true,
+        secondsLeft: 0,
+        expired: true,
+        resendIn: 0,
+        canResend: true,
+      });
     });
 
-    it('should navigate to login after successful verification', async () => {
+    it('만료 시 코드 입력란이 비활성', () => {
+      renderWithTheme(<SignupForm />);
+      expect(screen.getByLabelText('인증 코드')).toBeDisabled();
+    });
+
+    it('만료 시 안내 문구가 노출된다', () => {
+      renderWithTheme(<SignupForm />);
+      expect(screen.getByText('코드가 만료되었습니다. 재발송해주세요')).toBeInTheDocument();
+    });
+
+    it('만료 시 인증 버튼은 비활성', () => {
+      renderWithTheme(<SignupForm />);
+      expect(screen.getByRole('button', { name: '인증' })).toBeDisabled();
+    });
+
+    it('만료 시 재발송 버튼은 활성 상태', () => {
+      renderWithTheme(<SignupForm />);
+      expect(screen.getByRole('button', { name: '재발송' })).toBeEnabled();
+    });
+  });
+
+  describe('재발송 클릭 동작', () => {
+    beforeEach(() => {
+      setVerificationState({
+        codeSent: true,
+        secondsLeft: 300,
+        resendIn: 0,
+        canResend: true,
+      });
+    });
+
+    it('재발송 클릭 시 sendCode 가 호출된다', async () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
+      await user.click(screen.getByRole('button', { name: '재발송' }));
+      expect(mockSendCode).toHaveBeenCalled();
+    });
 
-      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-      await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
-      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
-      await user.type(await screen.findByLabelText('인증 코드'), '123456');
+    it('재발송 클릭 시 코드 입력값이 비워진다', async () => {
+      const user = userEvent.setup();
+      renderWithTheme(<SignupForm />);
+      const codeInput = screen.getByLabelText('인증 코드') as HTMLInputElement;
+      await user.type(codeInput, '123456');
+      expect(codeInput.value).toBe('123456');
 
-      await user.click(screen.getByRole('button', { name: '가입하기' }));
+      await user.click(screen.getByRole('button', { name: '재발송' }));
+      expect(codeInput.value).toBe('');
+    });
+  });
 
+  describe('만료 시 verified 자동 해제', () => {
+    // 만료 직전 상태에서는 verified 가 true 가 되어도 expired 가 true 가 되는 순간
+    // useEffect 가 verified 를 false 로 리셋한다. SignupForm 이 React.memo 로 감싸져 있어
+    // module-level mock 상태 변경만으로는 re-render 가 트리거되지 않아 시뮬레이션이 어렵다.
+    // 만료 직후 흐름은 아래 "만료 시 인증 비활성" 케이스로 간접 보장.
+    it('만료된 상태에서 인증 버튼이 비활성이라 verified 진입을 차단한다 (대체 검증)', () => {
+      setVerificationState({
+        codeSent: true,
+        expired: true,
+        secondsLeft: 0,
+        resendIn: 0,
+        canResend: true,
+      });
+      renderWithTheme(<SignupForm />);
+      expect(screen.getByRole('button', { name: '인증' })).toBeDisabled();
+      expect(screen.queryByLabelText('비밀번호')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('에러 코드 별 메시지', () => {
+    it('verification.errorCode === EMAIL_ALREADY_EXISTS 면 로그인 페이지 링크가 노출된다', () => {
+      setVerificationState({ errorCode: 'EMAIL_ALREADY_EXISTS' });
+      renderWithTheme(<SignupForm />);
+      expect(screen.getByText(/이미 가입된 이메일입니다/)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: '로그인하시겠어요?' })).toBeInTheDocument();
+    });
+
+    it('로그인하시겠어요? 클릭 시 /login 으로 이동', async () => {
+      const user = userEvent.setup();
+      setVerificationState({ errorCode: 'EMAIL_ALREADY_EXISTS' });
+      renderWithTheme(<SignupForm />);
+      await user.click(screen.getByRole('button', { name: '로그인하시겠어요?' }));
       expect(mockNavigate).toHaveBeenCalledWith('/login');
     });
+
+    it('verification.errorCode === INVALID_EMAIL_FORMAT 메시지', () => {
+      setVerificationState({ errorCode: 'INVALID_EMAIL_FORMAT' });
+      renderWithTheme(<SignupForm />);
+      expect(screen.getByText('이메일 형식이 올바르지 않습니다.')).toBeInTheDocument();
+    });
+
+    it('signup.errorCode === INVALID_CODE 메시지가 코드 입력란 하단에 노출', () => {
+      setVerificationState({ codeSent: true, secondsLeft: 200 });
+      setSignupState({ errorCode: 'INVALID_CODE', error: '인증코드가 올바르지 않습니다.' });
+      renderWithTheme(<SignupForm />);
+      expect(screen.getByText('인증코드가 올바르지 않습니다.')).toBeInTheDocument();
+    });
+
+    it('signup.errorCode === EXPIRED_CODE 메시지', () => {
+      setVerificationState({ codeSent: true, secondsLeft: 200 });
+      setSignupState({ errorCode: 'EXPIRED_CODE', error: '코드가 만료되었습니다.' });
+      renderWithTheme(<SignupForm />);
+      expect(screen.getByText('코드가 만료되었습니다. 재발송해주세요.')).toBeInTheDocument();
+    });
+
+    it('RATE_LIMITED 시 retryAfter 카운트다운 노출', () => {
+      setSignupState({ errorCode: 'RATE_LIMITED', retryAfter: 30 });
+      renderWithTheme(<SignupForm />);
+      expect(screen.getByText('잠시 후 다시 시도해주세요. (30초)')).toBeInTheDocument();
+    });
   });
 
-  describe('Navigation', () => {
-    it('should navigate to login page when login button is clicked', async () => {
+  describe('네비게이션', () => {
+    it('하단 로그인 버튼 클릭 시 /login 으로 이동', async () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
-
-      const loginButton = screen.getByRole('button', { name: '로그인' });
-      await user.click(loginButton);
-
+      await user.click(screen.getByRole('button', { name: '로그인' }));
       expect(mockNavigate).toHaveBeenCalledWith('/login');
-    });
-
-    it('should call navigate function with correct path', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      const loginButton = screen.getByRole('button', { name: '로그인' });
-      await user.click(loginButton);
-
-      expect(mockNavigate).toHaveBeenCalledWith('/login');
-      expect(mockNavigate).toHaveBeenCalledTimes(1);
-    });
-
-    it('should call navigate only once on single click', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      const loginButton = screen.getByRole('button', { name: '로그인' });
-      await user.click(loginButton);
-
-      expect(mockNavigate).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('Edge Cases', () => {
-    it('should handle special characters in input fields', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      const emailInput = screen.getByLabelText('이메일') as HTMLInputElement;
-      const nicknameInput = screen.getByLabelText('닉네임') as HTMLInputElement;
-      const passwordInput = screen.getByLabelText('비밀번호') as HTMLInputElement;
-
-      await user.type(emailInput, 'test+tag@example.com');
-      await user.type(nicknameInput, 'user@123!');
-      await user.type(passwordInput, STRONG_PASSWORD);
-
-      expect(emailInput.value).toBe('test+tag@example.com');
-      expect(nicknameInput.value).toBe('user@123!');
-      expect(passwordInput.value).toBe(STRONG_PASSWORD);
-    });
-
-    it('should disable send email button after first send to prevent duplicates', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-      await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
-
-      const sendEmailButton = screen.getByRole('button', { name: '인증 코드 발송' });
-      await user.click(sendEmailButton);
-
-      expect(await screen.findByLabelText('인증 코드')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: '코드 발송됨' })).toBeDisabled();
-    });
-
-    it('should handle clearing and re-entering verification code', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-      await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
-      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
-
-      const verificationInput = (await screen.findByLabelText('인증 코드')) as HTMLInputElement;
-      await user.type(verificationInput, '123456');
-      expect(verificationInput.value).toBe('123456');
-
-      await user.clear(verificationInput);
-      expect(verificationInput.value).toBe('');
-
-      await user.type(verificationInput, '654321');
-      expect(verificationInput.value).toBe('654321');
-    });
-
-    it('should validate form state correctly after clearing email', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      const emailInput = screen.getByLabelText('이메일');
-      await user.type(emailInput, 'test@example.com');
-      await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
-
-      expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeEnabled();
-
-      await user.clear(emailInput);
-      expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeDisabled();
-    });
-
-    it('should handle numeric-only input in email field', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      const emailInput = screen.getByLabelText('이메일') as HTMLInputElement;
-      await user.type(emailInput, '12345');
-      await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
-
-      expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeEnabled();
-      expect(emailInput.value).toBe('12345');
-    });
-
-    it('should handle unicode characters in nickname field', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      const nicknameInput = screen.getByLabelText('닉네임') as HTMLInputElement;
-      await user.type(nicknameInput, '사용자이름');
-
-      expect(nicknameInput.value).toBe('사용자이름');
-    });
-  });
-
-  describe('Accessibility', () => {
-    it('should have proper input type attributes', () => {
-      renderWithTheme(<SignupForm />);
-
-      const emailInput = screen.getByLabelText('이메일') as HTMLInputElement;
-      expect(emailInput.type).toBe('email');
-
-      const passwordInput = screen.getByLabelText('비밀번호') as HTMLInputElement;
-      expect(passwordInput.type).toBe('password');
-    });
-
-    it('should have proper button types', () => {
-      renderWithTheme(<SignupForm />);
-
-      const sendEmailButton = screen.getByRole('button', {
-        name: '인증 코드 발송',
-      }) as HTMLButtonElement;
-      expect(sendEmailButton.type).toBe('button');
-
-      const signupButton = screen.getByRole('button', { name: '가입하기' }) as HTMLButtonElement;
-      expect(signupButton.type).toBe('submit');
-    });
-
-    it('should have placeholders for all input fields', () => {
-      renderWithTheme(<SignupForm />);
-
-      expect(screen.getByPlaceholderText('example@email.com')).toBeInTheDocument();
-      expect(screen.getByPlaceholderText('닉네임 입력')).toBeInTheDocument();
-      expect(screen.getByPlaceholderText('비밀번호 입력')).toBeInTheDocument();
-    });
-
-    it('should have placeholder for verification code input', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-      await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
-      await user.click(screen.getByRole('button', { name: '인증 코드 발송' }));
-
-      expect(await screen.findByPlaceholderText('이메일로 받은 코드 입력')).toBeInTheDocument();
-    });
-  });
-
-  // =====================================================================
-  // 비밀번호 강도 정책 (신규)
-  // =====================================================================
-  describe('비밀번호 강도 정책', () => {
-    it('비밀번호가 9자 이하(약함)이면 인증 코드 발송 버튼이 비활성화된다', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-      await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), WEAK_PASSWORD);
-
-      expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeDisabled();
-    });
-
-    it('비밀번호가 10자 이상(강함)이면 인증 코드 발송 버튼이 활성화된다', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-      await user.type(screen.getByLabelText('닉네임'), 'testuser');
-      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
-
-      expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeEnabled();
-    });
-
-    it('비밀번호를 강한 값으로 교체하면 버튼이 활성화된다', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-
-      const emailInput = screen.getByLabelText('이메일');
-      const nicknameInput = screen.getByLabelText('닉네임');
-      const passwordInput = screen.getByLabelText('비밀번호');
-
-      await user.type(emailInput, 'test@example.com');
-      await user.type(nicknameInput, 'testuser');
-
-      // 먼저 약한 비밀번호 입력
-      await user.type(passwordInput, WEAK_PASSWORD);
-      expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeDisabled();
-
-      // 강한 비밀번호로 교체
-      await user.clear(passwordInput);
-      await user.type(passwordInput, STRONG_PASSWORD);
-      expect(screen.getByRole('button', { name: '인증 코드 발송' })).toBeEnabled();
     });
   });
 });

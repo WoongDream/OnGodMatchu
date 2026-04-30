@@ -32,6 +32,20 @@ export const ErrorText = styled.p`
   color: ${({ theme }) => theme.colors.status.error};
 `;
 
+export const InfoText = styled.p`
+  ${text({ size: 'sm' })}
+  color: ${({ theme }) => theme.colors.fg.secondary};
+`;
+
+export const InlineLoginLink = styled.button`
+  ${text({ size: 'sm', weight: 'medium' })}
+  color: ${({ theme }) => theme.colors.accent.primary};
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
 export const NicknameStatusText = styled.p<{ $tone: 'positive' | 'negative' | 'neutral' }>`
   ${text({ size: 'sm' })}
   color: ${({ theme, $tone }) => {
@@ -44,6 +58,19 @@ export const NicknameStatusText = styled.p<{ $tone: 'positive' | 'negative' | 'n
     return theme.colors.fg.secondary;
   }};
   margin-top: -${({ theme }) => theme.spacing.xs};
+`;
+
+export const TimerText = styled.span<{ $expired?: boolean }>`
+  ${text({ size: 'sm', weight: 'medium' })}
+  color: ${({ theme, $expired }) =>
+    $expired ? theme.colors.status.error : theme.colors.fg.secondary};
+  font-variant-numeric: tabular-nums;
+`;
+
+export const VerifyButtonRow = styled.div`
+  display: grid;
+  grid-template-columns: 4fr 1fr;
+  gap: ${({ theme }) => theme.spacing.sm};
 `;
 
 export const LinkButton = styled.button`
