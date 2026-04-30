@@ -1,6 +1,7 @@
 import { ThemeProvider } from '@emotion/react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Header from '@/components/header';
+import Footer from '@/components/footer';
 import { theme } from '@/styles/theme';
 import { AppShell, PageContent } from '@/styles/layout';
 import MainPage from './pages/MainPage';
@@ -40,6 +41,7 @@ const App = () => {
               <Route path="/terms" element={<TermsPage />} />
             </Routes>
           </PageContent>
+          <Footer />
         </AppShell>
       </BrowserRouter>
     </ThemeProvider>

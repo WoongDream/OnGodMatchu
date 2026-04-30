@@ -60,6 +60,10 @@ vi.mock('@/components/header', () => ({
   default: () => <div data-testid="header">Header</div>,
 }));
 
+vi.mock('@/components/footer', () => ({
+  default: () => <div data-testid="footer">Footer</div>,
+}));
+
 vi.mock('@/styles/layout', () => ({
   AppShell: ({ children }: any) => <div data-testid="app-shell">{children}</div>,
   PageContent: ({ children }: any) => <div data-testid="page-content">{children}</div>,
@@ -121,6 +125,18 @@ describe('App', () => {
       expect(within(appShell).getByTestId('page-content')).toBeInTheDocument();
     });
 
+    it('renders Footer component inside AppShell', () => {
+      renderWithTheme(<App />);
+      const appShell = screen.getByTestId('app-shell');
+      expect(within(appShell).getByTestId('footer')).toBeInTheDocument();
+    });
+
+    it('renders Footer outside of PageContent (sibling of routes)', () => {
+      renderWithTheme(<App />);
+      const pageContent = screen.getByTestId('page-content');
+      expect(within(pageContent).queryByTestId('footer')).not.toBeInTheDocument();
+    });
+
     it('renders Routes inside PageContent', () => {
       renderWithTheme(<App />);
       const pageContent = screen.getByTestId('page-content');
@@ -134,12 +150,14 @@ describe('App', () => {
       const header = within(appShell).getByTestId('header');
       const pageContent = within(appShell).getByTestId('page-content');
       const routes = within(pageContent).getByTestId('routes');
+      const footer = within(appShell).getByTestId('footer');
 
       expect(browserRouter).toBeInTheDocument();
       expect(appShell).toBeInTheDocument();
       expect(header).toBeInTheDocument();
       expect(pageContent).toBeInTheDocument();
       expect(routes).toBeInTheDocument();
+      expect(footer).toBeInTheDocument();
     });
   });
 
@@ -376,6 +394,19 @@ describe('App', () => {
     });
   });
 
+  describe('Footer integration', () => {
+    it('renders Footer on every route', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('footer')).toBeInTheDocument();
+    });
+
+    it('Footer is rendered inside AppShell', () => {
+      renderWithTheme(<App />);
+      const appShell = screen.getByTestId('app-shell');
+      expect(within(appShell).getByTestId('footer')).toBeInTheDocument();
+    });
+  });
+
   describe('edge cases', () => {
     it('renders successfully when all mocks are in place', () => {
       renderWithTheme(<App />);
@@ -416,6 +447,11 @@ describe('App', () => {
     it('Header mock is used', () => {
       renderWithTheme(<App />);
       expect(screen.getByTestId('header')).toBeInTheDocument();
+    });
+
+    it('Footer mock is used', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('footer')).toBeInTheDocument();
     });
 
     it('Layout mocks are used', () => {
