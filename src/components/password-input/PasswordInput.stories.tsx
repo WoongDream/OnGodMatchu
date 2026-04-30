@@ -14,7 +14,6 @@ const meta: Meta<typeof PasswordInput> = {
     disabled: { control: 'boolean' },
     showStrengthMeter: { control: 'boolean' },
     showChecklist: { control: 'boolean' },
-    showHint: { control: 'boolean' },
   },
 };
 

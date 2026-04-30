@@ -47,3 +47,8 @@ export const CrackTimeText = styled.span`
   ${text({ size: 'xs' })}
   color: ${({ theme }) => theme.colors.fg.tertiary};
 `;
+
+export const FeedbackText = styled.span`
+  ${text({ size: 'xs' })}
+  color: ${({ theme }) => theme.colors.status.warning};
+`;

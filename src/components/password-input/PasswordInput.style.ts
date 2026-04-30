@@ -84,27 +84,3 @@ export const ErrorMessage = styled.span`
   ${text({ size: 'xs' })}
   color: ${({ theme }) => theme.colors.status.error};
 `;
-
-export const HintBox = styled.div`
-  ${text({ size: 'xs' })}
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  background-color: ${({ theme }) => theme.colors.bg.secondary};
-  color: ${({ theme }) => theme.colors.fg.secondary};
-`;
-
-export const HintTitle = styled.strong`
-  ${text({ size: 'xs', weight: 'semibold' })}
-  color: ${({ theme }) => theme.colors.fg.primary};
-`;
-
-export const HintList = styled.ul`
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-  margin: 0;
-  padding-left: 1rem;
-`;

@@ -8,9 +8,6 @@ import {
   StyledInput,
   ToggleButton,
   ErrorMessage,
-  HintBox,
-  HintTitle,
-  HintList,
 } from './PasswordInput.style';
 import StrengthMeter from './StrengthMeter';
 import RuleChecklist from './RuleChecklist';
@@ -29,7 +26,6 @@ const PasswordInput = memo(
     ruleStatus,
     showStrengthMeter = true,
     showChecklist = true,
-    showHint = true,
     userInputs,
   }: PasswordInputProps) => {
     const [revealed, setRevealed] = useState(false);
@@ -40,6 +36,9 @@ const PasswordInput = memo(
     useEffect(() => {
       onStrengthChange?.(strength);
     }, [strength, onStrengthChange]);
+
+    const feedbackText =
+      strength.score < 2 ? strength.feedbackWarning || strength.feedbackSuggestions[0] || '' : '';
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       onChange(e.target.value);
@@ -76,20 +75,13 @@ const PasswordInput = memo(
         </InputBox>
         {error && <ErrorMessage>{error}</ErrorMessage>}
         {showStrengthMeter && value.length > 0 && (
-          <StrengthMeter score={strength.score} crackTimesDisplay={strength.crackTimesDisplay} />
+          <StrengthMeter
+            score={strength.score}
+            crackTimesDisplay={strength.crackTimesDisplay}
+            feedbackText={feedbackText}
+          />
         )}
         {showChecklist && <RuleChecklist ruleStatus={ruleStatus} />}
-        {showHint && (
-          <HintBox>
-            <HintTitle>💡 안전한 비밀번호 만들기 팁</HintTitle>
-            <HintList>
-              <li>10자 이상의 길이가 가장 중요해요</li>
-              <li>특수문자보다는 길이가 보안에 더 효과적이에요</li>
-              <li>예: &quot;내고양이는오늘도잠만잔다&quot; 같은 문장도 좋아요</li>
-              <li>다른 사이트와 동일한 비밀번호는 피해주세요</li>
-            </HintList>
-          </HintBox>
-        )}
       </Wrapper>
     );
   },

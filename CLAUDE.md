@@ -20,3 +20,4 @@ Korean quiz app — create & share image/text short-answer quizzes
 ## References
 Architecture: `docs/architecture.md`
 Conventions: `docs/conventions.md`
+Backend API (Swagger): `http://localhost:8080/swagger-ui/index.html#/`

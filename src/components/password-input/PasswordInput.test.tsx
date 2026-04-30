@@ -237,7 +237,7 @@ describe('PasswordInput', () => {
     });
 
     it('onStrengthChange 는 PasswordStrength 형태의 객체를 인수로 받는다', () => {
-      const onStrengthChange = vi.fn<[PasswordStrength], void>();
+      const onStrengthChange = vi.fn<(strength: PasswordStrength) => void>();
       renderPasswordInput({ value: 'somepassword', onStrengthChange });
 
       expect(onStrengthChange).toHaveBeenCalledWith(
@@ -248,6 +248,30 @@ describe('PasswordInput', () => {
           feedbackSuggestions: expect.any(Array),
         }),
       );
+    });
+  });
+
+  describe('feedbackText (StrengthMeter 인라인 피드백)', () => {
+    // zxcvbn mock: length < 10 → score 0, warning='This is a top-10 common password'
+    it('약한 비밀번호 입력 시 zxcvbn 피드백 텍스트가 화면에 표시된다', () => {
+      renderPasswordInput({ value: 'password' }); // length=8, score=0
+      expect(screen.getByText(/This is a top-10 common password/)).toBeInTheDocument();
+    });
+
+    it('약한 비밀번호 피드백 텍스트는 💡 접두어와 함께 표시된다', () => {
+      renderPasswordInput({ value: 'abc' }); // length=3, score=0
+      expect(screen.getByText('💡 This is a top-10 common password')).toBeInTheDocument();
+    });
+
+    // zxcvbn mock: length >= 10 → score 3, warning='', suggestions=[]
+    it('강한 비밀번호 입력 시 피드백 라인이 표시되지 않는다', () => {
+      renderPasswordInput({ value: '내고양이는오늘도잠만잔다' }); // length=12, score=3
+      expect(screen.queryByText(/💡/)).not.toBeInTheDocument();
+    });
+
+    it('value 가 비어있으면 StrengthMeter 자체가 없으므로 피드백도 없다', () => {
+      renderPasswordInput({ value: '' });
+      expect(screen.queryByText(/💡/)).not.toBeInTheDocument();
     });
   });
 

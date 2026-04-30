@@ -36,6 +36,28 @@ describe('StrengthMeter', () => {
     });
   });
 
+  describe('feedbackText', () => {
+    it('feedbackText 가 주어지면 "💡 {text}" 형태로 렌더된다', () => {
+      renderWithTheme(<StrengthMeter score={0} feedbackText="더 길게 입력해보세요" />);
+      expect(screen.getByText('💡 더 길게 입력해보세요')).toBeInTheDocument();
+    });
+
+    it('feedbackText 내용이 화면에 포함된다 (부분 일치)', () => {
+      renderWithTheme(<StrengthMeter score={1} feedbackText="숫자와 특수문자를 추가해보세요" />);
+      expect(screen.getByText(/숫자와 특수문자를 추가해보세요/)).toBeInTheDocument();
+    });
+
+    it('feedbackText 가 undefined 면 피드백 라인이 렌더되지 않는다', () => {
+      renderWithTheme(<StrengthMeter score={2} />);
+      expect(screen.queryByText(/💡/)).not.toBeInTheDocument();
+    });
+
+    it('feedbackText 가 빈 문자열이면 피드백 라인이 렌더되지 않는다', () => {
+      renderWithTheme(<StrengthMeter score={3} feedbackText="" />);
+      expect(screen.queryByText(/💡/)).not.toBeInTheDocument();
+    });
+  });
+
   describe('ARIA', () => {
     it('progressbar role 이 렌더된다', () => {
       renderWithTheme(<StrengthMeter score={3} />);

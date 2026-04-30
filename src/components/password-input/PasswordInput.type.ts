@@ -23,13 +23,13 @@ export type PasswordInputProps = {
   ruleStatus: PasswordRuleStatus;
   showStrengthMeter?: boolean;
   showChecklist?: boolean;
-  showHint?: boolean;
   userInputs?: readonly string[];
 };
 
 export type StrengthMeterProps = {
   score: PasswordStrengthScore;
   crackTimesDisplay?: string;
+  feedbackText?: string;
 };
 
 export type RuleChecklistProps = {
