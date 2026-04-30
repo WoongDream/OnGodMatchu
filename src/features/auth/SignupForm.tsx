@@ -1,7 +1,10 @@
-import { memo, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Input from '@/components/input';
 import Button from '@/components/button';
+import PasswordInput from '@/components/password-input';
+import type { PasswordRuleStatus, PasswordStrength } from '@/components/password-input';
+import { canSubmitByStrength, isLengthValid } from '@/lib/password';
 import SocialLoginButtons from './SocialLoginButtons';
 import {
   FormWrapper,
@@ -10,68 +13,274 @@ import {
   LinkText,
   LinkButton,
   ErrorText,
+  InfoText,
+  InlineLoginLink,
+  NicknameStatusText,
+  TimerText,
+  VerifyButtonRow,
 } from './SignupForm.style';
 import useSignup from '@/hooks/useSignup';
+import useVerificationCode from '@/hooks/useVerificationCode';
+import useNicknameCheck, { type NicknameStatus } from '@/hooks/useNicknameCheck';
+
+const toneOf = (status: NicknameStatus): 'positive' | 'negative' | 'neutral' => {
+  if (status === 'available') {
+    return 'positive';
+  }
+  if (status === 'taken' || status === 'invalid' || status === 'error') {
+    return 'negative';
+  }
+  return 'neutral';
+};
+
+const formatTime = (seconds: number): string => {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+};
 
 const SignupForm = memo(() => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
-  const [nickname, setNickname] = useState('');
+  const [code, setCode] = useState('');
+  const [verified, setVerified] = useState(false);
   const [password, setPassword] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-  const { handleSendCode, handleVerify, isSending, isVerifying, emailSent, error } = useSignup();
+  const [nickname, setNickname] = useState('');
+  const [strength, setStrength] = useState<PasswordStrength | null>(null);
 
-  const canSendCode = email.trim() !== '' && nickname.trim() !== '' && password.trim() !== '';
-  const canSubmit = emailSent && verificationCode.trim() !== '';
+  const verification = useVerificationCode();
+  const signup = useSignup();
 
-  const handleSendEmail = async () => {
-    await handleSendCode(email, nickname, password);
+  const codeSent = verification.codeSent;
+  const expired = verification.expired;
+  const showProfile = codeSent && verified;
+
+  const userInputs = useMemo(() => [email, nickname].filter(Boolean), [email, nickname]);
+
+  const { status: nicknameStatus, message: nicknameMessage } = useNicknameCheck(nickname, {
+    enabled: showProfile,
+  });
+
+  const ruleStatus: PasswordRuleStatus = {
+    lengthOk: isLengthValid(password),
+  };
+
+  // 만료 시 verified 자동 해제 (이전에 인증해 놨더라도 코드가 만료되면 무효화)
+  useEffect(() => {
+    if (expired && verified) {
+      setVerified(false);
+    }
+  }, [expired, verified]);
+
+  // BREACH 표시 자동 해제 — 비밀번호 변경 시
+  const lastPasswordRef = useRef(password);
+  useEffect(() => {
+    if (password !== lastPasswordRef.current) {
+      lastPasswordRef.current = password;
+      if (signup.errorCode === 'BREACH') {
+        signup.clearError();
+      }
+    }
+  }, [password, signup]);
+
+  // RATE_LIMITED 카운트다운 (signup 응답의 retryAfter 기반 표시용 틱)
+  const [rateLimitSec, setRateLimitSec] = useState(0);
+  useEffect(() => {
+    if (signup.errorCode !== 'RATE_LIMITED' || signup.retryAfter <= 0) {
+      setRateLimitSec(0);
+      return;
+    }
+    setRateLimitSec(signup.retryAfter);
+    const id = setInterval(() => {
+      setRateLimitSec((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [signup.errorCode, signup.retryAfter]);
+
+  const isNicknameRaceConflict = signup.errorCode === 'NICKNAME_TAKEN';
+  const effectiveNicknameMessage = isNicknameRaceConflict
+    ? '이미 사용 중인 닉네임입니다.'
+    : nicknameMessage;
+  const nicknameTone: 'positive' | 'negative' | 'neutral' = isNicknameRaceConflict
+    ? 'negative'
+    : toneOf(nicknameStatus);
+
+  const canSendEmail = email.trim() !== '' && !verification.isSending;
+  const canVerify = codeSent && !verified && !expired && code.trim().length > 0;
+
+  const canSubmit =
+    showProfile &&
+    nicknameStatus === 'available' &&
+    !isNicknameRaceConflict &&
+    isLengthValid(password) &&
+    canSubmitByStrength(strength?.score ?? 0) &&
+    signup.errorCode !== 'BREACH';
+
+  const emailErrorCode =
+    verification.errorCode === 'EMAIL_ALREADY_EXISTS' || signup.errorCode === 'EMAIL_ALREADY_EXISTS'
+      ? 'EMAIL_ALREADY_EXISTS'
+      : verification.errorCode === 'INVALID_EMAIL_FORMAT' ||
+          signup.errorCode === 'INVALID_EMAIL_FORMAT'
+        ? 'INVALID_EMAIL_FORMAT'
+        : null;
+
+  const codeErrorMessage =
+    signup.errorCode === 'INVALID_CODE'
+      ? '인증코드가 올바르지 않습니다.'
+      : signup.errorCode === 'EXPIRED_CODE'
+        ? '코드가 만료되었습니다. 재발송해주세요.'
+        : null;
+
+  const rateLimitMessage =
+    verification.errorCode === 'RATE_LIMITED' || signup.errorCode === 'RATE_LIMITED'
+      ? rateLimitSec > 0 || verification.resendIn > 0
+        ? `잠시 후 다시 시도해주세요. (${rateLimitSec || verification.resendIn}초)`
+        : '잠시 후 다시 시도해주세요.'
+      : null;
+
+  const generalError =
+    signup.errorCode === 'NETWORK' || signup.errorCode === 'POLICY' ? signup.error : null;
+
+  const handleSendCode = async () => {
+    const trimmed = email.trim();
+    if (!trimmed) {
+      return;
+    }
+    signup.clearError();
+    await verification.sendCode(trimmed);
+  };
+
+  const handleResend = async () => {
+    if (!verification.canResend) {
+      return;
+    }
+    setCode('');
+    setVerified(false);
+    signup.clearError();
+    await verification.sendCode(email.trim());
+  };
+
+  const handleVerify = () => {
+    if (!canVerify) {
+      return;
+    }
+    setVerified(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await handleVerify(email, verificationCode);
+    if (!canSubmit || signup.isSubmitting) {
+      return;
+    }
+    await signup.submit({ email: email.trim(), password, nickname, code: code.trim() });
   };
 
   return (
     <FormWrapper onSubmit={handleSubmit}>
       <FormTitle>회원가입</FormTitle>
+
       <Input
         label="이메일"
         type="email"
         value={email}
         onChange={setEmail}
         placeholder="example@email.com"
+        disabled={codeSent}
       />
-      <Input label="닉네임" value={nickname} onChange={setNickname} placeholder="닉네임 입력" />
-      <Input
-        label="비밀번호"
-        type="password"
-        value={password}
-        onChange={setPassword}
-        placeholder="비밀번호 입력"
-      />
-      <Button
-        type="button"
-        variant="secondary"
-        fullWidth
-        onClick={handleSendEmail}
-        disabled={!canSendCode || isSending || emailSent}
-      >
-        {isSending ? '발송 중...' : emailSent ? '코드 발송됨' : '인증 코드 발송'}
-      </Button>
-      {emailSent && (
-        <Input
-          label="인증 코드"
-          value={verificationCode}
-          onChange={setVerificationCode}
-          placeholder="이메일로 받은 코드 입력"
-        />
+      {emailErrorCode === 'EMAIL_ALREADY_EXISTS' && (
+        <ErrorText>
+          이미 가입된 이메일입니다.{' '}
+          <InlineLoginLink type="button" onClick={() => navigate('/login')}>
+            로그인하시겠어요?
+          </InlineLoginLink>
+        </ErrorText>
       )}
-      {error && <ErrorText>{error}</ErrorText>}
-      <Button fullWidth type="submit" disabled={!canSubmit || isVerifying}>
-        {isVerifying ? '인증 중...' : '가입하기'}
-      </Button>
+      {emailErrorCode === 'INVALID_EMAIL_FORMAT' && (
+        <ErrorText>이메일 형식이 올바르지 않습니다.</ErrorText>
+      )}
+
+      {!codeSent && (
+        <Button
+          type="button"
+          variant="secondary"
+          fullWidth
+          onClick={handleSendCode}
+          disabled={!canSendEmail}
+        >
+          {verification.isSending ? '발송 중...' : '인증 코드 발송'}
+        </Button>
+      )}
+
+      {codeSent && (
+        <>
+          <Input
+            label="인증 코드"
+            value={code}
+            onChange={setCode}
+            placeholder="이메일로 받은 코드 입력"
+            disabled={expired || verified}
+            labelTrailing={
+              !verified ? (
+                <TimerText $expired={expired}>{formatTime(verification.secondsLeft)}</TimerText>
+              ) : null
+            }
+          />
+          {!verified && (
+            <VerifyButtonRow>
+              <Button
+                type="button"
+                variant="primary"
+                fullWidth
+                onClick={handleVerify}
+                disabled={!canVerify}
+              >
+                인증
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                fullWidth
+                onClick={handleResend}
+                disabled={!verification.canResend || verification.isSending}
+              >
+                {verification.isSending
+                  ? '발송 중'
+                  : verification.canResend
+                    ? '재발송'
+                    : `${verification.resendIn}s`}
+              </Button>
+            </VerifyButtonRow>
+          )}
+          {expired && !verified && <InfoText>코드가 만료되었습니다. 재발송해주세요</InfoText>}
+          {codeErrorMessage && <ErrorText>{codeErrorMessage}</ErrorText>}
+        </>
+      )}
+
+      {showProfile && (
+        <>
+          <PasswordInput
+            label="비밀번호"
+            value={password}
+            onChange={setPassword}
+            placeholder="비밀번호 입력"
+            ruleStatus={ruleStatus}
+            userInputs={userInputs}
+            onStrengthChange={setStrength}
+            error={signup.errorCode === 'BREACH' && signup.error ? signup.error : undefined}
+          />
+          <Input label="닉네임" value={nickname} onChange={setNickname} placeholder="닉네임 입력" />
+          {effectiveNicknameMessage && (
+            <NicknameStatusText $tone={nicknameTone}>{effectiveNicknameMessage}</NicknameStatusText>
+          )}
+          <Button fullWidth type="submit" disabled={!canSubmit || signup.isSubmitting}>
+            {signup.isSubmitting ? '가입 중...' : '가입하기'}
+          </Button>
+        </>
+      )}
+
+      {rateLimitMessage && <ErrorText>{rateLimitMessage}</ErrorText>}
+      {generalError && <ErrorText>{generalError}</ErrorText>}
+
       <SocialLoginButtons />
       <LinkRow>
         <LinkText>이미 계정이 있으신가요?</LinkText>

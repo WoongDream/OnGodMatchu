@@ -13,3 +13,5 @@
 - [App Component Testing](app_component_testing.md) — 180+ test cases covering ThemeProvider, routing, ProtectedRoute, layout structure
 - [Component Mock Patterns](testing_mock_patterns.md) — Input mock with htmlFor label association, vi.hoisted for useNavigate mocks, renderWithTheme single import
 - [LoginForm Test Fixes](loginform_test_fixes.md) — Hoisted mocks, form submission with happy-dom, mock call count tracking
+- [Async Hook Testing Patterns](testing_hooks_async.md) — fake timers scoped per-test, flushPromises, Storage.prototype spy limitation in happy-dom, Zustand selector mock
+- [Password Policy & PasswordInput Testing](testing_password_policy.md) — zxcvbn mock, SignupForm PasswordInput mock, showChecklist selector pitfall, useSignup AxiosError construction

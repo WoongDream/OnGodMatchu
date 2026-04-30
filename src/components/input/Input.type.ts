@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 export type InputProps = {
   value: string;
   onChange: (value: string) => void;
@@ -5,5 +7,6 @@ export type InputProps = {
   disabled?: boolean;
   error?: string;
   label?: string;
+  labelTrailing?: ReactNode;
   type?: 'text' | 'email' | 'password';
 };
