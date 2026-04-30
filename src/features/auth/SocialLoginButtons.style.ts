@@ -1,4 +1,5 @@
 import styled from '@emotion/styled';
+import { Link } from 'react-router-dom';
 import { text } from '@/styles/text';
 import type { OAuthProvider } from '@/types';
 
@@ -6,6 +7,22 @@ export const SocialWrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+export const ConsentNotice = styled.p`
+  ${text({ size: 'xs', lineHeight: 1.5 })}
+  color: ${({ theme }) => theme.colors.fg.tertiary};
+  text-align: center;
+  margin: ${({ theme }) => theme.spacing.xs} 0 0;
+`;
+
+export const ConsentLink = styled(Link)`
+  color: ${({ theme }) => theme.colors.fg.secondary};
+  text-decoration: underline;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.accent.primary};
+  }
 `;
 
 export const Divider = styled.div`
