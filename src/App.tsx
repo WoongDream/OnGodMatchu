@@ -9,6 +9,7 @@ import QuizResultPage from './pages/QuizResultPage';
 import QuizCreatePage from './pages/QuizCreatePage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import OAuthCallbackPage from './pages/OAuthCallbackPage';
 import ProtectedRoute from '@/components/protected-route/ProtectedRoute';
 
 const App = () => {
@@ -32,6 +33,7 @@ const App = () => {
               <Route path="/quiz/:id/result" element={<QuizResultPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
+              <Route path="/oauth2/callback" element={<OAuthCallbackPage />} />
             </Routes>
           </PageContent>
         </AppShell>

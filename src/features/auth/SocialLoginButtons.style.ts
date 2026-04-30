@@ -1,5 +1,6 @@
 import styled from '@emotion/styled';
 import { text } from '@/styles/text';
+import type { OAuthProvider } from '@/types';
 
 export const SocialWrapper = styled.div`
   display: flex;
@@ -28,7 +29,7 @@ export const DividerText = styled.span`
   white-space: nowrap;
 `;
 
-export const SocialButton = styled.button<{ $provider: 'google' | 'naver' | 'kakao' }>`
+export const SocialButton = styled.button<{ $provider: OAuthProvider }>`
   ${text({ size: 'md', weight: 'medium' })}
   display: flex;
   align-items: center;
