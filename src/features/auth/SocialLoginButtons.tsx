@@ -13,13 +13,13 @@ const SocialLoginButtons = memo(() => {
       <Divider>
         <DividerText>또는</DividerText>
       </Divider>
-      <SocialButton $provider="google" onClick={() => handleSocialLogin('google')}>
+      <SocialButton type="button" $provider="google" onClick={() => handleSocialLogin('google')}>
         Google로 계속하기
       </SocialButton>
-      <SocialButton $provider="naver" onClick={() => handleSocialLogin('naver')}>
+      <SocialButton type="button" $provider="naver" onClick={() => handleSocialLogin('naver')}>
         네이버로 계속하기
       </SocialButton>
-      <SocialButton $provider="kakao" onClick={() => handleSocialLogin('kakao')}>
+      <SocialButton type="button" $provider="kakao" onClick={() => handleSocialLogin('kakao')}>
         카카오로 계속하기
       </SocialButton>
     </SocialWrapper>
