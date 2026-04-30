@@ -27,10 +27,14 @@ vi.mock('@/api/auth', () => ({
   getMe: mockGetMe,
 }));
 
-vi.mock('@/store/authStore', () => ({
-  default: (selector: (s: { setUser: typeof mockSetUser }) => unknown) =>
-    selector({ setUser: mockSetUser }),
-}));
+vi.mock('@/store/authStore', () => {
+  const store = { setUser: mockSetUser };
+  const useAuthStore = ((selector: (s: typeof store) => unknown) => selector(store)) as ((
+    selector: (s: typeof store) => unknown,
+  ) => unknown) & { getState: () => typeof store };
+  useAuthStore.getState = () => store;
+  return { default: useAuthStore };
+});
 
 // -----------------------------------------------------------------------
 // Helpers

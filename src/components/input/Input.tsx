@@ -1,16 +1,30 @@
 import type { InputProps } from './Input.type';
-import { InputWrapper, Label, StyledInput, ErrorMessage } from './Input.style';
+import { InputWrapper, Label, LabelRow, StyledInput, ErrorMessage } from './Input.style';
 import { memo } from 'react';
 
 const Input = memo(
-  ({ value, onChange, placeholder, disabled = false, error, label, type = 'text' }: InputProps) => {
+  ({
+    value,
+    onChange,
+    placeholder,
+    disabled = false,
+    error,
+    label,
+    labelTrailing,
+    type = 'text',
+  }: InputProps) => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       onChange(e.target.value);
     };
 
     return (
       <InputWrapper>
-        {label && <Label>{label}</Label>}
+        {label && (
+          <LabelRow>
+            <Label>{label}</Label>
+            {labelTrailing}
+          </LabelRow>
+        )}
         <StyledInput
           type={type}
           value={value}
