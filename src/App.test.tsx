@@ -48,6 +48,14 @@ vi.mock('./pages/OAuthCallbackPage', () => ({
   default: () => <div data-testid="oauth-callback-page">OAuth Callback Page</div>,
 }));
 
+vi.mock('./pages/PrivacyPage', () => ({
+  default: () => <div data-testid="privacy-page">Privacy Page</div>,
+}));
+
+vi.mock('./pages/TermsPage', () => ({
+  default: () => <div data-testid="terms-page">Terms Page</div>,
+}));
+
 vi.mock('@/components/header', () => ({
   default: () => <div data-testid="header">Header</div>,
 }));
@@ -171,10 +179,20 @@ describe('App', () => {
       expect(screen.getByTestId('route-/oauth2/callback')).toBeInTheDocument();
     });
 
-    it('has seven routes total', () => {
+    it('renders route for "/privacy"', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-/privacy')).toBeInTheDocument();
+    });
+
+    it('renders route for "/terms"', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-/terms')).toBeInTheDocument();
+    });
+
+    it('has nine routes total', () => {
       renderWithTheme(<App />);
       const routeElements = screen.getAllByTestId(/^route-/);
-      expect(routeElements).toHaveLength(7);
+      expect(routeElements).toHaveLength(9);
     });
 
     it('route "/" has correct path attribute', () => {
@@ -218,6 +236,32 @@ describe('App', () => {
       const route = screen.getByTestId('route-/oauth2/callback');
       expect(route).toHaveAttribute('data-path', '/oauth2/callback');
     });
+
+    it('route "/privacy" has correct path attribute', () => {
+      renderWithTheme(<App />);
+      const route = screen.getByTestId('route-/privacy');
+      expect(route).toHaveAttribute('data-path', '/privacy');
+    });
+
+    it('route "/terms" has correct path attribute', () => {
+      renderWithTheme(<App />);
+      const route = screen.getByTestId('route-/terms');
+      expect(route).toHaveAttribute('data-path', '/terms');
+    });
+
+    it('does not wrap /privacy with ProtectedRoute', () => {
+      renderWithTheme(<App />);
+      const route = screen.getByTestId('route-/privacy');
+      expect(within(route).queryByTestId('navigate-to-login')).not.toBeInTheDocument();
+      expect(within(route).getByTestId('privacy-page')).toBeInTheDocument();
+    });
+
+    it('does not wrap /terms with ProtectedRoute', () => {
+      renderWithTheme(<App />);
+      const route = screen.getByTestId('route-/terms');
+      expect(within(route).queryByTestId('navigate-to-login')).not.toBeInTheDocument();
+      expect(within(route).getByTestId('terms-page')).toBeInTheDocument();
+    });
   });
 
   describe('page rendering', () => {
@@ -251,6 +295,16 @@ describe('App', () => {
       expect(screen.getByTestId('oauth-callback-page')).toBeInTheDocument();
     });
 
+    it('renders PrivacyPage component for "/privacy" route', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('privacy-page')).toBeInTheDocument();
+    });
+
+    it('renders TermsPage component for "/terms" route', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('terms-page')).toBeInTheDocument();
+    });
+
     it('renders all page components without errors', () => {
       renderWithTheme(<App />);
       expect(screen.getByTestId('main-page')).toBeInTheDocument();
@@ -259,6 +313,8 @@ describe('App', () => {
       expect(screen.getByTestId('login-page')).toBeInTheDocument();
       expect(screen.getByTestId('signup-page')).toBeInTheDocument();
       expect(screen.getByTestId('oauth-callback-page')).toBeInTheDocument();
+      expect(screen.getByTestId('privacy-page')).toBeInTheDocument();
+      expect(screen.getByTestId('terms-page')).toBeInTheDocument();
     });
 
     it('renders all components inside Routes', () => {
@@ -270,6 +326,8 @@ describe('App', () => {
       expect(within(routes).getByTestId('login-page')).toBeInTheDocument();
       expect(within(routes).getByTestId('signup-page')).toBeInTheDocument();
       expect(within(routes).getByTestId('oauth-callback-page')).toBeInTheDocument();
+      expect(within(routes).getByTestId('privacy-page')).toBeInTheDocument();
+      expect(within(routes).getByTestId('terms-page')).toBeInTheDocument();
     });
   });
 
@@ -376,6 +434,8 @@ describe('App', () => {
       expect(screen.getByTestId('login-page')).toBeInTheDocument();
       expect(screen.getByTestId('signup-page')).toBeInTheDocument();
       expect(screen.getByTestId('oauth-callback-page')).toBeInTheDocument();
+      expect(screen.getByTestId('privacy-page')).toBeInTheDocument();
+      expect(screen.getByTestId('terms-page')).toBeInTheDocument();
     });
   });
 });

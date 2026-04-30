@@ -1,5 +1,12 @@
 import { memo } from 'react';
-import { SocialWrapper, Divider, DividerText, SocialButton } from './SocialLoginButtons.style';
+import {
+  SocialWrapper,
+  Divider,
+  DividerText,
+  SocialButton,
+  ConsentNotice,
+  ConsentLink,
+} from './SocialLoginButtons.style';
 import { buildOAuthAuthorizationUrl } from '@/api/oauth';
 import type { OAuthProvider } from '@/types';
 
@@ -22,6 +29,10 @@ const SocialLoginButtons = memo(() => {
       <SocialButton type="button" $provider="kakao" onClick={() => handleSocialLogin('kakao')}>
         카카오로 계속하기
       </SocialButton>
+      <ConsentNotice>
+        로그인 시 <ConsentLink to="/terms">이용약관</ConsentLink> 및{' '}
+        <ConsentLink to="/privacy">개인정보처리방침</ConsentLink>에 동의하는 것으로 간주됩니다.
+      </ConsentNotice>
     </SocialWrapper>
   );
 });
