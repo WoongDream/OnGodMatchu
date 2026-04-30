@@ -3,7 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { signup, verifyEmail } from '@/api/auth';
 
-export type SignupErrorCode = 'BREACH' | 'POLICY' | 'CONFLICT' | 'NETWORK' | null;
+export type SignupErrorCode =
+  | 'BREACH'
+  | 'POLICY'
+  | 'CONFLICT'
+  | 'NICKNAME_TAKEN'
+  | 'NETWORK'
+  | null;
 
 type UseSignupReturn = {
   handleSendCode: (email: string, nickname: string, password: string) => Promise<void>;
@@ -29,6 +35,10 @@ const resolveSignupError = (err: unknown): { code: SignupErrorCode; message: str
       return { code: 'POLICY', message: '비밀번호가 정책에 맞지 않습니다. 다시 확인해주세요.' };
     }
     if (status === 409) {
+      const code = (err.response?.data as { error?: { code?: string } } | undefined)?.error?.code;
+      if (code === 'NICKNAME_ALREADY_EXISTS') {
+        return { code: 'NICKNAME_TAKEN', message: '이미 사용 중인 닉네임입니다.' };
+      }
       return { code: 'CONFLICT', message: '이미 가입된 이메일일 수 있습니다.' };
     }
   }

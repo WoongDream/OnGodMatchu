@@ -25,7 +25,6 @@ vi.mock('zxcvbn', () => ({
 
 const defaultRuleStatus: PasswordRuleStatus = {
   lengthOk: false,
-  notBreached: null,
 };
 
 const renderPasswordInput = (
@@ -176,30 +175,17 @@ describe('PasswordInput', () => {
 
   describe('ruleStatus 반영', () => {
     it('ruleStatus.lengthOk true → ✓ 아이콘이 보인다', () => {
-      renderPasswordInput({ ruleStatus: { lengthOk: true, notBreached: null } });
-      expect(screen.getAllByText('✓').length).toBeGreaterThanOrEqual(1);
+      renderPasswordInput({ ruleStatus: { lengthOk: true } });
+      expect(screen.getByText('✓')).toBeInTheDocument();
     });
 
     it('ruleStatus.lengthOk false → ✗ 아이콘이 보인다', () => {
-      renderPasswordInput({ ruleStatus: { lengthOk: false, notBreached: null } });
-      expect(screen.getAllByText('✗').length).toBeGreaterThanOrEqual(1);
-    });
-
-    it('ruleStatus.notBreached false → 유출 항목이 ✗ 아이콘으로 표시된다', () => {
-      renderPasswordInput({ ruleStatus: { lengthOk: true, notBreached: false } });
-      // lengthOk=true(✓), notBreached=false(✗) 이므로 ✗ 가 1개 있어야 함
-      expect(screen.getAllByText('✗')).toHaveLength(1);
-    });
-
-    it('ruleStatus.notBreached null → • (pending) 아이콘이 보인다', () => {
-      renderPasswordInput({ ruleStatus: { lengthOk: true, notBreached: null } });
-      expect(screen.getAllByText('•').length).toBeGreaterThanOrEqual(1);
+      renderPasswordInput({ ruleStatus: { lengthOk: false } });
+      expect(screen.getByText('✗')).toBeInTheDocument();
     });
 
     it('showChecklist=false 이면 체크리스트가 렌더되지 않는다', () => {
       renderPasswordInput({ showChecklist: false });
-      // RuleChecklist 의 "10자 이상 64자 이하" 항목이 없어야 함
-      // HintList 에는 "10자 이상의 길이가..." 가 있으므로 규칙 항목 텍스트로 정확히 매칭
       expect(screen.queryByText(/10자 이상 64자 이하/)).not.toBeInTheDocument();
     });
   });
@@ -253,14 +239,17 @@ describe('PasswordInput', () => {
 
   describe('feedbackText (StrengthMeter 인라인 피드백)', () => {
     // zxcvbn mock: length < 10 → score 0, warning='This is a top-10 common password'
-    it('약한 비밀번호 입력 시 zxcvbn 피드백 텍스트가 화면에 표시된다', () => {
+    // → translateFeedback 으로 한글화되어 화면에 노출
+    it('약한 비밀번호 입력 시 zxcvbn 피드백 텍스트가 한글로 표시된다', () => {
       renderPasswordInput({ value: 'password' }); // length=8, score=0
-      expect(screen.getByText(/This is a top-10 common password/)).toBeInTheDocument();
+      expect(screen.getByText(/가장 많이 쓰이는 10대 비밀번호/)).toBeInTheDocument();
     });
 
     it('약한 비밀번호 피드백 텍스트는 💡 접두어와 함께 표시된다', () => {
       renderPasswordInput({ value: 'abc' }); // length=3, score=0
-      expect(screen.getByText('💡 This is a top-10 common password')).toBeInTheDocument();
+      expect(
+        screen.getByText('💡 가장 많이 쓰이는 10대 비밀번호 중 하나입니다.'),
+      ).toBeInTheDocument();
     });
 
     // zxcvbn mock: length >= 10 → score 3, warning='', suggestions=[]

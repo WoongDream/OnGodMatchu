@@ -13,8 +13,20 @@ import {
   LinkText,
   LinkButton,
   ErrorText,
+  NicknameStatusText,
 } from './SignupForm.style';
 import useSignup from '@/hooks/useSignup';
+import useNicknameCheck, { type NicknameStatus } from '@/hooks/useNicknameCheck';
+
+const toneOf = (status: NicknameStatus): 'positive' | 'negative' | 'neutral' => {
+  if (status === 'available') {
+    return 'positive';
+  }
+  if (status === 'taken' || status === 'invalid' || status === 'error') {
+    return 'negative';
+  }
+  return 'neutral';
+};
 
 const SignupForm = memo(() => {
   const navigate = useNavigate();
@@ -44,14 +56,24 @@ const SignupForm = memo(() => {
 
   const userInputs = useMemo(() => [email, nickname].filter(Boolean), [email, nickname]);
 
+  const { status: nicknameStatus, message: nicknameMessage } = useNicknameCheck(nickname);
+
   const ruleStatus: PasswordRuleStatus = {
     lengthOk: isLengthValid(password),
-    notBreached: signupErrorCode === 'BREACH' ? false : emailSent ? true : null,
   };
+
+  const isNicknameRaceConflict = signupErrorCode === 'NICKNAME_TAKEN';
+  const effectiveNicknameMessage = isNicknameRaceConflict
+    ? '이미 사용 중인 닉네임입니다.'
+    : nicknameMessage;
+  const nicknameTone: 'positive' | 'negative' | 'neutral' = isNicknameRaceConflict
+    ? 'negative'
+    : toneOf(nicknameStatus);
 
   const canSendCode =
     email.trim() !== '' &&
-    nickname.trim() !== '' &&
+    nicknameStatus === 'available' &&
+    !isNicknameRaceConflict &&
     isLengthValid(password) &&
     canSubmitByStrength(strength?.score ?? 0) &&
     signupErrorCode !== 'BREACH';
@@ -77,7 +99,6 @@ const SignupForm = memo(() => {
         onChange={setEmail}
         placeholder="example@email.com"
       />
-      <Input label="닉네임" value={nickname} onChange={setNickname} placeholder="닉네임 입력" />
       <PasswordInput
         label="비밀번호"
         value={password}
@@ -88,6 +109,10 @@ const SignupForm = memo(() => {
         onStrengthChange={setStrength}
         error={signupErrorCode === 'BREACH' && error ? error : undefined}
       />
+      <Input label="닉네임" value={nickname} onChange={setNickname} placeholder="닉네임 입력" />
+      {effectiveNicknameMessage && (
+        <NicknameStatusText $tone={nicknameTone}>{effectiveNicknameMessage}</NicknameStatusText>
+      )}
       <Button
         type="button"
         variant="secondary"
@@ -105,7 +130,9 @@ const SignupForm = memo(() => {
           placeholder="이메일로 받은 코드 입력"
         />
       )}
-      {error && signupErrorCode !== 'BREACH' && <ErrorText>{error}</ErrorText>}
+      {error && signupErrorCode !== 'BREACH' && signupErrorCode !== 'NICKNAME_TAKEN' && (
+        <ErrorText>{error}</ErrorText>
+      )}
       <Button fullWidth type="submit" disabled={!canSubmit || isVerifying}>
         {isVerifying ? '인증 중...' : '가입하기'}
       </Button>

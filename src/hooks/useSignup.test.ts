@@ -31,9 +31,9 @@ vi.mock('@/api/auth', () => ({
 // -----------------------------------------------------------------------
 // Helpers
 // -----------------------------------------------------------------------
-function makeAxiosError(status: number): AxiosError {
+function makeAxiosError(status: number, data: unknown = {}): AxiosError {
   const err = new AxiosError('Request failed');
-  err.response = { status, data: {}, headers: {}, config: {} as never, statusText: '' };
+  err.response = { status, data, headers: {}, config: {} as never, statusText: '' };
   return err;
 }
 
@@ -210,6 +210,36 @@ describe('useSignup', () => {
     });
 
     it('signupErrorCode 가 "CONFLICT" 로 설정된다', async () => {
+      const { result } = renderUseSignup();
+
+      await act(async () => {
+        await result.current.handleSendCode('a@b.com', 'nick', 'pw');
+      });
+
+      expect(result.current.signupErrorCode).toBe('CONFLICT');
+    });
+  });
+
+  // =====================================================================
+  // handleSendCode — 409 + NICKNAME_ALREADY_EXISTS (NICKNAME_TAKEN)
+  // =====================================================================
+  describe('handleSendCode — 409 + NICKNAME_ALREADY_EXISTS (NICKNAME_TAKEN)', () => {
+    it('error.code 가 NICKNAME_ALREADY_EXISTS 면 signupErrorCode 가 "NICKNAME_TAKEN" 으로 설정된다', async () => {
+      mockSignup.mockRejectedValue(
+        makeAxiosError(409, { error: { code: 'NICKNAME_ALREADY_EXISTS' } }),
+      );
+      const { result } = renderUseSignup();
+
+      await act(async () => {
+        await result.current.handleSendCode('a@b.com', 'nick', 'pw');
+      });
+
+      expect(result.current.signupErrorCode).toBe('NICKNAME_TAKEN');
+      expect(result.current.error).toBe('이미 사용 중인 닉네임입니다.');
+    });
+
+    it('error.code 가 다른 값이면 기존 CONFLICT 분기로 떨어진다', async () => {
+      mockSignup.mockRejectedValue(makeAxiosError(409, { error: { code: 'EMAIL_EXISTS' } }));
       const { result } = renderUseSignup();
 
       await act(async () => {

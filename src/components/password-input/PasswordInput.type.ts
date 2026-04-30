@@ -9,7 +9,6 @@ export type PasswordStrength = {
 
 export type PasswordRuleStatus = {
   lengthOk: boolean;
-  notBreached: boolean | null;
 };
 
 export type PasswordInputProps = {

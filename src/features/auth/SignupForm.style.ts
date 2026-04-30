@@ -32,6 +32,20 @@ export const ErrorText = styled.p`
   color: ${({ theme }) => theme.colors.status.error};
 `;
 
+export const NicknameStatusText = styled.p<{ $tone: 'positive' | 'negative' | 'neutral' }>`
+  ${text({ size: 'sm' })}
+  color: ${({ theme, $tone }) => {
+    if ($tone === 'positive') {
+      return theme.colors.status.success;
+    }
+    if ($tone === 'negative') {
+      return theme.colors.status.error;
+    }
+    return theme.colors.fg.secondary;
+  }};
+  margin-top: -${({ theme }) => theme.spacing.xs};
+`;
+
 export const LinkButton = styled.button`
   ${text({ size: 'sm', weight: 'medium' })}
   color: ${({ theme }) => theme.colors.accent.primary};

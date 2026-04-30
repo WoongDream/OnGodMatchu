@@ -21,9 +21,8 @@ export default meta;
 
 type Story = StoryObj<typeof PasswordInput>;
 
-const PENDING_RULE: PasswordRuleStatus = { lengthOk: false, notBreached: null };
-const PASS_RULE: PasswordRuleStatus = { lengthOk: true, notBreached: null };
-const BREACH_RULE: PasswordRuleStatus = { lengthOk: true, notBreached: false };
+const PENDING_RULE: PasswordRuleStatus = { lengthOk: false };
+const PASS_RULE: PasswordRuleStatus = { lengthOk: true };
 
 export const Default: Story = {
   render: (args) => {
@@ -91,7 +90,7 @@ export const BreachDetected: Story = {
     label: '비밀번호',
     placeholder: '비밀번호 입력',
     error: '이 비밀번호는 외부 유출 이력이 있어요. 다른 비밀번호를 사용해주세요.',
-    ruleStatus: BREACH_RULE,
+    ruleStatus: PASS_RULE,
   },
 };
 
@@ -104,7 +103,7 @@ export const Disabled: Story = {
     label: '비밀번호',
     placeholder: '비밀번호 입력',
     disabled: true,
-    ruleStatus: { lengthOk: true, notBreached: null },
+    ruleStatus: PASS_RULE,
   },
 };
 

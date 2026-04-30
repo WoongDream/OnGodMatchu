@@ -21,7 +21,6 @@ const ICON: Record<RuleState, string> = {
 
 const RuleChecklist = memo(({ ruleStatus }: RuleChecklistProps) => {
   const lengthState = toState(ruleStatus.lengthOk);
-  const breachState = toState(ruleStatus.notBreached);
 
   return (
     <ChecklistWrapper>
@@ -30,12 +29,6 @@ const RuleChecklist = memo(({ ruleStatus }: RuleChecklistProps) => {
           {ICON[lengthState]}
         </RuleIcon>
         {PASSWORD_MIN_LENGTH}자 이상 {PASSWORD_MAX_LENGTH}자 이하
-      </RuleItem>
-      <RuleItem $state={breachState}>
-        <RuleIcon $state={breachState} aria-hidden="true">
-          {ICON[breachState]}
-        </RuleIcon>
-        자주 사용되거나 유출된 비밀번호 아님
       </RuleItem>
     </ChecklistWrapper>
   );

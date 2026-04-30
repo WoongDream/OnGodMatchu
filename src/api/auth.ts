@@ -27,6 +27,20 @@ export const verifyEmail = async (email: string, code: string): Promise<void> =>
   await instance.post('/api/auth/verify-email', { email, code });
 };
 
+export type NicknameAvailability = {
+  available: boolean;
+  reason?: 'taken' | 'format';
+};
+
+export const checkNicknameAvailability = async (
+  nickname: string,
+): Promise<NicknameAvailability> => {
+  const res = await instance.get<ApiResponse<NicknameAvailability>>('/api/auth/check-nickname', {
+    params: { nickname },
+  });
+  return res.data.data;
+};
+
 export const refreshToken = async (token: string): Promise<TokenResponse> => {
   const res = await instance.post<ApiResponse<TokenResponse>>('/api/auth/refresh', token, {
     headers: { 'Content-Type': 'text/plain' },

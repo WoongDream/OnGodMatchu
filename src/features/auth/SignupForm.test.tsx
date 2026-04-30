@@ -15,6 +15,14 @@ vi.mock('@/api/auth', () => ({
   verifyEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
+// 기본적으로 닉네임이 입력되면 '사용 가능' 으로 처리해 기존 테스트 흐름(타이핑 → 버튼 활성)을 유지.
+vi.mock('@/hooks/useNicknameCheck', () => ({
+  default: (raw: string) =>
+    raw.trim() === ''
+      ? { status: 'idle', message: undefined }
+      : { status: 'available', message: '사용 가능한 닉네임입니다.' },
+}));
+
 vi.mock('./SocialLoginButtons', () => ({
   default: () => <div data-testid="social-login-buttons">Social Login Buttons</div>,
 }));
