@@ -1,10 +1,11 @@
 import { memo } from 'react';
 import { SocialWrapper, Divider, DividerText, SocialButton } from './SocialLoginButtons.style';
+import { buildOAuthAuthorizationUrl } from '@/api/oauth';
+import type { OAuthProvider } from '@/types';
 
 const SocialLoginButtons = memo(() => {
-  const handleSocialLogin = (provider: 'google' | 'naver' | 'kakao') => {
-    // TODO: 소셜 로그인 API 연동
-    alert(`${provider} 로그인 (API 연동 전)`);
+  const handleSocialLogin = (provider: OAuthProvider) => {
+    window.location.href = buildOAuthAuthorizationUrl(provider);
   };
 
   return (

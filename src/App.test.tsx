@@ -44,6 +44,10 @@ vi.mock('./pages/SignupPage', () => ({
   default: () => <div data-testid="signup-page">Signup Page</div>,
 }));
 
+vi.mock('./pages/OAuthCallbackPage', () => ({
+  default: () => <div data-testid="oauth-callback-page">OAuth Callback Page</div>,
+}));
+
 vi.mock('@/components/header', () => ({
   default: () => <div data-testid="header">Header</div>,
 }));
@@ -162,10 +166,15 @@ describe('App', () => {
       expect(screen.getByTestId('route-/signup')).toBeInTheDocument();
     });
 
-    it('has six routes total', () => {
+    it('renders route for "/oauth2/callback"', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-/oauth2/callback')).toBeInTheDocument();
+    });
+
+    it('has seven routes total', () => {
       renderWithTheme(<App />);
       const routeElements = screen.getAllByTestId(/^route-/);
-      expect(routeElements).toHaveLength(6);
+      expect(routeElements).toHaveLength(7);
     });
 
     it('route "/" has correct path attribute', () => {
@@ -203,6 +212,12 @@ describe('App', () => {
       const route = screen.getByTestId('route-/signup');
       expect(route).toHaveAttribute('data-path', '/signup');
     });
+
+    it('route "/oauth2/callback" has correct path attribute', () => {
+      renderWithTheme(<App />);
+      const route = screen.getByTestId('route-/oauth2/callback');
+      expect(route).toHaveAttribute('data-path', '/oauth2/callback');
+    });
   });
 
   describe('page rendering', () => {
@@ -231,6 +246,11 @@ describe('App', () => {
       expect(screen.getByTestId('signup-page')).toBeInTheDocument();
     });
 
+    it('renders OAuthCallbackPage component for "/oauth2/callback" route', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('oauth-callback-page')).toBeInTheDocument();
+    });
+
     it('renders all page components without errors', () => {
       renderWithTheme(<App />);
       expect(screen.getByTestId('main-page')).toBeInTheDocument();
@@ -238,6 +258,7 @@ describe('App', () => {
       expect(screen.getByTestId('quiz-result-page')).toBeInTheDocument();
       expect(screen.getByTestId('login-page')).toBeInTheDocument();
       expect(screen.getByTestId('signup-page')).toBeInTheDocument();
+      expect(screen.getByTestId('oauth-callback-page')).toBeInTheDocument();
     });
 
     it('renders all components inside Routes', () => {
@@ -248,6 +269,7 @@ describe('App', () => {
       expect(within(routes).getByTestId('quiz-result-page')).toBeInTheDocument();
       expect(within(routes).getByTestId('login-page')).toBeInTheDocument();
       expect(within(routes).getByTestId('signup-page')).toBeInTheDocument();
+      expect(within(routes).getByTestId('oauth-callback-page')).toBeInTheDocument();
     });
   });
 
@@ -353,6 +375,7 @@ describe('App', () => {
       expect(screen.getByTestId('quiz-create-page')).toBeInTheDocument();
       expect(screen.getByTestId('login-page')).toBeInTheDocument();
       expect(screen.getByTestId('signup-page')).toBeInTheDocument();
+      expect(screen.getByTestId('oauth-callback-page')).toBeInTheDocument();
     });
   });
 });
