@@ -1,75 +1,75 @@
-import styled from '@emotion/styled';
-import { Link } from 'react-router-dom';
+import { css, type Theme } from '@emotion/react';
 import { text } from '@/styles/text';
 import type { OAuthProvider } from '@/types';
 
-export const SocialWrapper = styled.div`
+export const wrapperStyle = (theme: Theme) => css`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: ${theme.spacing.sm};
 `;
 
-export const ConsentNotice = styled.p`
-  ${text({ size: 'xs', lineHeight: 1.5 })}
-  color: ${({ theme }) => theme.colors.fg.tertiary};
+export const consentNoticeStyle = (theme: Theme) => css`
+  ${text({ size: 'xs', lineHeight: 1.5 })({ theme })}
+  color: ${theme.colors.fg.tertiary};
   text-align: center;
-  margin: ${({ theme }) => theme.spacing.xs} 0 0;
+  margin: ${theme.spacing.xs} 0 0;
 `;
 
-export const ConsentLink = styled(Link)`
-  color: ${({ theme }) => theme.colors.fg.secondary};
+export const consentLinkStyle = (theme: Theme) => css`
+  color: ${theme.colors.fg.secondary};
   text-decoration: underline;
 
   &:hover {
-    color: ${({ theme }) => theme.colors.accent.primary};
+    color: ${theme.colors.accent.primary};
   }
 `;
 
-export const Divider = styled.div`
+export const dividerStyle = (theme: Theme) => css`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
-  margin: ${({ theme }) => theme.spacing.sm} 0;
+  gap: ${theme.spacing.md};
+  margin: ${theme.spacing.sm} 0;
 
   &::before,
   &::after {
     content: '';
     flex: 1;
     height: 1px;
-    background-color: ${({ theme }) => theme.colors.border.primary};
+    background-color: ${theme.colors.border.primary};
   }
 `;
 
-export const DividerText = styled.span`
-  ${text({ size: 'sm' })}
-  color: ${({ theme }) => theme.colors.fg.tertiary};
+export const dividerTextStyle = (theme: Theme) => css`
+  ${text({ size: 'sm' })({ theme })}
+  color: ${theme.colors.fg.tertiary};
   white-space: nowrap;
 `;
 
-export const SocialButton = styled.button<{ $provider: OAuthProvider }>`
-  ${text({ size: 'md', weight: 'medium' })}
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  width: 100%;
-  height: 2.75rem;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  border: 1px solid ${({ theme }) => theme.colors.border.primary};
-  transition: opacity 0.15s;
+const providerColors: Record<OAuthProvider, { background: string; color: string; border: string }> =
+  {
+    google: { background: '#ffffff', color: '#374151', border: '' },
+    naver: { background: '#03C75A', color: '#ffffff', border: '#03C75A' },
+    kakao: { background: '#FEE500', color: '#191919', border: '#FEE500' },
+  };
 
-  ${({ $provider }) => {
-    switch ($provider) {
-      case 'google':
-        return `background-color: #ffffff; color: #374151;`;
-      case 'naver':
-        return `background-color: #03C75A; color: #ffffff; border-color: #03C75A;`;
-      case 'kakao':
-        return `background-color: #FEE500; color: #191919; border-color: #FEE500;`;
+export const socialButtonStyle = (provider: OAuthProvider) => (theme: Theme) => {
+  const palette = providerColors[provider];
+  return css`
+    ${text({ size: 'md', weight: 'medium' })({ theme })}
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: ${theme.spacing.sm};
+    width: 100%;
+    height: 2.75rem;
+    border-radius: ${theme.borderRadius.md};
+    border: 1px solid ${palette.border || theme.colors.border.primary};
+    background-color: ${palette.background};
+    color: ${palette.color};
+    transition: opacity 0.15s;
+
+    &:hover {
+      opacity: 0.85;
     }
-  }}
-
-  &:hover {
-    opacity: 0.85;
-  }
-`;
+  `;
+};

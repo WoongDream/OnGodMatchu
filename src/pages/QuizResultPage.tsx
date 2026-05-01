@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { PageWrapper } from '@/styles/layout';
+import { pageWrapperStyle } from '@/styles/layout';
 import ResultScore from '@/features/quiz-result/ResultScore';
 import ResultActions from '@/features/quiz-result/ResultActions';
 
@@ -34,10 +34,10 @@ const QuizResultPage = () => {
   };
 
   return (
-    <PageWrapper gap="xl">
+    <div css={pageWrapperStyle('xl')}>
       <ResultScore scores={state.scores} total={state.total} />
       <ResultActions quizId={Number(id)} onRetry={handleRetry} onHome={handleHome} />
-    </PageWrapper>
+    </div>
   );
 };
 

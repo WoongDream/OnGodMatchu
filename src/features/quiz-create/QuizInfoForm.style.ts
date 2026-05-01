@@ -1,19 +1,19 @@
-import styled from '@emotion/styled';
+import { css, type Theme } from '@emotion/react';
 import { text } from '@/styles/text';
 
-export const FormSection = styled.section`
+export const sectionStyle = (theme: Theme) => css`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${theme.spacing.md};
 `;
 
-export const SectionTitle = styled.h2`
-  ${text({ size: 'lg', weight: 'bold' })}
-  color: ${({ theme }) => theme.colors.fg.primary};
+export const sectionTitleStyle = (theme: Theme) => css`
+  ${text({ size: 'lg', weight: 'bold' })({ theme })}
+  color: ${theme.colors.fg.primary};
 `;
 
-export const CategoryRow = styled.div`
+export const categoryRowStyle = (theme: Theme) => css`
   display: flex;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: ${theme.spacing.sm};
   flex-wrap: wrap;
 `;

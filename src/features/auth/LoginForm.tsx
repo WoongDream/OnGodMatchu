@@ -4,12 +4,12 @@ import Input from '@/components/input';
 import Button from '@/components/button';
 import SocialLoginButtons from './SocialLoginButtons';
 import {
-  FormWrapper,
-  FormTitle,
-  LinkRow,
-  LinkText,
-  LinkButton,
-  ErrorText,
+  formStyle,
+  titleStyle,
+  linkRowStyle,
+  linkTextStyle,
+  linkButtonStyle,
+  errorTextStyle,
 } from './LoginForm.style';
 import useLogin from '@/hooks/useLogin';
 
@@ -27,8 +27,8 @@ const LoginForm = memo(() => {
   };
 
   return (
-    <FormWrapper onSubmit={handleSubmit}>
-      <FormTitle>로그인</FormTitle>
+    <form css={formStyle} onSubmit={handleSubmit}>
+      <h1 css={titleStyle}>로그인</h1>
       <Input
         label="이메일"
         type="email"
@@ -43,18 +43,18 @@ const LoginForm = memo(() => {
         onChange={setPassword}
         placeholder="비밀번호 입력"
       />
-      {error && <ErrorText>{error}</ErrorText>}
+      {error && <p css={errorTextStyle}>{error}</p>}
       <Button fullWidth type="submit" disabled={!isValid || isLoading}>
         {isLoading ? '로그인 중...' : '로그인'}
       </Button>
       <SocialLoginButtons />
-      <LinkRow>
-        <LinkText>계정이 없으신가요?</LinkText>
-        <LinkButton type="button" onClick={() => navigate('/signup')}>
+      <div css={linkRowStyle}>
+        <span css={linkTextStyle}>계정이 없으신가요?</span>
+        <button type="button" css={linkButtonStyle} onClick={() => navigate('/signup')}>
           회원가입
-        </LinkButton>
-      </LinkRow>
-    </FormWrapper>
+        </button>
+      </div>
+    </form>
   );
 });
 

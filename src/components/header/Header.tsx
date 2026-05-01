@@ -1,7 +1,7 @@
+import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '@/store/authStore';
-import { HeaderWrapper, HeaderInner, Logo, NavActions } from './Header.style';
-import { memo } from 'react';
+import { wrapperStyle, innerStyle, logoStyle, navActionsStyle } from './Header.style';
 
 const Header = memo(() => {
   const navigate = useNavigate();
@@ -25,10 +25,12 @@ const Header = memo(() => {
   };
 
   return (
-    <HeaderWrapper>
-      <HeaderInner>
-        <Logo onClick={handleLogoClick}>OnGodMatchu</Logo>
-        <NavActions>
+    <header css={wrapperStyle}>
+      <div css={innerStyle}>
+        <span css={logoStyle} onClick={handleLogoClick}>
+          OnGodMatchu
+        </span>
+        <div css={navActionsStyle}>
           {isLoggedIn ? (
             <>
               <button onClick={handleCreateClick}>퀴즈 만들기</button>
@@ -37,9 +39,9 @@ const Header = memo(() => {
           ) : (
             <button onClick={handleLoginClick}>로그인</button>
           )}
-        </NavActions>
-      </HeaderInner>
-    </HeaderWrapper>
+        </div>
+      </div>
+    </header>
   );
 });
 

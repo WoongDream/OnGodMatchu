@@ -1,47 +1,41 @@
-import styled from '@emotion/styled';
+import { css, type Theme } from '@emotion/react';
 import { text } from '@/styles/text';
 
 export type RuleState = 'pending' | 'pass' | 'fail';
 
-export const ChecklistWrapper = styled.ul`
+const stateColor = (state: RuleState, theme: Theme) => {
+  if (state === 'pass') {
+    return theme.colors.status.success;
+  }
+  if (state === 'fail') {
+    return theme.colors.status.error;
+  }
+  return theme.colors.fg.tertiary;
+};
+
+export const checklistWrapperStyle = (theme: Theme) => css`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
+  gap: ${theme.spacing.xs};
   margin: 0;
   padding: 0;
   list-style: none;
 `;
 
-export const RuleItem = styled.li<{ $state: RuleState }>`
-  ${text({ size: 'xs' })}
+export const ruleItemStyle = (state: RuleState) => (theme: Theme) => css`
+  ${text({ size: 'xs' })({ theme })}
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.xs};
-  color: ${({ $state, theme }) => {
-    if ($state === 'pass') {
-      return theme.colors.status.success;
-    }
-    if ($state === 'fail') {
-      return theme.colors.status.error;
-    }
-    return theme.colors.fg.tertiary;
-  }};
+  gap: ${theme.spacing.xs};
+  color: ${stateColor(state, theme)};
 `;
 
-export const RuleIcon = styled.span<{ $state: RuleState }>`
+export const ruleIconStyle = (state: RuleState) => (theme: Theme) => css`
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 1rem;
   height: 1rem;
-  font-weight: ${({ theme }) => theme.fontWeight.bold};
-  color: ${({ $state, theme }) => {
-    if ($state === 'pass') {
-      return theme.colors.status.success;
-    }
-    if ($state === 'fail') {
-      return theme.colors.status.error;
-    }
-    return theme.colors.fg.tertiary;
-  }};
+  font-weight: ${theme.fontWeight.bold};
+  color: ${stateColor(state, theme)};
 `;

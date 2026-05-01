@@ -1,7 +1,7 @@
-import styled from '@emotion/styled';
+import { css, type Theme } from '@emotion/react';
 
-export const AnswerWrapper = styled.div`
+export const wrapperStyle = (theme: Theme) => css`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${theme.spacing.md};
 `;

@@ -3,7 +3,7 @@ import type { Category } from '@/types';
 import { CATEGORIES } from '@/types/quiz';
 import ChipButton from '@/components/chip-button';
 import type { CategoryFilterProps } from './CategoryFilter.type';
-import { FilterWrapper } from './CategoryFilter.style';
+import { wrapperStyle } from './CategoryFilter.style';
 
 const CategoryFilter = memo(({ selected, onSelect }: CategoryFilterProps) => {
   const handleChipClick = (category: Category | null) => {
@@ -11,7 +11,7 @@ const CategoryFilter = memo(({ selected, onSelect }: CategoryFilterProps) => {
   };
 
   return (
-    <FilterWrapper>
+    <div css={wrapperStyle}>
       <ChipButton active={selected === null} onClick={() => handleChipClick(null)}>
         전체
       </ChipButton>
@@ -20,7 +20,7 @@ const CategoryFilter = memo(({ selected, onSelect }: CategoryFilterProps) => {
           {label}
         </ChipButton>
       ))}
-    </FilterWrapper>
+    </div>
   );
 });
 

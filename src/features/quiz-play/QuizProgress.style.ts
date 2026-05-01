@@ -1,29 +1,29 @@
-import styled from '@emotion/styled';
+import { css, type Theme } from '@emotion/react';
 import { text } from '@/styles/text';
 
-export const ProgressWrapper = styled.div`
+export const wrapperStyle = (theme: Theme) => css`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: ${theme.spacing.sm};
 `;
 
-export const ProgressLabel = styled.span`
-  ${text({ size: 'sm', weight: 'medium' })}
-  color: ${({ theme }) => theme.colors.fg.secondary};
+export const labelStyle = (theme: Theme) => css`
+  ${text({ size: 'sm', weight: 'medium' })({ theme })}
+  color: ${theme.colors.fg.secondary};
 `;
 
-export const ProgressBar = styled.div`
+export const barStyle = (theme: Theme) => css`
   width: 100%;
   height: 6px;
-  background-color: ${({ theme }) => theme.colors.bg.tertiary};
-  border-radius: ${({ theme }) => theme.borderRadius.full};
+  background-color: ${theme.colors.bg.tertiary};
+  border-radius: ${theme.borderRadius.full};
   overflow: hidden;
 `;
 
-export const ProgressFill = styled.div<{ $percent: number }>`
+export const fillStyle = (percent: number) => (theme: Theme) => css`
   height: 100%;
-  width: ${({ $percent }) => $percent}%;
-  background-color: ${({ theme }) => theme.colors.accent.primary};
-  border-radius: ${({ theme }) => theme.borderRadius.full};
+  width: ${percent}%;
+  background-color: ${theme.colors.accent.primary};
+  border-radius: ${theme.borderRadius.full};
   transition: width 0.3s ease;
 `;

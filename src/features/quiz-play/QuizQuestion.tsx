@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import type { Question } from '@/types';
-import { QuestionWrapper, QuestionImage, QuestionText } from './QuizQuestion.style';
+import { wrapperStyle, imageStyle, textStyle } from './QuizQuestion.style';
 
 type QuizQuestionProps = {
   question: Question;
@@ -8,10 +8,10 @@ type QuizQuestionProps = {
 
 const QuizQuestion = memo(({ question }: QuizQuestionProps) => {
   return (
-    <QuestionWrapper>
-      {question.imageUrl && <QuestionImage src={question.imageUrl} alt="문제 이미지" />}
-      {question.questionText && <QuestionText>{question.questionText}</QuestionText>}
-    </QuestionWrapper>
+    <div css={wrapperStyle}>
+      {question.imageUrl && <img css={imageStyle} src={question.imageUrl} alt="문제 이미지" />}
+      {question.questionText && <p css={textStyle}>{question.questionText}</p>}
+    </div>
   );
 });
 

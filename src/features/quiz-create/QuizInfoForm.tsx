@@ -4,7 +4,7 @@ import type { Category } from '@/types';
 import Input from '@/components/input';
 import ChipButton from '@/components/chip-button';
 import ImageUpload from '@/components/image-upload';
-import { FormSection, SectionTitle, CategoryRow } from './QuizInfoForm.style';
+import { sectionStyle, sectionTitleStyle, categoryRowStyle } from './QuizInfoForm.style';
 
 type QuizInfoFormProps = {
   title: string;
@@ -31,8 +31,8 @@ const QuizInfoForm = memo(
     onThumbnailRemove,
   }: QuizInfoFormProps) => {
     return (
-      <FormSection>
-        <SectionTitle>퀴즈 정보</SectionTitle>
+      <section css={sectionStyle}>
+        <h2 css={sectionTitleStyle}>퀴즈 정보</h2>
         <ImageUpload
           label="썸네일 (선택)"
           previewUrl={thumbnailPreviewUrl}
@@ -51,7 +51,7 @@ const QuizInfoForm = memo(
           onChange={onDescriptionChange}
           placeholder="퀴즈에 대한 설명을 입력하세요"
         />
-        <CategoryRow>
+        <div css={categoryRowStyle}>
           {CATEGORIES.map(({ value, label }) => (
             <ChipButton
               key={value}
@@ -61,8 +61,8 @@ const QuizInfoForm = memo(
               {label}
             </ChipButton>
           ))}
-        </CategoryRow>
-      </FormSection>
+        </div>
+      </section>
     );
   },
 );

@@ -1,14 +1,14 @@
 import { memo, useId, useRef } from 'react';
 import type { ImageUploadProps } from './ImageUpload.type';
 import {
-  UploadWrapper,
-  UploadLabel,
-  UploadArea,
-  UploadPlaceholder,
-  UploadPlaceholderText,
-  PreviewImage,
-  RemoveButton,
-  HiddenInput,
+  wrapperStyle,
+  labelStyle,
+  areaStyle,
+  placeholderStyle,
+  placeholderTextStyle,
+  previewImageStyle,
+  removeButtonStyle,
+  hiddenInputStyle,
 } from './ImageUpload.style';
 
 const ImageUpload = memo(({ previewUrl, onChange, onRemove, label }: ImageUploadProps) => {
@@ -34,27 +34,40 @@ const ImageUpload = memo(({ previewUrl, onChange, onRemove, label }: ImageUpload
   };
 
   return (
-    <UploadWrapper>
-      {label && <UploadLabel id={`${id}-label`}>{label}</UploadLabel>}
-      <UploadArea
+    <div css={wrapperStyle}>
+      {label && (
+        <span css={labelStyle} id={`${id}-label`}>
+          {label}
+        </span>
+      )}
+      <label
+        css={areaStyle(!!previewUrl)}
         htmlFor={id}
-        $hasPreview={!!previewUrl}
         aria-labelledby={label ? `${id}-label` : undefined}
       >
         {previewUrl ? (
           <>
-            <PreviewImage src={previewUrl} alt="업로드 이미지 미리보기" />
-            <RemoveButton onClick={handleRemove}>✕</RemoveButton>
+            <img css={previewImageStyle} src={previewUrl} alt="업로드 이미지 미리보기" />
+            <button css={removeButtonStyle} onClick={handleRemove}>
+              ✕
+            </button>
           </>
         ) : (
-          <UploadPlaceholder>
-            <UploadPlaceholderText>클릭하여 이미지 업로드</UploadPlaceholderText>
-            <UploadPlaceholderText>JPG, PNG, WEBP</UploadPlaceholderText>
-          </UploadPlaceholder>
+          <div css={placeholderStyle}>
+            <span css={placeholderTextStyle}>클릭하여 이미지 업로드</span>
+            <span css={placeholderTextStyle}>JPG, PNG, WEBP</span>
+          </div>
         )}
-        <HiddenInput ref={inputRef} id={id} type="file" accept="image/*" onChange={handleChange} />
-      </UploadArea>
-    </UploadWrapper>
+        <input
+          css={hiddenInputStyle}
+          ref={inputRef}
+          id={id}
+          type="file"
+          accept="image/*"
+          onChange={handleChange}
+        />
+      </label>
+    </div>
   );
 });
 

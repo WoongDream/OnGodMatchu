@@ -1,12 +1,12 @@
 import { memo } from 'react';
 import type { ChipButtonProps } from './ChipButton.type';
-import { StyledChip } from './ChipButton.style';
+import { chipStyle } from './ChipButton.style';
 
 const ChipButton = memo(({ active = false, onClick, children }: ChipButtonProps) => {
   return (
-    <StyledChip $active={active} onClick={onClick}>
+    <button css={chipStyle(active)} onClick={onClick}>
       {children}
-    </StyledChip>
+    </button>
   );
 });
 

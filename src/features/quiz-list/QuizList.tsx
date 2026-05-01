@@ -1,8 +1,8 @@
+import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Quiz } from '@/types';
 import QuizCard from './QuizCard';
-import { ListWrapper, EmptyMessage } from './QuizList.style';
-import { memo } from 'react';
+import { wrapperStyle, emptyMessageStyle } from './QuizList.style';
 
 type QuizListProps = {
   quizzes: Quiz[];
@@ -17,18 +17,18 @@ const QuizList = memo(({ quizzes }: QuizListProps) => {
 
   if (quizzes.length === 0) {
     return (
-      <ListWrapper>
-        <EmptyMessage>퀴즈가 없어요</EmptyMessage>
-      </ListWrapper>
+      <section css={wrapperStyle}>
+        <p css={emptyMessageStyle}>퀴즈가 없어요</p>
+      </section>
     );
   }
 
   return (
-    <ListWrapper>
+    <section css={wrapperStyle}>
       {quizzes.map((quiz) => (
         <QuizCard key={quiz.id} quiz={quiz} onClick={handleCardClick} />
       ))}
-    </ListWrapper>
+    </section>
   );
 });
 

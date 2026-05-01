@@ -1,26 +1,26 @@
-import styled from '@emotion/styled';
+import { css, type Theme } from '@emotion/react';
 import { text } from '@/styles/text';
 
-export const UploadWrapper = styled.div`
+export const wrapperStyle = (theme: Theme) => css`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
+  gap: ${theme.spacing.xs};
   width: 100%;
 `;
 
-export const UploadLabel = styled.span`
-  ${text({ size: 'sm', weight: 'medium' })}
-  color: ${({ theme }) => theme.colors.fg.primary};
+export const labelStyle = (theme: Theme) => css`
+  ${text({ size: 'sm', weight: 'medium' })({ theme })}
+  color: ${theme.colors.fg.primary};
 `;
 
-export const UploadArea = styled.label<{ $hasPreview: boolean }>`
+export const areaStyle = (hasPreview: boolean) => (theme: Theme) => css`
   position: relative;
   width: 100%;
-  aspect-ratio: ${({ $hasPreview }) => ($hasPreview ? '16 / 9' : 'auto')};
-  min-height: ${({ $hasPreview }) => ($hasPreview ? 'auto' : '7rem')};
-  border: 2px dashed ${({ theme }) => theme.colors.border.primary};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  background-color: ${({ theme }) => theme.colors.bg.secondary};
+  aspect-ratio: ${hasPreview ? '16 / 9' : 'auto'};
+  min-height: ${hasPreview ? 'auto' : '7rem'};
+  border: 2px dashed ${theme.colors.border.primary};
+  border-radius: ${theme.borderRadius.lg};
+  background-color: ${theme.colors.bg.secondary};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -29,42 +29,42 @@ export const UploadArea = styled.label<{ $hasPreview: boolean }>`
   transition: border-color 0.15s;
 
   &:hover {
-    border-color: ${({ theme }) => theme.colors.accent.primary};
+    border-color: ${theme.colors.accent.primary};
   }
 `;
 
-export const UploadPlaceholder = styled.div`
+export const placeholderStyle = (theme: Theme) => css`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.xs};
-  padding: ${({ theme }) => theme.spacing.lg};
+  gap: ${theme.spacing.xs};
+  padding: ${theme.spacing.lg};
 `;
 
-export const UploadPlaceholderText = styled.span`
-  ${text({ size: 'sm' })}
-  color: ${({ theme }) => theme.colors.fg.tertiary};
+export const placeholderTextStyle = (theme: Theme) => css`
+  ${text({ size: 'sm' })({ theme })}
+  color: ${theme.colors.fg.tertiary};
 `;
 
-export const PreviewImage = styled.img`
+export const previewImageStyle = css`
   width: 100%;
   height: 100%;
   object-fit: cover;
 `;
 
-export const RemoveButton = styled.button`
+export const removeButtonStyle = (theme: Theme) => css`
   position: absolute;
-  top: ${({ theme }) => theme.spacing.sm};
-  right: ${({ theme }) => theme.spacing.sm};
+  top: ${theme.spacing.sm};
+  right: ${theme.spacing.sm};
   width: 1.75rem;
   height: 1.75rem;
-  border-radius: ${({ theme }) => theme.borderRadius.full};
+  border-radius: ${theme.borderRadius.full};
   background-color: rgba(0, 0, 0, 0.5);
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  ${text({ size: 'sm', weight: 'bold' })}
+  ${text({ size: 'sm', weight: 'bold' })({ theme })}
   z-index: 1;
 
   &:hover {
@@ -72,6 +72,6 @@ export const RemoveButton = styled.button`
   }
 `;
 
-export const HiddenInput = styled.input`
+export const hiddenInputStyle = css`
   display: none;
 `;
