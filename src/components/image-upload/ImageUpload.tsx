@@ -1,5 +1,6 @@
-import { memo, useId, useRef } from 'react';
+import { memo, useId, useRef, useState } from 'react';
 import type { ImageUploadProps } from './ImageUpload.type';
+import { validateImageFile, getValidationMessage } from './ImageUpload.policy';
 import {
   wrapperStyle,
   labelStyle,
@@ -9,17 +10,28 @@ import {
   previewImageStyle,
   removeButtonStyle,
   hiddenInputStyle,
+  errorTextStyle,
 } from './ImageUpload.style';
 
 const ImageUpload = memo(({ previewUrl, onChange, onRemove, label }: ImageUploadProps) => {
   const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
       return;
     }
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      setErrorMessage(getValidationMessage(validationError));
+      if (inputRef.current) {
+        inputRef.current.value = '';
+      }
+      return;
+    }
+    setErrorMessage(null);
     const url = URL.createObjectURL(file);
     onChange(file, url);
     if (inputRef.current) {
@@ -30,6 +42,7 @@ const ImageUpload = memo(({ previewUrl, onChange, onRemove, label }: ImageUpload
   const handleRemove = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setErrorMessage(null);
     onRemove();
   };
 
@@ -55,7 +68,7 @@ const ImageUpload = memo(({ previewUrl, onChange, onRemove, label }: ImageUpload
         ) : (
           <div css={placeholderStyle}>
             <span css={placeholderTextStyle}>클릭하여 이미지 업로드</span>
-            <span css={placeholderTextStyle}>JPG, PNG, WEBP</span>
+            <span css={placeholderTextStyle}>JPG, PNG, WEBP · 최대 5MB</span>
           </div>
         )}
         <input
@@ -67,6 +80,11 @@ const ImageUpload = memo(({ previewUrl, onChange, onRemove, label }: ImageUpload
           onChange={handleChange}
         />
       </label>
+      {errorMessage && (
+        <span css={errorTextStyle} role="alert">
+          {errorMessage}
+        </span>
+      )}
     </div>
   );
 });

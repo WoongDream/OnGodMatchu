@@ -111,11 +111,11 @@ describe('QuizInfoForm', () => {
       });
     });
 
-    it('renders exactly 5 category chips', () => {
+    it('renders exactly 9 category chips', () => {
       renderWithTheme(<QuizInfoForm {...defaultProps} />);
       const chips = screen.getAllByRole('button');
       const categoryChips = chips.filter((btn) => btn.getAttribute('data-active') !== null);
-      expect(categoryChips).toHaveLength(5);
+      expect(categoryChips).toHaveLength(9);
     });
   });
 
@@ -264,7 +264,17 @@ describe('QuizInfoForm', () => {
     it('renders all category options from CATEGORIES', () => {
       renderWithTheme(<QuizInfoForm {...defaultProps} />);
 
-      const expectedCategories = ['게임', '음악', '문화', '방송', '기타'];
+      const expectedCategories = [
+        '연예인',
+        '영화',
+        '드라마',
+        '애니메이션',
+        '게임',
+        '음악',
+        '스포츠',
+        '상식',
+        '기타',
+      ];
       expectedCategories.forEach((category) => {
         expect(screen.getByTestId(`chip-${category}`)).toBeInTheDocument();
       });
@@ -320,10 +330,14 @@ describe('QuizInfoForm', () => {
     it('calls onCategoryChange with correct category value for all categories', async () => {
       const user = userEvent.setup();
       const testCases: { value: Category; label: string }[] = [
+        { value: 'entertainment', label: '연예인' },
+        { value: 'movie', label: '영화' },
+        { value: 'drama', label: '드라마' },
+        { value: 'anime', label: '애니메이션' },
         { value: 'game', label: '게임' },
         { value: 'music', label: '음악' },
-        { value: 'culture', label: '문화' },
-        { value: 'broadcast', label: '방송' },
+        { value: 'sports', label: '스포츠' },
+        { value: 'general', label: '상식' },
         { value: 'etc', label: '기타' },
       ];
 
@@ -622,7 +636,17 @@ describe('QuizInfoForm', () => {
     });
 
     it('handles all category types', () => {
-      const categories: Category[] = ['game', 'music', 'culture', 'broadcast', 'etc'];
+      const categories: Category[] = [
+        'entertainment',
+        'movie',
+        'drama',
+        'anime',
+        'game',
+        'music',
+        'sports',
+        'general',
+        'etc',
+      ];
 
       categories.forEach((cat) => {
         const { unmount } = renderWithTheme(<QuizInfoForm {...defaultProps} category={cat} />);

@@ -16,6 +16,7 @@ describe('QuizCard', () => {
     title: 'Test Quiz Title',
     description: 'Test quiz description',
     category: 'game',
+    thumbnailKey: 'quiz-thumbnails/abc',
     thumbnailUrl: 'https://example.com/image.jpg',
     playCount: 1234,
     createdAt: '2024-01-01T00:00:00Z',
@@ -305,7 +306,17 @@ describe('QuizCard', () => {
 
   describe('category rendering', () => {
     it('renders all supported categories correctly', async () => {
-      const categories = ['game', 'music', 'culture', 'broadcast', 'etc'] as const;
+      const categories = [
+        'entertainment',
+        'movie',
+        'drama',
+        'anime',
+        'game',
+        'music',
+        'sports',
+        'general',
+        'etc',
+      ] as const;
 
       for (const category of categories) {
         const { unmount } = renderWithTheme(
@@ -455,7 +466,17 @@ describe('QuizCard', () => {
     });
 
     it('handles all category types without errors', () => {
-      const categories = ['game', 'music', 'culture', 'broadcast', 'etc'] as const;
+      const categories = [
+        'entertainment',
+        'movie',
+        'drama',
+        'anime',
+        'game',
+        'music',
+        'sports',
+        'general',
+        'etc',
+      ] as const;
 
       categories.forEach((category) => {
         const { unmount } = renderWithTheme(

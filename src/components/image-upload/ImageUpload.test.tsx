@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest';
 import { renderWithTheme, screen } from '@/test/renderWithTheme';
 import userEvent from '@testing-library/user-event';
+import { fireEvent } from '@testing-library/react';
 import ImageUpload from './ImageUpload';
 
 describe('ImageUpload', () => {
@@ -71,13 +72,13 @@ describe('ImageUpload', () => {
     it('displays both placeholder text lines', () => {
       renderWithTheme(<ImageUpload {...defaultProps} previewUrl={null} />);
       expect(screen.getByText('클릭하여 이미지 업로드')).toBeInTheDocument();
-      expect(screen.getByText('JPG, PNG, WEBP')).toBeInTheDocument();
+      expect(screen.getByText('JPG, PNG, WEBP · 최대 5MB')).toBeInTheDocument();
     });
 
     it('hides placeholder when preview URL exists', () => {
       renderWithTheme(<ImageUpload {...defaultProps} previewUrl="blob:test-url" />);
       expect(screen.queryByText('클릭하여 이미지 업로드')).not.toBeInTheDocument();
-      expect(screen.queryByText('JPG, PNG, WEBP')).not.toBeInTheDocument();
+      expect(screen.queryByText('JPG, PNG, WEBP · 최대 5MB')).not.toBeInTheDocument();
     });
   });
 
@@ -396,18 +397,47 @@ describe('ImageUpload', () => {
       expect(uploadedFile.name).toBe(specialName);
     });
 
-    it('handles very large file', async () => {
+    it('rejects files larger than 5MB with inline error', async () => {
       const user = userEvent.setup();
       const onChange = vi.fn();
       const { container } = renderWithTheme(<ImageUpload {...defaultProps} onChange={onChange} />);
 
       const largeFile = new File(['x'.repeat(1024)], 'large.png', { type: 'image/png' });
-      Object.defineProperty(largeFile, 'size', { value: 100 * 1024 * 1024 });
+      Object.defineProperty(largeFile, 'size', { value: 6 * 1024 * 1024 });
 
       const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
       await user.upload(fileInput, largeFile);
 
-      expect(onChange).toHaveBeenCalledOnce();
+      expect(onChange).not.toHaveBeenCalled();
+      expect(screen.getByRole('alert')).toHaveTextContent('5MB');
+    });
+
+    it('rejects non-image MIME types with inline error', () => {
+      const onChange = vi.fn();
+      const { container } = renderWithTheme(<ImageUpload {...defaultProps} onChange={onChange} />);
+
+      const pdfFile = new File(['pdf-content'], 'doc.pdf', { type: 'application/pdf' });
+      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+      fireEvent.change(fileInput, { target: { files: [pdfFile] } });
+
+      expect(onChange).not.toHaveBeenCalled();
+      expect(screen.getByRole('alert')).toHaveTextContent('JPG, PNG, WEBP');
+    });
+
+    it('clears error message after a valid file is selected', () => {
+      const onChange = vi.fn();
+      const { container } = renderWithTheme(<ImageUpload {...defaultProps} onChange={onChange} />);
+
+      const pdfFile = new File(['pdf'], 'doc.pdf', { type: 'application/pdf' });
+      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+      fireEvent.change(fileInput, { target: { files: [pdfFile] } });
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+
+      const validFile = new File(['png'], 'image.png', { type: 'image/png' });
+      fireEvent.change(fileInput, { target: { files: [validFile] } });
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(onChange).toHaveBeenCalledWith(validFile, 'blob:mock-url');
     });
 
     it('handles previewUrl with special characters', () => {

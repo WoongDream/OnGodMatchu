@@ -75,3 +75,8 @@ export const removeButtonStyle = (theme: Theme) => css`
 export const hiddenInputStyle = css`
   display: none;
 `;
+
+export const errorTextStyle = (theme: Theme) => css`
+  ${text({ size: 'sm' })({ theme })}
+  color: ${theme.colors.status.error};
+`;
