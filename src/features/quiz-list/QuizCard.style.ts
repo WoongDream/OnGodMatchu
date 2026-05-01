@@ -1,14 +1,14 @@
-import styled from '@emotion/styled';
+import { css, type Theme } from '@emotion/react';
 import { text } from '@/styles/text';
 
-export const CardWrapper = styled.article`
+export const wrapperStyle = (theme: Theme) => css`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-  padding: ${({ theme }) => theme.spacing.md};
-  border: 1px solid ${({ theme }) => theme.colors.border.primary};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  background-color: ${({ theme }) => theme.colors.bg.primary};
+  gap: ${theme.spacing.sm};
+  padding: ${theme.spacing.md};
+  border: 1px solid ${theme.colors.border.primary};
+  border-radius: ${theme.borderRadius.lg};
+  background-color: ${theme.colors.bg.primary};
   cursor: pointer;
   transition: box-shadow 0.15s;
 
@@ -17,11 +17,11 @@ export const CardWrapper = styled.article`
   }
 `;
 
-export const Thumbnail = styled.div`
+export const thumbnailStyle = (theme: Theme) => css`
   width: 100%;
   aspect-ratio: 16 / 9;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  background-color: ${({ theme }) => theme.colors.bg.tertiary};
+  border-radius: ${theme.borderRadius.md};
+  background-color: ${theme.colors.bg.tertiary};
   overflow: hidden;
 
   img {
@@ -31,28 +31,28 @@ export const Thumbnail = styled.div`
   }
 `;
 
-export const CardTitle = styled.h3`
-  ${text({ size: 'md', weight: 'semibold', ellipsis: 2 })}
-  color: ${({ theme }) => theme.colors.fg.primary};
+export const titleStyle = (theme: Theme) => css`
+  ${text({ size: 'md', weight: 'semibold', ellipsis: 2 })({ theme })}
+  color: ${theme.colors.fg.primary};
 `;
 
-export const CardDescription = styled.p`
-  ${text({ size: 'sm', ellipsis: 1 })}
-  color: ${({ theme }) => theme.colors.fg.secondary};
+export const descriptionStyle = (theme: Theme) => css`
+  ${text({ size: 'sm', ellipsis: 1 })({ theme })}
+  color: ${theme.colors.fg.secondary};
 `;
 
-export const CardMeta = styled.div`
+export const metaStyle = (theme: Theme) => css`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: ${theme.spacing.sm};
 `;
 
-export const Category = styled.span`
-  ${text({ size: 'xs', weight: 'medium' })}
-  color: ${({ theme }) => theme.colors.accent.primary};
+export const categoryStyle = (theme: Theme) => css`
+  ${text({ size: 'xs', weight: 'medium' })({ theme })}
+  color: ${theme.colors.accent.primary};
 `;
 
-export const PlayCount = styled.span`
-  ${text({ size: 'xs' })}
-  color: ${({ theme }) => theme.colors.fg.tertiary};
+export const playCountStyle = (theme: Theme) => css`
+  ${text({ size: 'xs' })({ theme })}
+  color: ${theme.colors.fg.tertiary};
 `;

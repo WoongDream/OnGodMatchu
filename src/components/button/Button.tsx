@@ -1,6 +1,6 @@
-import type { ButtonProps } from './Button.type';
-import { StyledButton } from './Button.style';
 import { memo } from 'react';
+import type { ButtonProps } from './Button.type';
+import { buttonStyle } from './Button.style';
 
 const Button = memo(
   ({
@@ -13,16 +13,14 @@ const Button = memo(
     children,
   }: ButtonProps) => {
     return (
-      <StyledButton
-        $variant={variant}
-        $size={size}
-        $fullWidth={fullWidth}
+      <button
+        css={buttonStyle(variant, size, fullWidth)}
         disabled={disabled}
         onClick={onClick}
         type={type}
       >
         {children}
-      </StyledButton>
+      </button>
     );
   },
 );

@@ -1,6 +1,6 @@
 import { memo, useCallback } from 'react';
 import Button from '@/components/button';
-import { ActionsWrapper } from './ResultActions.style';
+import { wrapperStyle } from './ResultActions.style';
 
 type ResultActionsProps = {
   quizId: number;
@@ -20,7 +20,7 @@ const ResultActions = memo(({ quizId, onRetry, onHome }: ResultActionsProps) => 
   }, [quizId]);
 
   return (
-    <ActionsWrapper>
+    <div css={wrapperStyle}>
       <Button fullWidth onClick={onRetry}>
         다시 풀기
       </Button>
@@ -30,7 +30,7 @@ const ResultActions = memo(({ quizId, onRetry, onHome }: ResultActionsProps) => 
       <Button fullWidth variant="ghost" onClick={onHome}>
         홈으로
       </Button>
-    </ActionsWrapper>
+    </div>
   );
 });
 

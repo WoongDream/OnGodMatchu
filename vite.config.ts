@@ -12,7 +12,7 @@ const dirname =
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react({ jsxImportSource: '@emotion/react' })],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

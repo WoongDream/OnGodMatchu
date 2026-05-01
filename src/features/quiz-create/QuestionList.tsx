@@ -1,7 +1,7 @@
 import { memo, useCallback } from 'react';
 import Button from '@/components/button';
 import QuestionItem from './QuestionItem';
-import { ListSection, SectionTitle, QuestionListWrapper } from './QuestionList.style';
+import { sectionStyle, sectionTitleStyle, listWrapperStyle } from './QuestionList.style';
 
 export type DraftQuestion = {
   id: string;
@@ -69,9 +69,9 @@ const QuestionList = memo(({ questions, onChange }: QuestionListProps) => {
   );
 
   return (
-    <ListSection>
-      <SectionTitle>문제 목록</SectionTitle>
-      <QuestionListWrapper>
+    <section css={sectionStyle}>
+      <h2 css={sectionTitleStyle}>문제 목록</h2>
+      <div css={listWrapperStyle}>
         {questions.map((q, index) => (
           <QuestionItem
             key={q.id}
@@ -92,11 +92,11 @@ const QuestionList = memo(({ questions, onChange }: QuestionListProps) => {
             isLast={index === questions.length - 1}
           />
         ))}
-      </QuestionListWrapper>
+      </div>
       <Button variant="secondary" onClick={handleAdd}>
         + 문제 추가
       </Button>
-    </ListSection>
+    </section>
   );
 });
 

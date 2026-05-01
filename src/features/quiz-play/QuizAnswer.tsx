@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import Input from '@/components/input';
 import Button from '@/components/button';
-import { AnswerWrapper } from './QuizAnswer.style';
+import { wrapperStyle } from './QuizAnswer.style';
 
 type QuizAnswerProps = {
   value: string;
@@ -18,7 +18,7 @@ const QuizAnswer = memo(({ value, onChange, onSubmit, disabled = false }: QuizAn
   };
 
   return (
-    <AnswerWrapper onKeyDown={handleKeyDown}>
+    <div css={wrapperStyle} onKeyDown={handleKeyDown}>
       <Input
         value={value}
         onChange={onChange}
@@ -28,7 +28,7 @@ const QuizAnswer = memo(({ value, onChange, onSubmit, disabled = false }: QuizAn
       <Button fullWidth onClick={onSubmit} disabled={disabled || value.trim() === ''}>
         제출
       </Button>
-    </AnswerWrapper>
+    </div>
   );
 });
 

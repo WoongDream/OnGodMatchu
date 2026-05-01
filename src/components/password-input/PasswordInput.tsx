@@ -2,12 +2,12 @@ import { memo, useEffect, useId, useMemo, useState } from 'react';
 import { evaluateStrength } from '@/lib/password';
 import type { PasswordInputProps } from './PasswordInput.type';
 import {
-  Wrapper,
-  Label,
-  InputBox,
-  StyledInput,
-  ToggleButton,
-  ErrorMessage,
+  wrapperStyle,
+  labelStyle,
+  inputBoxStyle,
+  inputStyle,
+  toggleButtonStyle,
+  errorMessageStyle,
 } from './PasswordInput.style';
 import StrengthMeter from './StrengthMeter';
 import RuleChecklist from './RuleChecklist';
@@ -49,21 +49,26 @@ const PasswordInput = memo(
     };
 
     return (
-      <Wrapper>
-        {label && <Label htmlFor={inputId}>{label}</Label>}
-        <InputBox>
-          <StyledInput
+      <div css={wrapperStyle}>
+        {label && (
+          <label css={labelStyle} htmlFor={inputId}>
+            {label}
+          </label>
+        )}
+        <div css={inputBoxStyle}>
+          <input
+            css={inputStyle(!!error)}
             id={inputId}
             type={revealed ? 'text' : 'password'}
             value={value}
             onChange={handleChange}
             placeholder={placeholder}
             disabled={disabled}
-            $hasError={!!error}
             autoComplete="new-password"
             maxLength={64}
           />
-          <ToggleButton
+          <button
+            css={toggleButtonStyle}
             type="button"
             onClick={handleToggleClick}
             disabled={disabled}
@@ -71,9 +76,9 @@ const PasswordInput = memo(
             aria-label={revealed ? '비밀번호 숨기기' : '비밀번호 표시'}
           >
             {revealed ? <EyeOffIcon /> : <EyeIcon />}
-          </ToggleButton>
-        </InputBox>
-        {error && <ErrorMessage>{error}</ErrorMessage>}
+          </button>
+        </div>
+        {error && <span css={errorMessageStyle}>{error}</span>}
         {showStrengthMeter && value.length > 0 && (
           <StrengthMeter
             score={strength.score}
@@ -82,7 +87,7 @@ const PasswordInput = memo(
           />
         )}
         {showChecklist && <RuleChecklist ruleStatus={ruleStatus} />}
-      </Wrapper>
+      </div>
     );
   },
 );

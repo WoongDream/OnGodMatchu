@@ -1,7 +1,13 @@
 import { memo } from 'react';
 import Input from '@/components/input';
 import ImageUpload from '@/components/image-upload';
-import { ItemWrapper, ItemHeader, ItemNumber, ItemActions, IconButton } from './QuestionItem.style';
+import {
+  wrapperStyle,
+  headerStyle,
+  numberStyle,
+  actionsStyle,
+  iconButtonStyle,
+} from './QuestionItem.style';
 
 type QuestionItemProps = {
   index: number;
@@ -36,21 +42,26 @@ const QuestionItem = memo(
     isLast,
   }: QuestionItemProps) => {
     return (
-      <ItemWrapper>
-        <ItemHeader>
-          <ItemNumber>{index + 1}번 문제</ItemNumber>
-          <ItemActions>
-            <IconButton onClick={onMoveUp} disabled={isFirst} aria-label="위로">
+      <div css={wrapperStyle}>
+        <div css={headerStyle}>
+          <span css={numberStyle}>{index + 1}번 문제</span>
+          <div css={actionsStyle}>
+            <button css={iconButtonStyle} onClick={onMoveUp} disabled={isFirst} aria-label="위로">
               ↑
-            </IconButton>
-            <IconButton onClick={onMoveDown} disabled={isLast} aria-label="아래로">
+            </button>
+            <button
+              css={iconButtonStyle}
+              onClick={onMoveDown}
+              disabled={isLast}
+              aria-label="아래로"
+            >
               ↓
-            </IconButton>
-            <IconButton onClick={onDelete} aria-label="삭제">
+            </button>
+            <button css={iconButtonStyle} onClick={onDelete} aria-label="삭제">
               ✕
-            </IconButton>
-          </ItemActions>
-        </ItemHeader>
+            </button>
+          </div>
+        </div>
         <ImageUpload
           label="문제 이미지 (선택)"
           previewUrl={imagePreviewUrl}
@@ -69,7 +80,7 @@ const QuestionItem = memo(
           onChange={onAnswerChange}
           placeholder="정답을 입력하세요"
         />
-      </ItemWrapper>
+      </div>
     );
   },
 );

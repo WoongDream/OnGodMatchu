@@ -1,7 +1,7 @@
 import { memo, useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Button from '@/components/button';
-import { PageWrapper } from '@/styles/layout';
+import { pageWrapperStyle } from '@/styles/layout';
 import QuizProgress from '@/features/quiz-play/QuizProgress';
 import QuizQuestion from '@/features/quiz-play/QuizQuestion';
 import QuizAnswer from '@/features/quiz-play/QuizAnswer';
@@ -59,7 +59,7 @@ const QuizPlayPage = memo(() => {
   };
 
   return (
-    <PageWrapper gap="lg">
+    <div css={pageWrapperStyle('lg')}>
       <QuizProgress current={currentIndex + 1} total={total} />
       <QuizQuestion question={currentQuestion} />
       <QuizAnswer
@@ -79,7 +79,7 @@ const QuizPlayPage = memo(() => {
           </Button>
         </>
       )}
-    </PageWrapper>
+    </div>
   );
 });
 

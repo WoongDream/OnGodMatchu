@@ -1,11 +1,12 @@
 import { memo } from 'react';
+import { Link } from 'react-router-dom';
 import {
-  SocialWrapper,
-  Divider,
-  DividerText,
-  SocialButton,
-  ConsentNotice,
-  ConsentLink,
+  wrapperStyle,
+  dividerStyle,
+  dividerTextStyle,
+  socialButtonStyle,
+  consentNoticeStyle,
+  consentLinkStyle,
 } from './SocialLoginButtons.style';
 import { buildOAuthAuthorizationUrl } from '@/api/oauth';
 import type { OAuthProvider } from '@/types';
@@ -16,24 +17,43 @@ const SocialLoginButtons = memo(() => {
   };
 
   return (
-    <SocialWrapper>
-      <Divider>
-        <DividerText>또는</DividerText>
-      </Divider>
-      <SocialButton type="button" $provider="google" onClick={() => handleSocialLogin('google')}>
+    <div css={wrapperStyle}>
+      <div css={dividerStyle}>
+        <span css={dividerTextStyle}>또는</span>
+      </div>
+      <button
+        type="button"
+        css={socialButtonStyle('google')}
+        onClick={() => handleSocialLogin('google')}
+      >
         Google로 계속하기
-      </SocialButton>
-      <SocialButton type="button" $provider="naver" onClick={() => handleSocialLogin('naver')}>
+      </button>
+      <button
+        type="button"
+        css={socialButtonStyle('naver')}
+        onClick={() => handleSocialLogin('naver')}
+      >
         네이버로 계속하기
-      </SocialButton>
-      <SocialButton type="button" $provider="kakao" onClick={() => handleSocialLogin('kakao')}>
+      </button>
+      <button
+        type="button"
+        css={socialButtonStyle('kakao')}
+        onClick={() => handleSocialLogin('kakao')}
+      >
         카카오로 계속하기
-      </SocialButton>
-      <ConsentNotice>
-        로그인 시 <ConsentLink to="/terms">이용약관</ConsentLink> 및{' '}
-        <ConsentLink to="/privacy">개인정보처리방침</ConsentLink>에 동의하는 것으로 간주됩니다.
-      </ConsentNotice>
-    </SocialWrapper>
+      </button>
+      <p css={consentNoticeStyle}>
+        로그인 시{' '}
+        <Link to="/terms" css={consentLinkStyle}>
+          이용약관
+        </Link>{' '}
+        및{' '}
+        <Link to="/privacy" css={consentLinkStyle}>
+          개인정보처리방침
+        </Link>
+        에 동의하는 것으로 간주됩니다.
+      </p>
+    </div>
   );
 });
 

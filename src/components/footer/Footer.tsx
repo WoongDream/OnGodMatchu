@@ -1,33 +1,40 @@
 import { memo } from 'react';
+import { Link } from 'react-router-dom';
 import {
-  FooterWrapper,
-  FooterInner,
-  BrandColumn,
-  BrandName,
-  CopyText,
-  MetaColumn,
-  FooterLink,
-  PrivacyLink,
-  ContactLink,
+  wrapperStyle,
+  innerStyle,
+  brandColumnStyle,
+  brandNameStyle,
+  copyTextStyle,
+  metaColumnStyle,
+  footerLinkStyle,
+  privacyLinkStyle,
+  contactLinkStyle,
 } from './Footer.style';
 
 const CONTACT_EMAIL = 'ongodmatchu@gmail.com';
 
 const Footer = memo(() => {
   return (
-    <FooterWrapper>
-      <FooterInner>
-        <BrandColumn>
-          <BrandName>OnGodMatchu</BrandName>
-          <CopyText>© 2026 OnGodMatchu. All rights reserved.</CopyText>
-        </BrandColumn>
-        <MetaColumn>
-          <FooterLink to="/terms">이용약관</FooterLink>
-          <PrivacyLink to="/privacy">개인정보처리방침</PrivacyLink>
-          <ContactLink href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</ContactLink>
-        </MetaColumn>
-      </FooterInner>
-    </FooterWrapper>
+    <footer css={wrapperStyle}>
+      <div css={innerStyle}>
+        <div css={brandColumnStyle}>
+          <span css={brandNameStyle}>OnGodMatchu</span>
+          <span css={copyTextStyle}>© 2026 OnGodMatchu. All rights reserved.</span>
+        </div>
+        <div css={metaColumnStyle}>
+          <Link to="/terms" css={footerLinkStyle}>
+            이용약관
+          </Link>
+          <Link to="/privacy" css={privacyLinkStyle}>
+            개인정보처리방침
+          </Link>
+          <a href={`mailto:${CONTACT_EMAIL}`} css={contactLinkStyle}>
+            {CONTACT_EMAIL}
+          </a>
+        </div>
+      </div>
+    </footer>
   );
 });
 

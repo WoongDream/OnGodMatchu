@@ -1,13 +1,13 @@
 import { memo } from 'react';
 import LegalDocument from '@/components/legal';
-import { PageWrapper } from '@/styles/layout';
+import { pageWrapperStyle } from '@/styles/layout';
 import privacyMarkdown from '@/content/legal/privacy.md?raw';
 
 const PrivacyPage = memo(() => {
   return (
-    <PageWrapper>
+    <div css={pageWrapperStyle()}>
       <LegalDocument source={privacyMarkdown} />
-    </PageWrapper>
+    </div>
   );
 });
 

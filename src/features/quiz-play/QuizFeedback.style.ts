@@ -1,25 +1,24 @@
-import styled from '@emotion/styled';
+import { css, type Theme } from '@emotion/react';
 import { text } from '@/styles/text';
 
-export const FeedbackWrapper = styled.div<{ $correct: boolean }>`
+export const wrapperStyle = (correct: boolean) => (theme: Theme) => css`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-  padding: ${({ theme }) => theme.spacing.md};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  background-color: ${({ $correct, theme }) =>
-    $correct ? `${theme.colors.status.success}18` : `${theme.colors.status.error}18`};
-  border: 1px solid
-    ${({ $correct, theme }) => ($correct ? theme.colors.status.success : theme.colors.status.error)};
+  gap: ${theme.spacing.sm};
+  padding: ${theme.spacing.md};
+  border-radius: ${theme.borderRadius.lg};
+  background-color: ${correct
+    ? `${theme.colors.status.success}18`
+    : `${theme.colors.status.error}18`};
+  border: 1px solid ${correct ? theme.colors.status.success : theme.colors.status.error};
 `;
 
-export const FeedbackResult = styled.span<{ $correct: boolean }>`
-  ${text({ size: 'md', weight: 'bold' })}
-  color: ${({ $correct, theme }) =>
-    $correct ? theme.colors.status.success : theme.colors.status.error};
+export const resultStyle = (correct: boolean) => (theme: Theme) => css`
+  ${text({ size: 'md', weight: 'bold' })({ theme })}
+  color: ${correct ? theme.colors.status.success : theme.colors.status.error};
 `;
 
-export const FeedbackAnswer = styled.span`
-  ${text({ size: 'sm' })}
-  color: ${({ theme }) => theme.colors.fg.secondary};
+export const answerStyle = (theme: Theme) => css`
+  ${text({ size: 'sm' })({ theme })}
+  color: ${theme.colors.fg.secondary};
 `;

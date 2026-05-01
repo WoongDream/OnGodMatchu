@@ -146,35 +146,70 @@ onClick?.();
 
 ## Emotion 스타일
 
-`css` prop 대신 `styled` 컴포넌트를 우선 사용한다.
+`styled` 컴포넌트 대신 `css` literal 을 우선 사용한다.
+사용처 JSX 에는 시맨틱 태그를 직접 작성하고 `css` prop 으로 스타일을 부착한다.
 
 ```tsx
-// X
-<div css={css``} />
+// X — styled 컴포넌트
+const Wrapper = styled.div`
+  color: ${({ theme }) => theme.colors.fg.primary};
+`;
+<Wrapper>...</Wrapper>;
 
-// O
-const StyledDiv = styled.div``;
+// O — css literal + 시맨틱 태그
+import { css, type Theme } from '@emotion/react';
+
+const wrapperStyle = (theme: Theme) => css`
+  color: ${theme.colors.fg.primary};
+`;
+<section css={wrapperStyle}>...</section>;
 ```
 
-### Emotion styled props
+`vite.config.ts` 의 React 플러그인과 `tsconfig.app.json` 에 `jsxImportSource: '@emotion/react'` 가 설정되어 있어,
+별도 `/** @jsxImportSource ... */` pragma 없이 모든 `.tsx` 에서 `css` prop 을 사용할 수 있다.
 
-스타일에만 사용하는 prop은 `$` prefix를 붙인다.
-`$` prefix props는 React가 유효한 HTML attribute로 인식하지 않아 DOM에 전달되지 않는다.
-`shouldForwardProp`은 `$` 없이 일반 prop 이름을 스타일에만 쓸 때 사용한다.
+### 정적 / 동적 / props 기반 패턴
 
 ```tsx
-// O - $ prefix 사용 (권장)
-const Box = styled.div<{ $isSelected: boolean }>`
-  background: ${({ $isSelected }) => ($isSelected ? 'blue' : 'white')};
+// 정적 (테마·props 무관)
+export const dividerStyle = css`
+  height: 1px;
+  background: #e4e4e7;
 `;
 
-// shouldForwardProp 이 필요한 경우
-const Box = styled('div', {
-  shouldForwardProp: (prop) => prop !== 'isSelected',
-})<{ isSelected: boolean }>`
-  background: ${({ isSelected }) => (isSelected ? 'blue' : 'white')};
+// 테마 의존 — Emotion 이 함수에 자동으로 theme 주입
+export const wrapperStyle = (theme: Theme) => css`
+  background: ${theme.colors.bg.secondary};
+`;
+<section css={wrapperStyle}>;
+
+// props + 테마 — 함수를 한 번 더 감싼다
+export const fillStyle = (percent: number) => (theme: Theme) => css`
+  width: ${percent}%;
+  background: ${theme.colors.accent.primary};
+`;
+<div css={fillStyle(percent)}>;
+
+// 조건부 — 배열로 합성
+<button css={[buttonBaseStyle, isPrimary && primaryButtonStyle]} />;
+```
+
+### `text()` 헬퍼
+
+`@/styles/text` 의 `text` 는 `({ size, weight, ... }) => ({ theme }) => css\`...\`` 형태이다.
+style 함수 내부에서 다음과 같이 호출한다.
+
+```tsx
+export const labelStyle = (theme: Theme) => css`
+  ${text({ size: 'sm', weight: 'semibold' })({ theme })}
+  color: ${theme.colors.fg.primary};
 `;
 ```
+
+### 금지 사항
+
+- `@emotion/styled` 직접 import 및 `styled.X` / `styled(Component)` 사용 금지
+- `$` prefix transient props · `shouldForwardProp` 사용 금지 (props 는 React 컴포넌트 레벨에서만 다루고 DOM 에 새지 않도록 함)
 
 ---
 
@@ -187,7 +222,7 @@ const Box = styled('div', {
 components/button/
 ├── index.ts          # export
 ├── Button.tsx        # 컴포넌트 및 핵심 로직
-├── Button.style.ts   # styled 컴포넌트
+├── Button.style.ts   # css literal 함수/상수 모음
 └── Button.type.ts    # Props 등 타입
 ```
 

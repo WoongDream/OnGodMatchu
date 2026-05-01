@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { FeedbackWrapper, FeedbackResult, FeedbackAnswer } from './QuizFeedback.style';
+import { wrapperStyle, resultStyle, answerStyle } from './QuizFeedback.style';
 
 type QuizFeedbackProps = {
   correct: boolean;
@@ -8,10 +8,10 @@ type QuizFeedbackProps = {
 
 const QuizFeedback = memo(({ correct, answer }: QuizFeedbackProps) => {
   return (
-    <FeedbackWrapper $correct={correct}>
-      <FeedbackResult $correct={correct}>{correct ? '정답이에요!' : '오답이에요'}</FeedbackResult>
-      {!correct && <FeedbackAnswer>정답: {answer}</FeedbackAnswer>}
-    </FeedbackWrapper>
+    <div css={wrapperStyle(correct)}>
+      <span css={resultStyle(correct)}>{correct ? '정답이에요!' : '오답이에요'}</span>
+      {!correct && <span css={answerStyle}>정답: {answer}</span>}
+    </div>
   );
 });
 

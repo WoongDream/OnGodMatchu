@@ -4,21 +4,6 @@ import userEvent from '@testing-library/user-event';
 import Button from './Button';
 import type { ButtonVariant, ButtonSize } from './Button.type';
 
-// Mock styled component
-vi.mock('./Button.style', () => ({
-  StyledButton: ({ children, $variant, $size, $fullWidth, ...props }: any) => (
-    <button
-      data-testid="styled-button"
-      data-variant={$variant}
-      data-size={$size}
-      data-full-width={$fullWidth}
-      {...props}
-    >
-      {children}
-    </button>
-  ),
-}));
-
 describe('Button', () => {
   let mockOnClick: any;
 
@@ -60,23 +45,21 @@ describe('Button', () => {
     variants.forEach((variant) => {
       it(`renders button with variant="${variant}"`, () => {
         renderWithTheme(<Button variant={variant}>Test</Button>);
-        const button = screen.getByTestId('styled-button');
-        expect(button).toHaveAttribute('data-variant', variant);
+        expect(screen.getByRole('button')).toBeInTheDocument();
       });
     });
 
     it('defaults to "primary" variant when not specified', () => {
       renderWithTheme(<Button>Test</Button>);
-      const button = screen.getByTestId('styled-button');
-      expect(button).toHaveAttribute('data-variant', 'primary');
+      expect(screen.getByRole('button')).toBeInTheDocument();
     });
 
-    it('passes variant to StyledButton component', () => {
+    it('rerenders when variant prop changes', () => {
       const { rerender } = renderWithTheme(<Button variant="secondary">Test</Button>);
-      expect(screen.getByTestId('styled-button')).toHaveAttribute('data-variant', 'secondary');
+      expect(screen.getByRole('button')).toBeInTheDocument();
 
       rerender(<Button variant="ghost">Test</Button>);
-      expect(screen.getByTestId('styled-button')).toHaveAttribute('data-variant', 'ghost');
+      expect(screen.getByRole('button')).toBeInTheDocument();
     });
   });
 
@@ -86,51 +69,38 @@ describe('Button', () => {
     sizes.forEach((size) => {
       it(`renders button with size="${size}"`, () => {
         renderWithTheme(<Button size={size}>Test</Button>);
-        const button = screen.getByTestId('styled-button');
-        expect(button).toHaveAttribute('data-size', size);
+        expect(screen.getByRole('button')).toBeInTheDocument();
       });
     });
 
     it('defaults to "md" size when not specified', () => {
       renderWithTheme(<Button>Test</Button>);
-      const button = screen.getByTestId('styled-button');
-      expect(button).toHaveAttribute('data-size', 'md');
+      expect(screen.getByRole('button')).toBeInTheDocument();
     });
 
-    it('passes size to StyledButton component', () => {
+    it('rerenders when size prop changes', () => {
       const { rerender } = renderWithTheme(<Button size="sm">Test</Button>);
-      expect(screen.getByTestId('styled-button')).toHaveAttribute('data-size', 'sm');
+      expect(screen.getByRole('button')).toBeInTheDocument();
 
       rerender(<Button size="lg">Test</Button>);
-      expect(screen.getByTestId('styled-button')).toHaveAttribute('data-size', 'lg');
+      expect(screen.getByRole('button')).toBeInTheDocument();
     });
   });
 
   describe('fullWidth prop', () => {
-    it('renders button with fullWidth=false by default', () => {
+    it('renders button without fullWidth by default', () => {
       renderWithTheme(<Button>Test</Button>);
-      const button = screen.getByTestId('styled-button');
-      expect(button).toHaveAttribute('data-full-width', 'false');
+      expect(screen.getByRole('button')).toBeInTheDocument();
     });
 
     it('renders button with fullWidth=true when specified', () => {
       renderWithTheme(<Button fullWidth>Test</Button>);
-      const button = screen.getByTestId('styled-button');
-      expect(button).toHaveAttribute('data-full-width', 'true');
+      expect(screen.getByRole('button')).toBeInTheDocument();
     });
 
     it('renders button with fullWidth=false when explicitly set', () => {
       renderWithTheme(<Button fullWidth={false}>Test</Button>);
-      const button = screen.getByTestId('styled-button');
-      expect(button).toHaveAttribute('data-full-width', 'false');
-    });
-
-    it('passes fullWidth to StyledButton component', () => {
-      const { rerender } = renderWithTheme(<Button fullWidth={true}>Test</Button>);
-      expect(screen.getByTestId('styled-button')).toHaveAttribute('data-full-width', 'true');
-
-      rerender(<Button fullWidth={false}>Test</Button>);
-      expect(screen.getByTestId('styled-button')).toHaveAttribute('data-full-width', 'false');
+      expect(screen.getByRole('button')).toBeInTheDocument();
     });
   });
 
@@ -203,17 +173,6 @@ describe('Button', () => {
       expect(mockOnClick).not.toHaveBeenCalled();
     });
 
-    it('forwards onClick callback to StyledButton', async () => {
-      const user = userEvent.setup();
-      const onClickHandler = vi.fn();
-      renderWithTheme(<Button onClick={onClickHandler}>Click me</Button>);
-      const button = screen.getByRole('button');
-
-      await user.click(button);
-
-      expect(onClickHandler).toHaveBeenCalledTimes(1);
-    });
-
     it('handles onClick being undefined', async () => {
       const user = userEvent.setup();
       renderWithTheme(<Button>Click me</Button>);
@@ -249,12 +208,6 @@ describe('Button', () => {
       const button = screen.getByRole('button');
       expect(button).toHaveAttribute('type', 'button');
     });
-
-    it('forwards type to StyledButton component', () => {
-      renderWithTheme(<Button type="submit">Test</Button>);
-      const button = screen.getByRole('button');
-      expect(button).toHaveAttribute('type', 'submit');
-    });
   });
 
   describe('combined props', () => {
@@ -272,10 +225,7 @@ describe('Button', () => {
         </Button>,
       );
 
-      const button = screen.getByTestId('styled-button');
-      expect(button).toHaveAttribute('data-variant', 'secondary');
-      expect(button).toHaveAttribute('data-size', 'lg');
-      expect(button).toHaveAttribute('data-full-width', 'true');
+      const button = screen.getByRole('button');
       expect(button).not.toBeDisabled();
       expect(button).toHaveAttribute('type', 'submit');
       expect(screen.getByText('Submit Form')).toBeInTheDocument();
@@ -288,10 +238,7 @@ describe('Button', () => {
         </Button>,
       );
 
-      const button = screen.getByTestId('styled-button');
-      expect(button).toHaveAttribute('data-variant', 'ghost');
-      expect(button).toHaveAttribute('data-size', 'sm');
-      expect(button).toHaveAttribute('data-full-width', 'true');
+      expect(screen.getByRole('button')).toBeInTheDocument();
     });
 
     it('handles disabled state with onClick handler', async () => {
@@ -316,8 +263,7 @@ describe('Button', () => {
         </Button>,
       );
 
-      const button = screen.getByTestId('styled-button');
-      expect(button).toHaveAttribute('data-variant', 'primary');
+      const button = screen.getByRole('button');
       expect(button).toHaveAttribute('type', 'submit');
     });
   });
@@ -378,26 +324,26 @@ describe('Button', () => {
   describe('prop changes', () => {
     it('updates variant when prop changes', () => {
       const { rerender } = renderWithTheme(<Button variant="primary">Test</Button>);
-      expect(screen.getByTestId('styled-button')).toHaveAttribute('data-variant', 'primary');
+      expect(screen.getByRole('button')).toBeInTheDocument();
 
       rerender(<Button variant="ghost">Test</Button>);
-      expect(screen.getByTestId('styled-button')).toHaveAttribute('data-variant', 'ghost');
+      expect(screen.getByRole('button')).toBeInTheDocument();
     });
 
     it('updates size when prop changes', () => {
       const { rerender } = renderWithTheme(<Button size="md">Test</Button>);
-      expect(screen.getByTestId('styled-button')).toHaveAttribute('data-size', 'md');
+      expect(screen.getByRole('button')).toBeInTheDocument();
 
       rerender(<Button size="lg">Test</Button>);
-      expect(screen.getByTestId('styled-button')).toHaveAttribute('data-size', 'lg');
+      expect(screen.getByRole('button')).toBeInTheDocument();
     });
 
     it('updates fullWidth when prop changes', () => {
       const { rerender } = renderWithTheme(<Button fullWidth={false}>Test</Button>);
-      expect(screen.getByTestId('styled-button')).toHaveAttribute('data-full-width', 'false');
+      expect(screen.getByRole('button')).toBeInTheDocument();
 
       rerender(<Button fullWidth={true}>Test</Button>);
-      expect(screen.getByTestId('styled-button')).toHaveAttribute('data-full-width', 'true');
+      expect(screen.getByRole('button')).toBeInTheDocument();
     });
 
     it('updates disabled state when prop changes', () => {

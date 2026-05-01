@@ -1,10 +1,10 @@
-import styled from '@emotion/styled';
+import { css, type Theme } from '@emotion/react';
 
-export const FilterWrapper = styled.div`
+export const wrapperStyle = (theme: Theme) => css`
   display: flex;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: ${theme.spacing.sm};
   overflow-x: auto;
-  padding: ${({ theme }) => theme.spacing.md} 0;
+  padding: ${theme.spacing.md} 0;
   scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;

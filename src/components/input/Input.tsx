@@ -1,6 +1,12 @@
-import type { InputProps } from './Input.type';
-import { InputWrapper, Label, LabelRow, StyledInput, ErrorMessage } from './Input.style';
 import { memo } from 'react';
+import type { InputProps } from './Input.type';
+import {
+  wrapperStyle,
+  labelRowStyle,
+  labelStyle,
+  inputStyle,
+  errorMessageStyle,
+} from './Input.style';
 
 const Input = memo(
   ({
@@ -18,23 +24,23 @@ const Input = memo(
     };
 
     return (
-      <InputWrapper>
+      <div css={wrapperStyle}>
         {label && (
-          <LabelRow>
-            <Label>{label}</Label>
+          <div css={labelRowStyle}>
+            <label css={labelStyle}>{label}</label>
             {labelTrailing}
-          </LabelRow>
+          </div>
         )}
-        <StyledInput
+        <input
+          css={inputStyle(!!error)}
           type={type}
           value={value}
           onChange={handleChange}
           placeholder={placeholder}
           disabled={disabled}
-          $hasError={!!error}
         />
-        {error && <ErrorMessage>{error}</ErrorMessage>}
-      </InputWrapper>
+        {error && <span css={errorMessageStyle}>{error}</span>}
+      </div>
     );
   },
 );
