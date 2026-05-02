@@ -4,7 +4,10 @@ import type { Category } from '@/types';
 import Input from '@/components/input';
 import ChipButton from '@/components/chip-button';
 import ImageUpload from '@/components/image-upload';
-import { FormSection, SectionTitle, CategoryRow } from './QuizInfoForm.style';
+import useCategories from '@/hooks/useCategories';
+import { sectionStyle, sectionTitleStyle, categoryRowStyle } from './QuizInfoForm.style';
+
+const FALLBACK_CATEGORIES = CATEGORIES.map((c) => ({ key: c.value, label: c.label }));
 
 type QuizInfoFormProps = {
   title: string;
@@ -30,9 +33,12 @@ const QuizInfoForm = memo(
     onThumbnailChange,
     onThumbnailRemove,
   }: QuizInfoFormProps) => {
+    const { categories } = useCategories();
+    const items = categories ?? FALLBACK_CATEGORIES;
+
     return (
-      <FormSection>
-        <SectionTitle>퀴즈 정보</SectionTitle>
+      <section css={sectionStyle}>
+        <h2 css={sectionTitleStyle}>퀴즈 정보</h2>
         <ImageUpload
           label="썸네일 (선택)"
           previewUrl={thumbnailPreviewUrl}
@@ -51,18 +57,18 @@ const QuizInfoForm = memo(
           onChange={onDescriptionChange}
           placeholder="퀴즈에 대한 설명을 입력하세요"
         />
-        <CategoryRow>
-          {CATEGORIES.map(({ value, label }) => (
+        <div css={categoryRowStyle}>
+          {items.map(({ key, label }) => (
             <ChipButton
-              key={value}
-              active={category === value}
-              onClick={() => onCategoryChange(value)}
+              key={key}
+              active={category === key}
+              onClick={() => onCategoryChange(key as Category)}
             >
               {label}
             </ChipButton>
           ))}
-        </CategoryRow>
-      </FormSection>
+        </div>
+      </section>
     );
   },
 );

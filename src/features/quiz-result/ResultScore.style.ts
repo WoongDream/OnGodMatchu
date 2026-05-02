@@ -1,31 +1,31 @@
-import styled from '@emotion/styled';
+import { css, type Theme } from '@emotion/react';
 import { text } from '@/styles/text';
 
-export const ScoreWrapper = styled.div`
+export const wrapperStyle = (theme: Theme) => css`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing['2xl']} 0;
+  gap: ${theme.spacing.md};
+  padding: ${theme.spacing['2xl']} 0;
 `;
 
-export const ScoreLabel = styled.p`
-  ${text({ size: 'md', weight: 'medium' })}
-  color: ${({ theme }) => theme.colors.fg.secondary};
+export const labelStyle = (theme: Theme) => css`
+  ${text({ size: 'md', weight: 'medium' })({ theme })}
+  color: ${theme.colors.fg.secondary};
 `;
 
-export const ScoreNumber = styled.p`
-  ${text({ size: 'xl', weight: 'bold' })}
-  color: ${({ theme }) => theme.colors.accent.primary};
+export const numberStyle = (theme: Theme) => css`
+  ${text({ size: 'xl', weight: 'bold' })({ theme })}
+  color: ${theme.colors.accent.primary};
   font-size: 4rem;
 `;
 
-export const ScoreTotal = styled.p`
-  ${text({ size: 'lg', weight: 'medium' })}
-  color: ${({ theme }) => theme.colors.fg.secondary};
+export const totalStyle = (theme: Theme) => css`
+  ${text({ size: 'lg', weight: 'medium' })({ theme })}
+  color: ${theme.colors.fg.secondary};
 `;
 
-export const ScoreMessage = styled.p`
-  ${text({ size: 'md' })}
-  color: ${({ theme }) => theme.colors.fg.primary};
+export const messageStyle = (theme: Theme) => css`
+  ${text({ size: 'md' })({ theme })}
+  color: ${theme.colors.fg.primary};
 `;

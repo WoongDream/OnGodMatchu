@@ -1,5 +1,4 @@
-import styled from '@emotion/styled';
-import type { Theme } from '@/styles/theme';
+import { css, type Theme } from '@emotion/react';
 import { text } from '@/styles/text';
 import type { PasswordStrengthScore } from './PasswordInput.type';
 
@@ -11,44 +10,46 @@ const STRENGTH_COLOR_KEYS: readonly (keyof Theme['colors']['strength'])[] = [
   'strong',
 ];
 
-export const MeterWrapper = styled.div`
+export const meterWrapperStyle = (theme: Theme) => css`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
+  gap: ${theme.spacing.xs};
   width: 100%;
 `;
 
-export const BarRow = styled.div`
+export const barRowStyle = (theme: Theme) => css`
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: ${({ theme }) => theme.spacing.xs};
+  gap: ${theme.spacing.xs};
 `;
 
-export const BarSegment = styled.span<{ $filled: boolean; $score: PasswordStrengthScore }>`
-  height: 0.375rem;
-  border-radius: ${({ theme }) => theme.borderRadius.sm};
-  background-color: ${({ $filled, $score, theme }) =>
-    $filled ? theme.colors.strength[STRENGTH_COLOR_KEYS[$score]] : theme.colors.border.primary};
-  transition: background-color 0.15s;
-`;
+export const barSegmentStyle =
+  (filled: boolean, score: PasswordStrengthScore) => (theme: Theme) => css`
+    height: 0.375rem;
+    border-radius: ${theme.borderRadius.sm};
+    background-color: ${filled
+      ? theme.colors.strength[STRENGTH_COLOR_KEYS[score]]
+      : theme.colors.border.primary};
+    transition: background-color 0.15s;
+  `;
 
-export const InfoRow = styled.div`
+export const infoRowStyle = (theme: Theme) => css`
   display: flex;
   justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: ${theme.spacing.sm};
 `;
 
-export const StrengthLabel = styled.span<{ $score: PasswordStrengthScore }>`
-  ${text({ size: 'xs', weight: 'medium' })}
-  color: ${({ $score, theme }) => theme.colors.strength[STRENGTH_COLOR_KEYS[$score]]};
+export const strengthLabelStyle = (score: PasswordStrengthScore) => (theme: Theme) => css`
+  ${text({ size: 'xs', weight: 'medium' })({ theme })}
+  color: ${theme.colors.strength[STRENGTH_COLOR_KEYS[score]]};
 `;
 
-export const CrackTimeText = styled.span`
-  ${text({ size: 'xs' })}
-  color: ${({ theme }) => theme.colors.fg.tertiary};
+export const crackTimeTextStyle = (theme: Theme) => css`
+  ${text({ size: 'xs' })({ theme })}
+  color: ${theme.colors.fg.tertiary};
 `;
 
-export const FeedbackText = styled.span`
-  ${text({ size: 'xs' })}
-  color: ${({ theme }) => theme.colors.status.warning};
+export const feedbackTextStyle = (theme: Theme) => css`
+  ${text({ size: 'xs' })({ theme })}
+  color: ${theme.colors.status.warning};
 `;

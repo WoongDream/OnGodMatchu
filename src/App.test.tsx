@@ -65,8 +65,9 @@ vi.mock('@/components/footer', () => ({
 }));
 
 vi.mock('@/styles/layout', () => ({
-  AppShell: ({ children }: any) => <div data-testid="app-shell">{children}</div>,
-  PageContent: ({ children }: any) => <div data-testid="page-content">{children}</div>,
+  appShellStyle: () => ({}),
+  pageContentStyle: () => ({}),
+  pageWrapperStyle: () => () => ({}),
 }));
 
 vi.mock('@/styles/theme', () => ({
@@ -96,6 +97,11 @@ vi.mock('@/components/protected-route/ProtectedRoute', () => ({
   default: mockProtectedRouteImpl,
 }));
 
+// AppShell/PageContent are no longer styled wrappers — they're <div>/<main> with css prop.
+// Identify them by structure / role instead of data-testid.
+const getAppShell = () => screen.getByTestId('browser-router').firstElementChild as HTMLElement;
+const getPageContent = () => screen.getByRole('main');
+
 describe('App', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -110,45 +116,45 @@ describe('App', () => {
 
     it('renders AppShell container', () => {
       renderWithTheme(<App />);
-      expect(screen.getByTestId('app-shell')).toBeInTheDocument();
+      expect(getAppShell()).toBeInTheDocument();
     });
 
     it('renders Header component inside AppShell', () => {
       renderWithTheme(<App />);
-      const appShell = screen.getByTestId('app-shell');
+      const appShell = getAppShell();
       expect(within(appShell).getByTestId('header')).toBeInTheDocument();
     });
 
     it('renders PageContent container inside AppShell', () => {
       renderWithTheme(<App />);
-      const appShell = screen.getByTestId('app-shell');
-      expect(within(appShell).getByTestId('page-content')).toBeInTheDocument();
+      const appShell = getAppShell();
+      expect(within(appShell).getByRole('main')).toBeInTheDocument();
     });
 
     it('renders Footer component inside AppShell', () => {
       renderWithTheme(<App />);
-      const appShell = screen.getByTestId('app-shell');
+      const appShell = getAppShell();
       expect(within(appShell).getByTestId('footer')).toBeInTheDocument();
     });
 
     it('renders Footer outside of PageContent (sibling of routes)', () => {
       renderWithTheme(<App />);
-      const pageContent = screen.getByTestId('page-content');
+      const pageContent = getPageContent();
       expect(within(pageContent).queryByTestId('footer')).not.toBeInTheDocument();
     });
 
     it('renders Routes inside PageContent', () => {
       renderWithTheme(<App />);
-      const pageContent = screen.getByTestId('page-content');
+      const pageContent = getPageContent();
       expect(within(pageContent).getByTestId('routes')).toBeInTheDocument();
     });
 
     it('maintains correct DOM hierarchy', () => {
       renderWithTheme(<App />);
       const browserRouter = screen.getByTestId('browser-router');
-      const appShell = within(browserRouter).getByTestId('app-shell');
+      const appShell = browserRouter.firstElementChild as HTMLElement;
       const header = within(appShell).getByTestId('header');
-      const pageContent = within(appShell).getByTestId('page-content');
+      const pageContent = within(appShell).getByRole('main');
       const routes = within(pageContent).getByTestId('routes');
       const footer = within(appShell).getByTestId('footer');
 
@@ -389,7 +395,7 @@ describe('App', () => {
 
     it('Header is rendered inside AppShell', () => {
       renderWithTheme(<App />);
-      const appShell = screen.getByTestId('app-shell');
+      const appShell = getAppShell();
       expect(within(appShell).getByTestId('header')).toBeInTheDocument();
     });
   });
@@ -402,7 +408,7 @@ describe('App', () => {
 
     it('Footer is rendered inside AppShell', () => {
       renderWithTheme(<App />);
-      const appShell = screen.getByTestId('app-shell');
+      const appShell = getAppShell();
       expect(within(appShell).getByTestId('footer')).toBeInTheDocument();
     });
   });
@@ -410,7 +416,7 @@ describe('App', () => {
   describe('edge cases', () => {
     it('renders successfully when all mocks are in place', () => {
       renderWithTheme(<App />);
-      expect(screen.getByTestId('app-shell')).toBeInTheDocument();
+      expect(getAppShell()).toBeInTheDocument();
     });
 
     it('does not render null or undefined at top level', () => {
@@ -421,11 +427,11 @@ describe('App', () => {
     it('maintains structure with different auth states', () => {
       setAuthState({ isLoggedIn: false });
       const { rerender } = renderWithTheme(<App />);
-      expect(screen.getByTestId('app-shell')).toBeInTheDocument();
+      expect(getAppShell()).toBeInTheDocument();
 
       setAuthState({ isLoggedIn: true });
       rerender(<App />);
-      expect(screen.getByTestId('app-shell')).toBeInTheDocument();
+      expect(getAppShell()).toBeInTheDocument();
     });
 
     it('renders multiple routes independently', () => {
@@ -456,8 +462,8 @@ describe('App', () => {
 
     it('Layout mocks are used', () => {
       renderWithTheme(<App />);
-      expect(screen.getByTestId('app-shell')).toBeInTheDocument();
-      expect(screen.getByTestId('page-content')).toBeInTheDocument();
+      expect(getAppShell()).toBeInTheDocument();
+      expect(getPageContent()).toBeInTheDocument();
     });
 
     it('all page mocks are used when logged in', () => {

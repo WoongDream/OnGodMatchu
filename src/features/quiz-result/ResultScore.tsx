@@ -1,10 +1,10 @@
 import { memo } from 'react';
 import {
-  ScoreWrapper,
-  ScoreLabel,
-  ScoreNumber,
-  ScoreTotal,
-  ScoreMessage,
+  wrapperStyle,
+  labelStyle,
+  numberStyle,
+  totalStyle,
+  messageStyle,
 } from './ResultScore.style';
 
 type ResultScoreProps = {
@@ -28,12 +28,12 @@ const getScoreMessage = (scores: number, total: number): string => {
 
 const ResultScore = memo(({ scores, total }: ResultScoreProps) => {
   return (
-    <ScoreWrapper>
-      <ScoreLabel>최종 점수</ScoreLabel>
-      <ScoreNumber>{scores}</ScoreNumber>
-      <ScoreTotal>/ {total}</ScoreTotal>
-      <ScoreMessage>{getScoreMessage(scores, total)}</ScoreMessage>
-    </ScoreWrapper>
+    <div css={wrapperStyle}>
+      <p css={labelStyle}>최종 점수</p>
+      <p css={numberStyle}>{scores}</p>
+      <p css={totalStyle}>/ {total}</p>
+      <p css={messageStyle}>{getScoreMessage(scores, total)}</p>
+    </div>
   );
 });
 

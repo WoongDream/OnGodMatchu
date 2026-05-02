@@ -1,7 +1,7 @@
 ## Absolute Rules
 - Wrap every component with `React.memo`
 - New file in `components/` → always add `.stories.tsx`
-- Emotion `styled` only — no `css` prop
+- Emotion `css` prop only — no `styled` components (style files export `(theme) => css\`...\`` functions; JSX uses semantic tags with `css={fooStyle}`)
 
 ## Commands
 `npm run dev` · `build` · `lint:fix` · `storybook`

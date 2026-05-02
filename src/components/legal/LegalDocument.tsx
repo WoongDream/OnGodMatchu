@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Article } from './LegalDocument.style';
+import { articleStyle } from './LegalDocument.style';
 
 interface LegalDocumentProps {
   source: string;
@@ -9,9 +9,9 @@ interface LegalDocumentProps {
 
 const LegalDocument = memo(({ source }: LegalDocumentProps) => {
   return (
-    <Article>
+    <article css={articleStyle}>
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{source}</ReactMarkdown>
-    </Article>
+    </article>
   );
 });
 

@@ -1,7 +1,7 @@
 import { memo, useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Button from '@/components/button';
-import { PageWrapper } from '@/styles/layout';
+import { pageWrapperStyle } from '@/styles/layout';
 import QuizProgress from '@/features/quiz-play/QuizProgress';
 import QuizQuestion from '@/features/quiz-play/QuizQuestion';
 import QuizAnswer from '@/features/quiz-play/QuizAnswer';
@@ -58,17 +58,19 @@ const QuizPlayPage = memo(() => {
     setSubmitState({ status: 'idle' });
   };
 
+  const isAnswered = submitState.status !== 'idle';
+
   return (
-    <PageWrapper gap="lg">
+    <div css={pageWrapperStyle('lg')}>
       <QuizProgress current={currentIndex + 1} total={total} />
-      <QuizQuestion question={currentQuestion} />
+      <QuizQuestion question={currentQuestion} revealAnswer={isAnswered} />
       <QuizAnswer
         value={inputValue}
         onChange={setInputValue}
         onSubmit={handleSubmit}
-        disabled={submitState.status !== 'idle'}
+        disabled={isAnswered}
       />
-      {submitState.status !== 'idle' && (
+      {isAnswered && (
         <>
           <QuizFeedback
             correct={submitState.status === 'correct'}
@@ -79,7 +81,7 @@ const QuizPlayPage = memo(() => {
           </Button>
         </>
       )}
-    </PageWrapper>
+    </div>
   );
 });
 

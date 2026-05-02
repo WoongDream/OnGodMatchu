@@ -24,6 +24,7 @@ const createMockQuiz = (overrides?: Partial<Quiz>): Quiz => ({
   title: 'Sample Quiz',
   description: 'A sample quiz for testing',
   category: 'game',
+  thumbnailKey: 'quiz-thumbnails/abc',
   thumbnailUrl: 'https://example.com/thumb.jpg',
   playCount: 42,
   createdAt: '2024-01-01T00:00:00Z',
@@ -192,7 +193,7 @@ describe('QuizList', () => {
         createMockQuiz({ id: 1, playCount: 0, title: 'Zero Plays' }),
         createMockQuiz({ id: 2, playCount: 999999, title: 'Many Plays' }),
         createMockQuiz({ id: 3, category: 'music', title: 'Music Quiz' }),
-        createMockQuiz({ id: 4, category: 'culture', title: 'Culture Quiz' }),
+        createMockQuiz({ id: 4, category: 'movie', title: 'Movie Quiz' }),
       ];
       renderWithTheme(<QuizList quizzes={quizzes} />);
 

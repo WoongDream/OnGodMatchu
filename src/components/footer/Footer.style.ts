@@ -1,80 +1,79 @@
-import styled from '@emotion/styled';
-import { Link } from 'react-router-dom';
+import { css, type Theme } from '@emotion/react';
 import { text } from '@/styles/text';
 
-export const FooterWrapper = styled.footer`
+export const wrapperStyle = (theme: Theme) => css`
   width: 100%;
-  background-color: ${({ theme }) => theme.colors.bg.secondary};
-  border-top: 1px solid ${({ theme }) => theme.colors.border.primary};
+  background-color: ${theme.colors.bg.secondary};
+  border-top: 1px solid ${theme.colors.border.primary};
 `;
 
-export const FooterInner = styled.div`
+export const innerStyle = (theme: Theme) => css`
   width: 100%;
-  max-width: ${({ theme }) => theme.breakpoints.desktop};
+  max-width: ${theme.breakpoints.desktop};
   margin: 0 auto;
-  padding: ${({ theme }) => `${theme.spacing.lg} ${theme.spacing.md}`};
+  padding: ${theme.spacing.lg} ${theme.spacing.md};
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: ${theme.spacing.sm};
 
-  @media (min-width: ${({ theme }) => theme.breakpoints.tablet}) {
-    padding: ${({ theme }) => `${theme.spacing.lg} ${theme.spacing.xl}`};
+  @media (min-width: ${theme.breakpoints.tablet}) {
+    padding: ${theme.spacing.lg} ${theme.spacing.xl};
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    gap: ${({ theme }) => theme.spacing.lg};
+    gap: ${theme.spacing.lg};
   }
 `;
 
-export const BrandColumn = styled.div`
+export const brandColumnStyle = (theme: Theme) => css`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
+  gap: ${theme.spacing.xs};
 `;
 
-export const BrandName = styled.span`
-  ${text({ size: 'sm', weight: 'semibold' })}
-  color: ${({ theme }) => theme.colors.fg.primary};
+export const brandNameStyle = (theme: Theme) => css`
+  ${text({ size: 'sm', weight: 'semibold' })({ theme })}
+  color: ${theme.colors.fg.primary};
 `;
 
-export const CopyText = styled.span`
-  ${text({ size: 'xs' })}
-  color: ${({ theme }) => theme.colors.fg.tertiary};
+export const copyTextStyle = (theme: Theme) => css`
+  ${text({ size: 'xs' })({ theme })}
+  color: ${theme.colors.fg.tertiary};
 `;
 
-export const MetaColumn = styled.div`
+export const metaColumnStyle = (theme: Theme) => css`
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${theme.spacing.md};
 `;
 
-export const FooterLink = styled(Link)`
-  ${text({ size: 'xs' })}
-  color: ${({ theme }) => theme.colors.fg.secondary};
+export const footerLinkStyle = (theme: Theme) => css`
+  ${text({ size: 'xs' })({ theme })}
+  color: ${theme.colors.fg.secondary};
 
   &:hover {
-    color: ${({ theme }) => theme.colors.accent.primary};
+    color: ${theme.colors.accent.primary};
     text-decoration: underline;
   }
 `;
 
-export const PrivacyLink = styled(Link)`
-  ${text({ size: 'xs', weight: 'bold' })}
-  color: ${({ theme }) => theme.colors.fg.primary};
+export const privacyLinkStyle = (theme: Theme) => css`
+  ${text({ size: 'xs', weight: 'bold' })({ theme })}
+  color: ${theme.colors.fg.primary};
 
   &:hover {
-    color: ${({ theme }) => theme.colors.accent.primary};
+    color: ${theme.colors.accent.primary};
     text-decoration: underline;
   }
 `;
 
-export const ContactLink = styled.a`
-  ${text({ size: 'xs' })}
-  color: ${({ theme }) => theme.colors.fg.secondary};
+export const contactLinkStyle = (theme: Theme) => css`
+  ${text({ size: 'xs' })({ theme })}
+  color: ${theme.colors.fg.secondary};
 
   &:hover {
-    color: ${({ theme }) => theme.colors.accent.primary};
+    color: ${theme.colors.accent.primary};
     text-decoration: underline;
   }
 `;

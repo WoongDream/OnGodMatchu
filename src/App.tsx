@@ -3,7 +3,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { theme } from '@/styles/theme';
-import { AppShell, PageContent } from '@/styles/layout';
+import { appShellStyle, pageContentStyle } from '@/styles/layout';
 import MainPage from './pages/MainPage';
 import QuizPlayPage from './pages/QuizPlayPage';
 import QuizResultPage from './pages/QuizResultPage';
@@ -19,9 +19,9 @@ const App = () => {
   return (
     <ThemeProvider theme={theme}>
       <BrowserRouter>
-        <AppShell>
+        <div css={appShellStyle}>
           <Header />
-          <PageContent>
+          <main css={pageContentStyle}>
             <Routes>
               <Route path="/" element={<MainPage />} />
               <Route
@@ -40,9 +40,9 @@ const App = () => {
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />
             </Routes>
-          </PageContent>
+          </main>
           <Footer />
-        </AppShell>
+        </div>
       </BrowserRouter>
     </ThemeProvider>
   );

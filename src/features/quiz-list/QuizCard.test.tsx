@@ -2,36 +2,11 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Mock } from 'vitest';
 import { renderWithTheme, screen } from '@/test/renderWithTheme';
 import userEvent from '@testing-library/user-event';
-import type { ReactNode } from 'react';
 import QuizCard from './QuizCard';
 import type { Quiz } from '@/types';
 
-// Mock styled components
-vi.mock('./QuizCard.style', () => ({
-  CardWrapper: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
-    <article onClick={onClick} data-testid="card-wrapper">
-      {children}
-    </article>
-  ),
-  Thumbnail: ({ children }: { children: ReactNode }) => (
-    <div data-testid="thumbnail">{children}</div>
-  ),
-  CardTitle: ({ children }: { children: ReactNode }) => (
-    <h3 data-testid="card-title">{children}</h3>
-  ),
-  CardDescription: ({ children }: { children: ReactNode }) => (
-    <p data-testid="card-description">{children}</p>
-  ),
-  CardMeta: ({ children }: { children: ReactNode }) => (
-    <div data-testid="card-meta">{children}</div>
-  ),
-  Category: ({ children }: { children: ReactNode }) => (
-    <span data-testid="category">{children}</span>
-  ),
-  PlayCount: ({ children }: { children: ReactNode }) => (
-    <span data-testid="play-count">{children}</span>
-  ),
-}));
+const getCard = () => screen.getByRole('article');
+const getTitle = () => screen.getByRole('heading', { level: 3 });
 
 describe('QuizCard', () => {
   let mockOnClick: Mock<(id: number) => void>;
@@ -41,6 +16,7 @@ describe('QuizCard', () => {
     title: 'Test Quiz Title',
     description: 'Test quiz description',
     category: 'game',
+    thumbnailKey: 'quiz-thumbnails/abc',
     thumbnailUrl: 'https://example.com/image.jpg',
     playCount: 1234,
     createdAt: '2024-01-01T00:00:00Z',
@@ -52,9 +28,9 @@ describe('QuizCard', () => {
   });
 
   describe('rendering', () => {
-    it('renders CardWrapper component', () => {
+    it('renders the card article landmark', () => {
       renderWithTheme(<QuizCard quiz={mockQuiz} onClick={mockOnClick} />);
-      expect(screen.getByTestId('card-wrapper')).toBeInTheDocument();
+      expect(getCard()).toBeInTheDocument();
     });
 
     it('renders quiz title', () => {
@@ -72,14 +48,15 @@ describe('QuizCard', () => {
       expect(screen.getByText('game')).toBeInTheDocument();
     });
 
-    it('renders Thumbnail component', () => {
+    it('renders the thumbnail image when present', () => {
       renderWithTheme(<QuizCard quiz={mockQuiz} onClick={mockOnClick} />);
-      expect(screen.getByTestId('thumbnail')).toBeInTheDocument();
+      expect(screen.getByRole('img')).toBeInTheDocument();
     });
 
-    it('renders CardMeta component with category and play count', () => {
+    it('renders both category and play count text', () => {
       renderWithTheme(<QuizCard quiz={mockQuiz} onClick={mockOnClick} />);
-      expect(screen.getByTestId('card-meta')).toBeInTheDocument();
+      expect(screen.getByText('game')).toBeInTheDocument();
+      expect(screen.getByText('· 1,234명 플레이')).toBeInTheDocument();
     });
 
     it('has displayName set to QuizCard', () => {
@@ -115,13 +92,14 @@ describe('QuizCard', () => {
       expect(screen.queryByRole('img')).not.toBeInTheDocument();
     });
 
-    it('renders Thumbnail container even when thumbnailUrl is null', () => {
+    it('still renders the card with no thumbnail URL', () => {
       const quizWithoutThumbnail: Quiz = {
         ...mockQuiz,
         thumbnailUrl: null,
       };
       renderWithTheme(<QuizCard quiz={quizWithoutThumbnail} onClick={mockOnClick} />);
-      expect(screen.getByTestId('thumbnail')).toBeInTheDocument();
+      expect(getCard()).toBeInTheDocument();
+      expect(getTitle()).toBeInTheDocument();
     });
 
     it('renders img with different URL when thumbnailUrl changes', () => {
@@ -184,7 +162,7 @@ describe('QuizCard', () => {
 
     it('includes bullet point before playCount', () => {
       renderWithTheme(<QuizCard quiz={mockQuiz} onClick={mockOnClick} />);
-      const playCountElement = screen.getByTestId('play-count');
+      const playCountElement = screen.getByText('· 1,234명 플레이');
       expect(playCountElement.textContent).toMatch(/^·/);
     });
 
@@ -208,12 +186,11 @@ describe('QuizCard', () => {
   });
 
   describe('onClick callback with quiz.id', () => {
-    it('calls onClick when card wrapper is clicked', async () => {
+    it('calls onClick when card is clicked', async () => {
       const user = userEvent.setup();
       renderWithTheme(<QuizCard quiz={mockQuiz} onClick={mockOnClick} />);
 
-      const cardWrapper = screen.getByTestId('card-wrapper');
-      await user.click(cardWrapper);
+      await user.click(getCard());
 
       expect(mockOnClick).toHaveBeenCalledTimes(1);
     });
@@ -222,8 +199,7 @@ describe('QuizCard', () => {
       const user = userEvent.setup();
       renderWithTheme(<QuizCard quiz={mockQuiz} onClick={mockOnClick} />);
 
-      const cardWrapper = screen.getByTestId('card-wrapper');
-      await user.click(cardWrapper);
+      await user.click(getCard());
 
       expect(mockOnClick).toHaveBeenCalledWith(1);
     });
@@ -237,8 +213,7 @@ describe('QuizCard', () => {
 
       renderWithTheme(<QuizCard quiz={quizWithDifferentId} onClick={mockOnClick} />);
 
-      const cardWrapper = screen.getByTestId('card-wrapper');
-      await user.click(cardWrapper);
+      await user.click(getCard());
 
       expect(mockOnClick).toHaveBeenCalledWith(42);
     });
@@ -247,10 +222,9 @@ describe('QuizCard', () => {
       const user = userEvent.setup();
       renderWithTheme(<QuizCard quiz={mockQuiz} onClick={mockOnClick} />);
 
-      const cardWrapper = screen.getByTestId('card-wrapper');
-      await user.click(cardWrapper);
-      await user.click(cardWrapper);
-      await user.click(cardWrapper);
+      await user.click(getCard());
+      await user.click(getCard());
+      await user.click(getCard());
 
       expect(mockOnClick).toHaveBeenCalledTimes(3);
       expect(mockOnClick).toHaveBeenNthCalledWith(1, 1);
@@ -267,8 +241,7 @@ describe('QuizCard', () => {
 
       renderWithTheme(<QuizCard quiz={quizWithZeroId} onClick={mockOnClick} />);
 
-      const cardWrapper = screen.getByTestId('card-wrapper');
-      await user.click(cardWrapper);
+      await user.click(getCard());
 
       expect(mockOnClick).toHaveBeenCalledWith(0);
     });
@@ -282,8 +255,7 @@ describe('QuizCard', () => {
 
       renderWithTheme(<QuizCard quiz={quizWithLargeId} onClick={mockOnClick} />);
 
-      const cardWrapper = screen.getByTestId('card-wrapper');
-      await user.click(cardWrapper);
+      await user.click(getCard());
 
       expect(mockOnClick).toHaveBeenCalledWith(999999999);
     });
@@ -292,10 +264,8 @@ describe('QuizCard', () => {
       const user = userEvent.setup();
       renderWithTheme(<QuizCard quiz={mockQuiz} onClick={mockOnClick} />);
 
-      const cardWrapper = screen.getByTestId('card-wrapper');
-      await user.click(cardWrapper);
+      await user.click(getCard());
 
-      // Verify only the id is passed, not the entire quiz object
       expect(mockOnClick).toHaveBeenCalledWith(expect.any(Number));
       expect(mockOnClick).toHaveBeenCalledTimes(1);
       const callArg = mockOnClick.mock.calls[0][0];
@@ -314,8 +284,7 @@ describe('QuizCard', () => {
 
       rerender(<QuizCard quiz={updatedQuiz} onClick={mockOnClick} />);
 
-      const cardWrapper = screen.getByTestId('card-wrapper');
-      await user.click(cardWrapper);
+      await user.click(getCard());
 
       expect(mockOnClick).toHaveBeenCalledWith(999);
     });
@@ -328,8 +297,7 @@ describe('QuizCard', () => {
 
       rerender(<QuizCard quiz={mockQuiz} onClick={newMockOnClick} />);
 
-      const cardWrapper = screen.getByTestId('card-wrapper');
-      await user.click(cardWrapper);
+      await user.click(getCard());
 
       expect(newMockOnClick).toHaveBeenCalledWith(1);
       expect(mockOnClick).not.toHaveBeenCalled();
@@ -338,7 +306,17 @@ describe('QuizCard', () => {
 
   describe('category rendering', () => {
     it('renders all supported categories correctly', async () => {
-      const categories = ['game', 'music', 'culture', 'broadcast', 'etc'] as const;
+      const categories = [
+        'entertainment',
+        'movie',
+        'drama',
+        'anime',
+        'game',
+        'music',
+        'sports',
+        'general',
+        'etc',
+      ] as const;
 
       for (const category of categories) {
         const { unmount } = renderWithTheme(
@@ -367,14 +345,12 @@ describe('QuizCard', () => {
   describe('title and description rendering', () => {
     it('renders title with correct text', () => {
       renderWithTheme(<QuizCard quiz={mockQuiz} onClick={mockOnClick} />);
-      const title = screen.getByTestId('card-title');
-      expect(title).toHaveTextContent('Test Quiz Title');
+      expect(getTitle()).toHaveTextContent('Test Quiz Title');
     });
 
     it('renders description with correct text', () => {
       renderWithTheme(<QuizCard quiz={mockQuiz} onClick={mockOnClick} />);
-      const description = screen.getByTestId('card-description');
-      expect(description).toHaveTextContent('Test quiz description');
+      expect(screen.getByText('Test quiz description')).toBeInTheDocument();
     });
 
     it('handles title with special characters', () => {
@@ -430,10 +406,10 @@ describe('QuizCard', () => {
   describe('React.memo optimization', () => {
     it('does not re-render when props remain the same', () => {
       const { rerender } = renderWithTheme(<QuizCard quiz={mockQuiz} onClick={mockOnClick} />);
-      const initialTitle = screen.getByTestId('card-title');
+      const initialTitle = getTitle();
 
       rerender(<QuizCard quiz={mockQuiz} onClick={mockOnClick} />);
-      const rerenderTitle = screen.getByTestId('card-title');
+      const rerenderTitle = getTitle();
 
       expect(initialTitle).toBe(rerenderTitle);
     });
@@ -457,8 +433,7 @@ describe('QuizCard', () => {
 
       rerender(<QuizCard quiz={mockQuiz} onClick={newMockOnClick} />);
 
-      // Component should be re-renderable with new callback
-      expect(screen.getByTestId('card-wrapper')).toBeInTheDocument();
+      expect(getCard()).toBeInTheDocument();
     });
   });
 
@@ -469,8 +444,7 @@ describe('QuizCard', () => {
         title: '',
       };
       renderWithTheme(<QuizCard quiz={quizWithEmptyTitle} onClick={mockOnClick} />);
-      const title = screen.getByTestId('card-title');
-      expect(title).toBeInTheDocument();
+      expect(getTitle()).toBeInTheDocument();
     });
 
     it('handles empty string description', () => {
@@ -479,8 +453,7 @@ describe('QuizCard', () => {
         description: '',
       };
       renderWithTheme(<QuizCard quiz={quizWithEmptyDescription} onClick={mockOnClick} />);
-      const description = screen.getByTestId('card-description');
-      expect(description).toBeInTheDocument();
+      expect(getCard()).toBeInTheDocument();
     });
 
     it('handles playCount of exactly 1000 with comma formatting', () => {
@@ -493,13 +466,23 @@ describe('QuizCard', () => {
     });
 
     it('handles all category types without errors', () => {
-      const categories = ['game', 'music', 'culture', 'broadcast', 'etc'] as const;
+      const categories = [
+        'entertainment',
+        'movie',
+        'drama',
+        'anime',
+        'game',
+        'music',
+        'sports',
+        'general',
+        'etc',
+      ] as const;
 
       categories.forEach((category) => {
         const { unmount } = renderWithTheme(
           <QuizCard quiz={{ ...mockQuiz, category }} onClick={mockOnClick} />,
         );
-        expect(screen.getByTestId('card-wrapper')).toBeInTheDocument();
+        expect(getCard()).toBeInTheDocument();
         unmount();
       });
     });
@@ -513,8 +496,7 @@ describe('QuizCard', () => {
 
       renderWithTheme(<QuizCard quiz={quizWithoutThumbnail} onClick={mockOnClick} />);
 
-      const cardWrapper = screen.getByTestId('card-wrapper');
-      await user.click(cardWrapper);
+      await user.click(getCard());
 
       expect(mockOnClick).toHaveBeenCalledWith(mockQuiz.id);
     });
@@ -556,8 +538,7 @@ describe('QuizCard', () => {
       expect(screen.getByText('Test Quiz Title')).toBeInTheDocument();
       expect(screen.getByText('· 1,234명 플레이')).toBeInTheDocument();
 
-      const cardWrapper = screen.getByTestId('card-wrapper');
-      await user.click(cardWrapper);
+      await user.click(getCard());
 
       expect(mockOnClick).toHaveBeenCalledWith(1);
     });
@@ -566,8 +547,7 @@ describe('QuizCard', () => {
       const user = userEvent.setup();
       const { rerender } = renderWithTheme(<QuizCard quiz={mockQuiz} onClick={mockOnClick} />);
 
-      let cardWrapper = screen.getByTestId('card-wrapper');
-      await user.click(cardWrapper);
+      await user.click(getCard());
       expect(mockOnClick).toHaveBeenLastCalledWith(1);
 
       const secondQuiz: Quiz = {
@@ -581,8 +561,7 @@ describe('QuizCard', () => {
       expect(screen.getByText('Second Quiz')).toBeInTheDocument();
       expect(screen.getByText('· 5,000명 플레이')).toBeInTheDocument();
 
-      cardWrapper = screen.getByTestId('card-wrapper');
-      await user.click(cardWrapper);
+      await user.click(getCard());
 
       expect(mockOnClick).toHaveBeenLastCalledWith(2);
       expect(mockOnClick).toHaveBeenCalledTimes(2);

@@ -1,15 +1,15 @@
 import { memo } from 'react';
 import OAuthCallbackStatus from '@/features/auth/OAuthCallbackStatus';
 import useOAuthCallback from '@/hooks/useOAuthCallback';
-import { PageWrapper } from '@/styles/layout';
+import { pageWrapperStyle } from '@/styles/layout';
 
 const OAuthCallbackPage = memo(() => {
   const { error } = useOAuthCallback();
 
   return (
-    <PageWrapper>
+    <div css={pageWrapperStyle()}>
       <OAuthCallbackStatus error={error} />
-    </PageWrapper>
+    </div>
   );
 });
 

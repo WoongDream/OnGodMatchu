@@ -42,5 +42,18 @@ export default defineConfig([globalIgnores(['dist', 'storybook-static']), {
 
     // any 사용 경고
     '@typescript-eslint/no-explicit-any': 'warn',
+
+    // Emotion: styled 금지, css literal 만 사용
+    'no-restricted-imports': [
+      'error',
+      {
+        paths: [
+          {
+            name: '@emotion/styled',
+            message: 'Use `css` from `@emotion/react` with the `css` prop instead of styled components.',
+          },
+        ],
+      },
+    ],
   },
 }, ...storybook.configs["flat/recommended"]]);

@@ -1,11 +1,11 @@
 import SignupForm from '@/features/auth/SignupForm';
-import { PageWrapper } from '@/styles/layout';
+import { pageWrapperStyle } from '@/styles/layout';
 
 const SignupPage = () => {
   return (
-    <PageWrapper>
+    <div css={pageWrapperStyle()}>
       <SignupForm />
-    </PageWrapper>
+    </div>
   );
 };
 

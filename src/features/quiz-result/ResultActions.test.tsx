@@ -22,13 +22,6 @@ vi.mock('@/components/button', () => ({
   ),
 }));
 
-// Mock the styled component
-vi.mock('./ResultActions.style', () => ({
-  ActionsWrapper: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="actions-wrapper">{children}</div>
-  ),
-}));
-
 describe('ResultActions', () => {
   let mockOnRetry: () => void;
   let mockOnHome: () => void;
@@ -58,10 +51,14 @@ describe('ResultActions', () => {
       expect(screen.getByTestId('button-홈으로')).toBeInTheDocument();
     });
 
-    it('renders ActionsWrapper component', () => {
-      renderWithTheme(<ResultActions quizId={1} onRetry={mockOnRetry} onHome={mockOnHome} />);
+    it('renders all three buttons inside a single container', () => {
+      const { container } = renderWithTheme(
+        <ResultActions quizId={1} onRetry={mockOnRetry} onHome={mockOnHome} />,
+      );
 
-      expect(screen.getByTestId('actions-wrapper')).toBeInTheDocument();
+      const wrapper = container.firstChild as HTMLElement;
+      expect(wrapper).not.toBeNull();
+      expect(wrapper.children.length).toBe(3);
     });
 
     it('renders retry button with correct text', () => {

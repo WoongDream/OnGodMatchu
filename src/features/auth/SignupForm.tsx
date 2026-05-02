@@ -7,17 +7,17 @@ import type { PasswordRuleStatus, PasswordStrength } from '@/components/password
 import { canSubmitByStrength, isLengthValid } from '@/lib/password';
 import SocialLoginButtons from './SocialLoginButtons';
 import {
-  FormWrapper,
-  FormTitle,
-  LinkRow,
-  LinkText,
-  LinkButton,
-  ErrorText,
-  InfoText,
-  InlineLoginLink,
-  NicknameStatusText,
-  TimerText,
-  VerifyButtonRow,
+  formStyle,
+  titleStyle,
+  linkRowStyle,
+  linkTextStyle,
+  linkButtonStyle,
+  errorTextStyle,
+  infoTextStyle,
+  inlineLoginLinkStyle,
+  nicknameStatusTextStyle,
+  timerTextStyle,
+  verifyButtonRowStyle,
 } from './SignupForm.style';
 import useSignup from '@/hooks/useSignup';
 import useVerificationCode from '@/hooks/useVerificationCode';
@@ -65,14 +65,12 @@ const SignupForm = memo(() => {
     lengthOk: isLengthValid(password),
   };
 
-  // 만료 시 verified 자동 해제 (이전에 인증해 놨더라도 코드가 만료되면 무효화)
   useEffect(() => {
     if (expired && verified) {
       setVerified(false);
     }
   }, [expired, verified]);
 
-  // BREACH 표시 자동 해제 — 비밀번호 변경 시
   const lastPasswordRef = useRef(password);
   useEffect(() => {
     if (password !== lastPasswordRef.current) {
@@ -83,7 +81,6 @@ const SignupForm = memo(() => {
     }
   }, [password, signup]);
 
-  // RATE_LIMITED 카운트다운 (signup 응답의 retryAfter 기반 표시용 틱)
   const [rateLimitSec, setRateLimitSec] = useState(0);
   useEffect(() => {
     if (signup.errorCode !== 'RATE_LIMITED' || signup.retryAfter <= 0) {
@@ -176,8 +173,8 @@ const SignupForm = memo(() => {
   };
 
   return (
-    <FormWrapper onSubmit={handleSubmit}>
-      <FormTitle>회원가입</FormTitle>
+    <form css={formStyle} onSubmit={handleSubmit}>
+      <h1 css={titleStyle}>회원가입</h1>
 
       <Input
         label="이메일"
@@ -188,15 +185,15 @@ const SignupForm = memo(() => {
         disabled={codeSent}
       />
       {emailErrorCode === 'EMAIL_ALREADY_EXISTS' && (
-        <ErrorText>
+        <p css={errorTextStyle}>
           이미 가입된 이메일입니다.{' '}
-          <InlineLoginLink type="button" onClick={() => navigate('/login')}>
+          <button type="button" css={inlineLoginLinkStyle} onClick={() => navigate('/login')}>
             로그인하시겠어요?
-          </InlineLoginLink>
-        </ErrorText>
+          </button>
+        </p>
       )}
       {emailErrorCode === 'INVALID_EMAIL_FORMAT' && (
-        <ErrorText>이메일 형식이 올바르지 않습니다.</ErrorText>
+        <p css={errorTextStyle}>이메일 형식이 올바르지 않습니다.</p>
       )}
 
       {!codeSent && (
@@ -221,12 +218,12 @@ const SignupForm = memo(() => {
             disabled={expired || verified}
             labelTrailing={
               !verified ? (
-                <TimerText $expired={expired}>{formatTime(verification.secondsLeft)}</TimerText>
+                <span css={timerTextStyle(expired)}>{formatTime(verification.secondsLeft)}</span>
               ) : null
             }
           />
           {!verified && (
-            <VerifyButtonRow>
+            <div css={verifyButtonRowStyle}>
               <Button
                 type="button"
                 variant="primary"
@@ -249,10 +246,10 @@ const SignupForm = memo(() => {
                     ? '재발송'
                     : `${verification.resendIn}s`}
               </Button>
-            </VerifyButtonRow>
+            </div>
           )}
-          {expired && !verified && <InfoText>코드가 만료되었습니다. 재발송해주세요</InfoText>}
-          {codeErrorMessage && <ErrorText>{codeErrorMessage}</ErrorText>}
+          {expired && !verified && <p css={infoTextStyle}>코드가 만료되었습니다. 재발송해주세요</p>}
+          {codeErrorMessage && <p css={errorTextStyle}>{codeErrorMessage}</p>}
         </>
       )}
 
@@ -270,7 +267,7 @@ const SignupForm = memo(() => {
           />
           <Input label="닉네임" value={nickname} onChange={setNickname} placeholder="닉네임 입력" />
           {effectiveNicknameMessage && (
-            <NicknameStatusText $tone={nicknameTone}>{effectiveNicknameMessage}</NicknameStatusText>
+            <p css={nicknameStatusTextStyle(nicknameTone)}>{effectiveNicknameMessage}</p>
           )}
           <Button fullWidth type="submit" disabled={!canSubmit || signup.isSubmitting}>
             {signup.isSubmitting ? '가입 중...' : '가입하기'}
@@ -278,17 +275,17 @@ const SignupForm = memo(() => {
         </>
       )}
 
-      {rateLimitMessage && <ErrorText>{rateLimitMessage}</ErrorText>}
-      {generalError && <ErrorText>{generalError}</ErrorText>}
+      {rateLimitMessage && <p css={errorTextStyle}>{rateLimitMessage}</p>}
+      {generalError && <p css={errorTextStyle}>{generalError}</p>}
 
       <SocialLoginButtons />
-      <LinkRow>
-        <LinkText>이미 계정이 있으신가요?</LinkText>
-        <LinkButton type="button" onClick={() => navigate('/login')}>
+      <div css={linkRowStyle}>
+        <span css={linkTextStyle}>이미 계정이 있으신가요?</span>
+        <button type="button" css={linkButtonStyle} onClick={() => navigate('/login')}>
           로그인
-        </LinkButton>
-      </LinkRow>
-    </FormWrapper>
+        </button>
+      </div>
+    </form>
   );
 });
 

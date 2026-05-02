@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { ProgressWrapper, ProgressLabel, ProgressBar, ProgressFill } from './QuizProgress.style';
+import { wrapperStyle, labelStyle, barStyle, fillStyle } from './QuizProgress.style';
 
 type QuizProgressProps = {
   current: number;
@@ -10,14 +10,14 @@ const QuizProgress = memo(({ current, total }: QuizProgressProps) => {
   const percent = (current / total) * 100;
 
   return (
-    <ProgressWrapper>
-      <ProgressLabel>
+    <div css={wrapperStyle}>
+      <span css={labelStyle}>
         {current} / {total}
-      </ProgressLabel>
-      <ProgressBar>
-        <ProgressFill $percent={percent} />
-      </ProgressBar>
-    </ProgressWrapper>
+      </span>
+      <div css={barStyle}>
+        <div css={fillStyle(percent)} />
+      </div>
+    </div>
   );
 });
 

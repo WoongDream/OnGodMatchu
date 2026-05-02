@@ -1,67 +1,77 @@
-import styled, { type CSSObject } from '@emotion/styled';
+import { css, type Theme } from '@emotion/react';
 import { text } from '@/styles/text';
-import type { Theme } from '@/styles/theme';
 import type { ButtonVariant, ButtonSize } from './Button.type';
 
-type StyledButtonProps = {
-  $variant: ButtonVariant;
-  $size: ButtonSize;
-  $fullWidth: boolean;
-};
-
-const variantStyles: Record<ButtonVariant, (theme: Theme) => CSSObject> = {
-  primary: (theme) => ({
-    backgroundColor: theme.colors.accent.primary,
-    color: theme.colors.accent.fg,
-    '&:hover:not(:disabled)': { backgroundColor: theme.colors.accent.hover },
-  }),
-  secondary: (theme) => ({
-    backgroundColor: 'transparent',
-    color: theme.colors.accent.primary,
-    border: `1px solid ${theme.colors.accent.primary}`,
-    '&:hover:not(:disabled)': { backgroundColor: theme.colors.bg.secondary },
-  }),
-  ghost: (theme) => ({
-    backgroundColor: 'transparent',
-    color: theme.colors.fg.secondary,
-    border: `1px solid ${theme.colors.border.primary}`,
-    '&:hover:not(:disabled)': { backgroundColor: theme.colors.bg.secondary },
-  }),
-};
-
-const sizeStyles: Record<ButtonSize, (theme: Theme) => CSSObject> = {
-  sm: (theme) => ({
-    height: '2rem',
-    padding: `0 ${theme.spacing.sm}`,
-    borderRadius: theme.borderRadius.sm,
-  }),
-  md: (theme) => ({
-    height: '2.75rem',
-    padding: `0 ${theme.spacing.lg}`,
-    borderRadius: theme.borderRadius.md,
-  }),
-  lg: (theme) => ({
-    height: '3.25rem',
-    padding: `0 ${theme.spacing.xl}`,
-    borderRadius: theme.borderRadius.lg,
-  }),
-};
-
-export const StyledButton = styled.button<StyledButtonProps>`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition:
-    background-color 0.15s,
-    opacity 0.15s;
-  width: ${({ $fullWidth }) => ($fullWidth ? '100%' : 'auto')};
-
-  ${({ $variant, theme }) => variantStyles[$variant](theme)}
-  ${({ $size, theme }) => sizeStyles[$size](theme)}
-  ${({ $size }) => text({ size: $size, weight: 'semibold' })}
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+const variantBlock = (variant: ButtonVariant, theme: Theme) => {
+  switch (variant) {
+    case 'primary':
+      return css`
+        background-color: ${theme.colors.accent.primary};
+        color: ${theme.colors.accent.fg};
+        &:hover:not(:disabled) {
+          background-color: ${theme.colors.accent.hover};
+        }
+      `;
+    case 'secondary':
+      return css`
+        background-color: transparent;
+        color: ${theme.colors.accent.primary};
+        border: 1px solid ${theme.colors.accent.primary};
+        &:hover:not(:disabled) {
+          background-color: ${theme.colors.bg.secondary};
+        }
+      `;
+    case 'ghost':
+      return css`
+        background-color: transparent;
+        color: ${theme.colors.fg.secondary};
+        border: 1px solid ${theme.colors.border.primary};
+        &:hover:not(:disabled) {
+          background-color: ${theme.colors.bg.secondary};
+        }
+      `;
   }
-`;
+};
+
+const sizeBlock = (size: ButtonSize, theme: Theme) => {
+  switch (size) {
+    case 'sm':
+      return css`
+        height: 2rem;
+        padding: 0 ${theme.spacing.sm};
+        border-radius: ${theme.borderRadius.sm};
+      `;
+    case 'md':
+      return css`
+        height: 2.75rem;
+        padding: 0 ${theme.spacing.lg};
+        border-radius: ${theme.borderRadius.md};
+      `;
+    case 'lg':
+      return css`
+        height: 3.25rem;
+        padding: 0 ${theme.spacing.xl};
+        border-radius: ${theme.borderRadius.lg};
+      `;
+  }
+};
+
+export const buttonStyle =
+  (variant: ButtonVariant, size: ButtonSize, fullWidth: boolean) => (theme: Theme) => css`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+      background-color 0.15s,
+      opacity 0.15s;
+    width: ${fullWidth ? '100%' : 'auto'};
+
+    ${variantBlock(variant, theme)}
+    ${sizeBlock(size, theme)}
+    ${text({ size, weight: 'semibold' })({ theme })}
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  `;

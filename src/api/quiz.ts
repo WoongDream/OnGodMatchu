@@ -31,12 +31,23 @@ type QuizCreateRequest = {
   title: string;
   description?: string;
   category: Category;
-  thumbnailUrl?: string;
+  thumbnailKey?: string;
   questions: Array<{
-    imageUrl?: string;
+    imageKey?: string;
+    answerImageKey?: string;
     questionText?: string;
     answer: string;
   }>;
+};
+
+export type CategoryItem = {
+  key: Category;
+  label: string;
+};
+
+export const getCategories = async (): Promise<CategoryItem[]> => {
+  const res = await instance.get<ApiResponse<CategoryItem[]>>('/api/quizzes/categories');
+  return res.data.data;
 };
 
 export const getQuizzes = async (params?: {

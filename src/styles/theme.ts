@@ -16,14 +16,19 @@ export const theme = {
       secondary: '#f0f0f2',
     },
     accent: {
-      primary: '#6c3ce1',
-      hover: '#5a2ecf',
+      primary: '#38bdf8', // Sky cyan — 브랜드 메인
+      hover: '#0ea5e9', // 한 단계 진한 sky
+      active: '#0284c7', // 클릭/active 상태
       fg: '#ffffff',
+      // 보조 톤 — 배경 강조, 배지, 알림 영역 등
+      subtle: '#e0f5ff', // 가장 연한 sky tint (info background)
+      muted: '#7dd3fc', // 중간 톤 (border, disabled accent)
     },
     status: {
       error: '#ef4444',
       warning: '#f59e0b',
       success: '#22c55e',
+      info: '#38bdf8', // accent와 동일하게 통일
     },
     strength: {
       veryWeak: '#ef4444',
