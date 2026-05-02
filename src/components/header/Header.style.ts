@@ -1,6 +1,5 @@
 import { css, type Theme } from '@emotion/react';
 import { HEADER_HEIGHT, Z_INDEX } from '@/styles/constants';
-import { text } from '@/styles/text';
 
 export const wrapperStyle = (theme: Theme) => css`
   position: fixed;
@@ -28,9 +27,10 @@ export const innerStyle = (theme: Theme) => css`
   }
 `;
 
-export const logoStyle = (theme: Theme) => css`
-  ${text({ size: 'lg', weight: 'bold' })({ theme })}
-  color: ${theme.colors.accent.primary};
+export const logoStyle = css`
+  display: block;
+  height: 2rem;
+  width: auto;
   cursor: pointer;
 `;
 

@@ -29,16 +29,18 @@ describe('Header', () => {
   });
 
   describe('logo rendering and navigation', () => {
-    it('renders the logo with text "OnGodMatchu"', () => {
+    it('renders the logo image with alt "OnGodMatchu"', () => {
       (useAuthStore as any).mockReturnValue({
         isLoggedIn: false,
         logout: vi.fn(),
       });
 
       renderWithTheme(<Header />);
-      const logo = screen.getByText('OnGodMatchu');
+      const logo = screen.getByRole('img', { name: 'OnGodMatchu' });
 
       expect(logo).toBeInTheDocument();
+      expect(logo.tagName).toBe('IMG');
+      expect(logo).toHaveAttribute('src');
     });
 
     it('navigates to / when logo is clicked', async () => {
@@ -49,7 +51,7 @@ describe('Header', () => {
 
       const user = userEvent.setup();
       renderWithTheme(<Header />);
-      const logo = screen.getByText('OnGodMatchu');
+      const logo = screen.getByRole('img', { name: 'OnGodMatchu' });
 
       await user.click(logo);
 
@@ -65,7 +67,7 @@ describe('Header', () => {
 
       const user = userEvent.setup();
       renderWithTheme(<Header />);
-      const logo = screen.getByText('OnGodMatchu');
+      const logo = screen.getByRole('img', { name: 'OnGodMatchu' });
 
       await user.click(logo);
 
@@ -340,7 +342,7 @@ describe('Header', () => {
 
       const user = userEvent.setup();
       renderWithTheme(<Header />);
-      const logo = screen.getByText('OnGodMatchu');
+      const logo = screen.getByRole('img', { name: 'OnGodMatchu' });
       const loginButton = screen.getByRole('button', { name: '로그인' });
 
       await user.click(logo);
