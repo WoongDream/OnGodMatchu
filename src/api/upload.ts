@@ -6,6 +6,10 @@ type ApiResponse<T> = {
   data: T;
 };
 
+// BE 가 presigned URL 서명에 포함시키는 태깅. PUT 요청 헤더에서 빠지면 S3 가 403 반환.
+// 값 변경은 운영 S3 라이프사이클 룰과 1:1 매칭되어 사실상 고정. 변경 시 BE 와 동시 작업 필요.
+export const PRESIGNED_PUT_TAGGING = 'status=pending';
+
 export type PresignedPutResponse = {
   uploadUrl: string;
   key: string;
@@ -30,7 +34,10 @@ export const requestUploadUrl = async (file: File): Promise<PresignedPutResponse
 
 export const uploadFileToPresignedUrl = async (file: File, uploadUrl: string): Promise<void> => {
   await axios.put(uploadUrl, file, {
-    headers: { 'Content-Type': file.type },
+    headers: {
+      'Content-Type': file.type,
+      'x-amz-tagging': PRESIGNED_PUT_TAGGING,
+    },
     timeout: 30000,
   });
 };

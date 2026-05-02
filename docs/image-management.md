@@ -9,7 +9,7 @@ S3 **private** 버킷에 이미지를 보관하고, 업로드는 **PUT presigned
 ```
 [FE] ──① POST /api/upload/presigned (file meta) ──> [BE]
 [FE] <── { uploadUrl, key, expiresIn } ──────────── [BE]
-[FE] ──② PUT uploadUrl (binary, Content-Type) ───> [S3]
+[FE] ──② PUT uploadUrl (binary, Content-Type, x-amz-tagging) ─> [S3]
 [FE] ──③ PATCH /api/upload/complete { key } ──────> [BE]   # 업로드 완료 알림
 [FE] ──④ POST /api/quizzes { ..., imageKey } ─────> [BE]   # key 만 저장
 
@@ -57,8 +57,14 @@ Resp: { uploadUrl: string, key: string, expiresIn: number }
 
 ### 2) S3 PUT (FE → S3 직접)
 
-`uploadUrl` 에 `Content-Type` 헤더와 함께 binary PUT.  
-헤더가 누락되거나 다르면 S3 가 403 반환 (BE 가 발급 시 Content-Type 을 서명에 박아둠).
+`uploadUrl` 에 두 헤더와 함께 binary PUT:
+
+| 헤더 | 값 | 비고 |
+|------|----|------|
+| `Content-Type` | `file.type` | BE 가 발급 시 서명에 박아둠. 누락·불일치 시 403 |
+| `x-amz-tagging` | `status=pending` | BE 가 서명에 포함하는 태깅. 누락 시 403. 운영 S3 라이프사이클 룰과 1:1 매칭되어 사실상 고정값 (`PRESIGNED_PUT_TAGGING` 상수) |
+
+`/api/upload/complete` 가 호출되면 BE 가 이 태그를 정식 상태로 갱신.
 
 ### 3) 업로드 완료 알림
 
@@ -184,7 +190,7 @@ await createQuiz({
 | code | 발생 조건 |
 |------|-----------|
 | `PRESIGNED_FAILED` | `POST /api/upload/presigned` 실패 |
-| `PUT_FAILED` | S3 PUT 실패 (Content-Type 불일치 / 만료 / 네트워크) |
+| `PUT_FAILED` | S3 PUT 실패 (Content-Type 불일치 / `x-amz-tagging` 누락 / 만료 / 네트워크) |
 | `COMPLETE_NOTIFY_FAILED` | `PATCH /api/upload/complete` 실패 |
 | `NETWORK` | 위 외 axios 가 아닌 에러 |
 
@@ -227,15 +233,16 @@ await createQuiz({
 - ❌ DB / payload 에 signed URL **저장 금지** — 만료시간 때문에 시간 경과 후 깨짐
 - ❌ 로그·분석 도구에 raw signed URL 그대로 보내지 말 것 — URL 자체에 민감정보는 없으나 만료 전엔 어디서든 동작
 - ✅ `User.id` (BIGSERIAL) 외부 노출 금지 — S3 key 내 식별자는 `User.publicId` (UUID) 만 사용 (BE 책임 영역, FE 는 직접 만들지 않음)
-- ✅ PUT 시 `Content-Type` 헤더 누락/오류 → 403. 반드시 `file.type` 그대로 전달
+- ✅ PUT 시 `Content-Type` + `x-amz-tagging` 헤더 모두 필수 → 누락/오류 시 403
 
 ## 트러블슈팅
 
 ### PUT 시 403 반환
 
-가장 흔한 원인 두 가지:
+흔한 원인:
 1. `Content-Type` 헤더 누락/불일치 — `file.type` 그대로 보냈는지 확인
-2. presigned URL 만료 (10분 초과) — 다시 발급
+2. `x-amz-tagging: status=pending` 누락 — `PRESIGNED_PUT_TAGGING` 상수 사용 확인
+3. presigned URL 만료 (10분 초과) — 다시 발급
 
 ### 이미지가 안 보임 (퀴즈 상세에서)
 
