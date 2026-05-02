@@ -4,7 +4,14 @@ import userEvent from '@testing-library/user-event';
 import QuestionList, { type DraftQuestion, createEmptyQuestion } from './QuestionList';
 
 vi.mock('./QuestionItem', () => ({
-  default: ({ index, onDelete, onMoveUp, onMoveDown }: any) => (
+  default: ({
+    index,
+    answerImageSameAsQuestion,
+    onDelete,
+    onMoveUp,
+    onMoveDown,
+    onAnswerImageSameAsQuestionChange,
+  }: any) => (
     <div data-testid={`question-item-${index}`}>
       <button data-testid={`delete-btn-${index}`} onClick={onDelete}>
         Delete
@@ -14,6 +21,13 @@ vi.mock('./QuestionItem', () => ({
       </button>
       <button data-testid={`move-down-btn-${index}`} onClick={onMoveDown}>
         Move Down
+      </button>
+      <span data-testid={`same-as-${index}`}>{String(answerImageSameAsQuestion)}</span>
+      <button
+        data-testid={`toggle-same-${index}`}
+        onClick={() => onAnswerImageSameAsQuestionChange(!answerImageSameAsQuestion)}
+      >
+        Toggle Same
       </button>
     </div>
   ),
@@ -34,6 +48,9 @@ describe('QuestionList', () => {
     answer: 'Test Answer 1',
     imageFile: null,
     imagePreviewUrl: null,
+    answerImageFile: null,
+    answerImagePreviewUrl: null,
+    answerImageSameAsQuestion: true,
     ...overrides,
   });
 
@@ -62,6 +79,12 @@ describe('QuestionList', () => {
       expect(question.answer).toBe('');
       expect(question.imageFile).toBeNull();
       expect(question.imagePreviewUrl).toBeNull();
+      expect(question.answerImageFile).toBeNull();
+      expect(question.answerImagePreviewUrl).toBeNull();
+    });
+
+    it('answerImageSameAsQuestion 기본값은 true (체크박스 기본 ON)', () => {
+      expect(createEmptyQuestion().answerImageSameAsQuestion).toBe(true);
     });
 
     it('generates valid UUIDs that match the UUID format', () => {
@@ -220,6 +243,94 @@ describe('QuestionList', () => {
 
       // Component should still render normally
       expect(screen.getByTestId('question-item-0')).toBeInTheDocument();
+    });
+  });
+
+  describe('answerImageSameAsQuestion 토글', () => {
+    it('체크박스 prop 이 QuestionItem 으로 전달된다', () => {
+      const questions = [createMockQuestion({ id: 'q1', answerImageSameAsQuestion: true })];
+      renderWithTheme(<QuestionList questions={questions} onChange={vi.fn()} />);
+      expect(screen.getByTestId('same-as-0')).toHaveTextContent('true');
+    });
+
+    it('OFF → ON 토글 시 answerImageFile/answerImagePreviewUrl 가 함께 초기화된다', async () => {
+      const onChange = vi.fn();
+      const file = new File(['ans'], 'a.png', { type: 'image/png' });
+      const questions = [
+        createMockQuestion({
+          id: 'q1',
+          answerImageFile: file,
+          answerImagePreviewUrl: 'blob:answer',
+          answerImageSameAsQuestion: false,
+        }),
+      ];
+
+      renderWithTheme(<QuestionList questions={questions} onChange={onChange} />);
+      await userEvent.click(screen.getByTestId('toggle-same-0'));
+
+      expect(onChange).toHaveBeenCalledTimes(1);
+      const next = onChange.mock.calls[0][0];
+      expect(next[0].answerImageSameAsQuestion).toBe(true);
+      expect(next[0].answerImageFile).toBeNull();
+      expect(next[0].answerImagePreviewUrl).toBeNull();
+    });
+
+    it('ON → OFF 토글 시 answerImageFile 은 그대로 유지 (사용자가 직접 선택 예정)', async () => {
+      const onChange = vi.fn();
+      const questions = [createMockQuestion({ id: 'q1', answerImageSameAsQuestion: true })];
+
+      renderWithTheme(<QuestionList questions={questions} onChange={onChange} />);
+      await userEvent.click(screen.getByTestId('toggle-same-0'));
+
+      expect(onChange).toHaveBeenCalledTimes(1);
+      const next = onChange.mock.calls[0][0];
+      expect(next[0].answerImageSameAsQuestion).toBe(false);
+    });
+  });
+
+  describe('새 필드 보존 — handleAdd / 이동 / 삭제 시 회귀', () => {
+    it('handleAdd 시 기존 항목의 answer 필드들이 보존된다', async () => {
+      const onChange = vi.fn();
+      const file = new File(['a'], 'a.png', { type: 'image/png' });
+      const original = createMockQuestion({
+        id: 'q1',
+        answerImageFile: file,
+        answerImagePreviewUrl: 'blob:ans',
+        answerImageSameAsQuestion: false,
+      });
+
+      renderWithTheme(<QuestionList questions={[original]} onChange={onChange} />);
+      await userEvent.click(screen.getByTestId('add-question-btn'));
+
+      const next = onChange.mock.calls[0][0];
+      expect(next[0]).toMatchObject({
+        answerImageFile: file,
+        answerImagePreviewUrl: 'blob:ans',
+        answerImageSameAsQuestion: false,
+      });
+    });
+
+    it('이동 시 기존 항목의 answer 필드들이 보존된다', async () => {
+      const onChange = vi.fn();
+      const fileA = new File(['a'], 'a.png', { type: 'image/png' });
+      const q1 = createMockQuestion({
+        id: 'q1',
+        answerImageFile: fileA,
+        answerImagePreviewUrl: 'blob:a',
+        answerImageSameAsQuestion: false,
+      });
+      const q2 = createMockQuestion({ id: 'q2' });
+
+      renderWithTheme(<QuestionList questions={[q1, q2]} onChange={onChange} />);
+      await userEvent.click(screen.getByTestId('move-down-btn-0'));
+
+      const next = onChange.mock.calls[0][0];
+      const movedQ1 = next.find((q: DraftQuestion) => q.id === 'q1');
+      expect(movedQ1).toMatchObject({
+        answerImageFile: fileA,
+        answerImagePreviewUrl: 'blob:a',
+        answerImageSameAsQuestion: false,
+      });
     });
   });
 

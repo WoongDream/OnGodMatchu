@@ -9,6 +9,9 @@ export type DraftQuestion = {
   answer: string;
   imageFile: File | null;
   imagePreviewUrl: string | null;
+  answerImageFile: File | null;
+  answerImagePreviewUrl: string | null;
+  answerImageSameAsQuestion: boolean;
 };
 
 type QuestionListProps = {
@@ -23,6 +26,9 @@ export const createEmptyQuestion = (): DraftQuestion => ({
   answer: '',
   imageFile: null,
   imagePreviewUrl: null,
+  answerImageFile: null,
+  answerImagePreviewUrl: null,
+  answerImageSameAsQuestion: true,
 });
 
 const QuestionList = memo(({ questions, onChange }: QuestionListProps) => {
@@ -79,12 +85,26 @@ const QuestionList = memo(({ questions, onChange }: QuestionListProps) => {
             questionText={q.questionText}
             answer={q.answer}
             imagePreviewUrl={q.imagePreviewUrl}
+            answerImagePreviewUrl={q.answerImagePreviewUrl}
+            answerImageSameAsQuestion={q.answerImageSameAsQuestion}
             onQuestionChange={(value) => handleChange(q.id, { questionText: value })}
             onAnswerChange={(value) => handleChange(q.id, { answer: value })}
             onImageChange={(file, url) =>
               handleChange(q.id, { imageFile: file, imagePreviewUrl: url })
             }
             onImageRemove={() => handleChange(q.id, { imageFile: null, imagePreviewUrl: null })}
+            onAnswerImageChange={(file, url) =>
+              handleChange(q.id, { answerImageFile: file, answerImagePreviewUrl: url })
+            }
+            onAnswerImageRemove={() =>
+              handleChange(q.id, { answerImageFile: null, answerImagePreviewUrl: null })
+            }
+            onAnswerImageSameAsQuestionChange={(sameAsQuestion) =>
+              handleChange(q.id, {
+                answerImageSameAsQuestion: sameAsQuestion,
+                ...(sameAsQuestion ? { answerImageFile: null, answerImagePreviewUrl: null } : {}),
+              })
+            }
             onMoveUp={() => handleMoveUp(index)}
             onMoveDown={() => handleMoveDown(index)}
             onDelete={() => handleDelete(q.id)}

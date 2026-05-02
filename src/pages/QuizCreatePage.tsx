@@ -4,7 +4,10 @@ import { css, type Theme } from '@emotion/react';
 import Button from '@/components/button';
 import { pageWrapperStyle } from '@/styles/layout';
 import QuizInfoForm from '@/features/quiz-create/QuizInfoForm';
-import QuestionList, { type DraftQuestion } from '@/features/quiz-create/QuestionList';
+import QuestionList, {
+  type DraftQuestion,
+  createEmptyQuestion,
+} from '@/features/quiz-create/QuestionList';
 import useCreateQuiz from '@/hooks/useCreateQuiz';
 import type { Category } from '@/types';
 
@@ -41,15 +44,7 @@ const QuizCreatePage = () => {
     category: null,
     thumbnailFile: null,
     thumbnailPreviewUrl: null,
-    questions: [
-      {
-        id: crypto.randomUUID(),
-        questionText: '',
-        answer: '',
-        imageFile: null,
-        imagePreviewUrl: null,
-      },
-    ],
+    questions: [createEmptyQuestion()],
   });
 
   const isValid =
@@ -69,6 +64,8 @@ const QuizCreatePage = () => {
       thumbnailFile: form.thumbnailFile,
       questions: form.questions.map((q) => ({
         imageFile: q.imageFile,
+        answerImageFile: q.answerImageFile,
+        answerImageSameAsQuestion: q.answerImageSameAsQuestion,
         questionText: q.questionText,
         answer: q.answer,
       })),
