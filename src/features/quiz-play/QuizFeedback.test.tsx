@@ -279,45 +279,4 @@ describe('QuizFeedback', () => {
       expect(screen.getByText('정답: 서울 🎓')).toBeInTheDocument();
     });
   });
-
-  describe('정답 이미지 노출', () => {
-    it('오답이고 answerImageUrl 이 있으면 정답 이미지가 렌더된다', () => {
-      renderWithTheme(
-        <QuizFeedback
-          correct={false}
-          answer="서울"
-          answerImageUrl="https://cdn.example.com/answer.jpg"
-        />,
-      );
-      const img = screen.getByAltText('정답 이미지');
-      expect(img).toBeInTheDocument();
-      expect(img).toHaveAttribute('src', 'https://cdn.example.com/answer.jpg');
-    });
-
-    it('오답이지만 answerImageUrl 이 없으면 정답 이미지가 렌더되지 않는다', () => {
-      renderWithTheme(<QuizFeedback correct={false} answer="서울" />);
-      expect(screen.queryByAltText('정답 이미지')).not.toBeInTheDocument();
-    });
-
-    it('answerImageUrl 이 null 이면 정답 이미지가 렌더되지 않는다', () => {
-      renderWithTheme(<QuizFeedback correct={false} answer="서울" answerImageUrl={null} />);
-      expect(screen.queryByAltText('정답 이미지')).not.toBeInTheDocument();
-    });
-
-    it('정답일 때는 answerImageUrl 이 있어도 노출되지 않는다', () => {
-      renderWithTheme(
-        <QuizFeedback
-          correct={true}
-          answer="서울"
-          answerImageUrl="https://cdn.example.com/answer.jpg"
-        />,
-      );
-      expect(screen.queryByAltText('정답 이미지')).not.toBeInTheDocument();
-    });
-
-    it('answerImageUrl 빈 문자열은 falsy 라 노출되지 않는다', () => {
-      renderWithTheme(<QuizFeedback correct={false} answer="서울" answerImageUrl="" />);
-      expect(screen.queryByAltText('정답 이미지')).not.toBeInTheDocument();
-    });
-  });
 });

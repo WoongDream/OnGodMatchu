@@ -58,22 +58,23 @@ const QuizPlayPage = memo(() => {
     setSubmitState({ status: 'idle' });
   };
 
+  const isAnswered = submitState.status !== 'idle';
+
   return (
     <div css={pageWrapperStyle('lg')}>
       <QuizProgress current={currentIndex + 1} total={total} />
-      <QuizQuestion question={currentQuestion} />
+      <QuizQuestion question={currentQuestion} revealAnswer={isAnswered} />
       <QuizAnswer
         value={inputValue}
         onChange={setInputValue}
         onSubmit={handleSubmit}
-        disabled={submitState.status !== 'idle'}
+        disabled={isAnswered}
       />
-      {submitState.status !== 'idle' && (
+      {isAnswered && (
         <>
           <QuizFeedback
             correct={submitState.status === 'correct'}
             answer={submitState.status === 'wrong' ? submitState.answer : currentQuestion.answer}
-            answerImageUrl={currentQuestion.answerImageUrl}
           />
           <Button fullWidth variant={isLastQuestion ? 'primary' : 'secondary'} onClick={handleNext}>
             {isLastQuestion ? '결과 보기' : '다음 문제'}

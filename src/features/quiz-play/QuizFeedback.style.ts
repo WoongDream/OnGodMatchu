@@ -22,12 +22,3 @@ export const answerStyle = (theme: Theme) => css`
   ${text({ size: 'sm' })({ theme })}
   color: ${theme.colors.fg.secondary};
 `;
-
-export const answerImageStyle = (theme: Theme) => css`
-  width: 100%;
-  max-width: 24rem;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  border-radius: ${theme.borderRadius.md};
-  border: 1px solid ${theme.colors.border.primary};
-`;
