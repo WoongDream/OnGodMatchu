@@ -4,7 +4,8 @@
 
 > 백엔드: [WoongDream/OnGodMatchu-BE](https://github.com/WoongDream/OnGodMatchu-BE)  
 > 운영 도메인: [ongodmatchu.com](https://ongodmatchu.com)  
-> 배포 가이드: [DEPLOYMENT.md](./docs/deployment.md)
+> 배포 가이드: [DEPLOYMENT.md](./docs/deployment.md)  
+> 이미지 관리: [IMAGE_MANAGEMENT.md](./docs/image-management.md)
 
 ## 기술 스택
 
