@@ -73,6 +73,7 @@ const QuizPlayPage = memo(() => {
           <QuizFeedback
             correct={submitState.status === 'correct'}
             answer={submitState.status === 'wrong' ? submitState.answer : currentQuestion.answer}
+            answerImageUrl={currentQuestion.answerImageUrl}
           />
           <Button fullWidth variant={isLastQuestion ? 'primary' : 'secondary'} onClick={handleNext}>
             {isLastQuestion ? '결과 보기' : '다음 문제'}
