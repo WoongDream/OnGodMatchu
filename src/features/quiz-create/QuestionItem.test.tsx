@@ -39,6 +39,9 @@ describe('QuestionItem', () => {
     onAnswerChange: vi.fn(),
     onImageChange: vi.fn(),
     onImageRemove: vi.fn(),
+    onAnswerImageChange: vi.fn(),
+    onAnswerImageRemove: vi.fn(),
+    onAnswerImageSameAsQuestionChange: vi.fn(),
     onMoveUp: vi.fn(),
     onMoveDown: vi.fn(),
     onDelete: vi.fn(),
@@ -49,6 +52,8 @@ describe('QuestionItem', () => {
     questionText: '테스트 문제',
     answer: '테스트 답',
     imagePreviewUrl: null,
+    answerImagePreviewUrl: null,
+    answerImageSameAsQuestion: true,
     isFirst: false,
     isLast: false,
     ...mockCallbacks,
@@ -629,6 +634,86 @@ describe('QuestionItem', () => {
       await user.keyboard('{Enter}');
       // The button remains focused but should not trigger callback
       expect(onMoveUp).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('section headings (문제/정답 영역 분리)', () => {
+    it('renders 문제 and 정답 h3 headings', () => {
+      renderWithTheme(<QuestionItem {...defaultProps} />);
+      const headings = screen.getAllByRole('heading', { level: 3 });
+      const headingTexts = headings.map((h) => h.textContent);
+      expect(headingTexts).toEqual(expect.arrayContaining(['문제', '정답']));
+    });
+  });
+
+  describe('정답 이미지를 문제 이미지와 동일하게 사용 체크박스', () => {
+    it('체크박스가 기본적으로 체크돼 있다', () => {
+      renderWithTheme(<QuestionItem {...defaultProps} answerImageSameAsQuestion={true} />);
+      const checkbox = screen.getByRole('checkbox', {
+        name: /문제 이미지와 동일하게 사용/,
+      });
+      expect(checkbox).toBeChecked();
+    });
+
+    it('체크 ON 일 때 정답 ImageUpload 가 표시되지 않고 안내 문구가 보인다', () => {
+      renderWithTheme(<QuestionItem {...defaultProps} answerImageSameAsQuestion={true} />);
+      expect(screen.queryByText('정답 이미지 (선택)')).not.toBeInTheDocument();
+      expect(screen.getByText(/정답 이미지로 문제 이미지를 그대로 사용/)).toBeInTheDocument();
+    });
+
+    it('체크 OFF 일 때 정답 ImageUpload 가 표시된다', () => {
+      renderWithTheme(<QuestionItem {...defaultProps} answerImageSameAsQuestion={false} />);
+      expect(screen.getByText('정답 이미지 (선택)')).toBeInTheDocument();
+      expect(screen.queryByText(/정답 이미지로 문제 이미지를 그대로 사용/)).not.toBeInTheDocument();
+    });
+
+    it('체크박스 클릭 시 onAnswerImageSameAsQuestionChange 가 반대 값으로 호출된다', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      renderWithTheme(
+        <QuestionItem
+          {...defaultProps}
+          answerImageSameAsQuestion={true}
+          onAnswerImageSameAsQuestionChange={onChange}
+        />,
+      );
+
+      const checkbox = screen.getByRole('checkbox', {
+        name: /문제 이미지와 동일하게 사용/,
+      });
+      await user.click(checkbox);
+      expect(onChange).toHaveBeenCalledWith(false);
+    });
+
+    it('OFF → ON 전환 클릭도 정확히 호출된다', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      renderWithTheme(
+        <QuestionItem
+          {...defaultProps}
+          answerImageSameAsQuestion={false}
+          onAnswerImageSameAsQuestionChange={onChange}
+        />,
+      );
+
+      const checkbox = screen.getByRole('checkbox', {
+        name: /문제 이미지와 동일하게 사용/,
+      });
+      await user.click(checkbox);
+      expect(onChange).toHaveBeenCalledWith(true);
+    });
+
+    it('OFF 상태에서 정답 이미지 미리보기가 표시된다', () => {
+      renderWithTheme(
+        <QuestionItem
+          {...defaultProps}
+          answerImageSameAsQuestion={false}
+          answerImagePreviewUrl="blob:answer-preview"
+        />,
+      );
+      const previews = screen.getAllByAltText('업로드 이미지 미리보기');
+      const sources = previews.map((img) => (img as HTMLImageElement).src);
+      expect(sources).toContain('blob:answer-preview');
     });
   });
 });

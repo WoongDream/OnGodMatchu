@@ -22,17 +22,21 @@ describe('CategoryFilter', () => {
 
     it('renders all category buttons', () => {
       renderWithTheme(<CategoryFilter selected={null} onSelect={vi.fn()} />);
+      expect(screen.getByText('연예인')).toBeInTheDocument();
+      expect(screen.getByText('영화')).toBeInTheDocument();
+      expect(screen.getByText('드라마')).toBeInTheDocument();
+      expect(screen.getByText('애니메이션')).toBeInTheDocument();
       expect(screen.getByText('게임')).toBeInTheDocument();
       expect(screen.getByText('음악')).toBeInTheDocument();
-      expect(screen.getByText('문화')).toBeInTheDocument();
-      expect(screen.getByText('방송')).toBeInTheDocument();
+      expect(screen.getByText('스포츠')).toBeInTheDocument();
+      expect(screen.getByText('상식')).toBeInTheDocument();
       expect(screen.getByText('기타')).toBeInTheDocument();
     });
 
-    it('renders exactly 6 buttons (1 all + 5 categories)', () => {
+    it('renders exactly 10 buttons (1 all + 9 categories)', () => {
       const { container } = renderWithTheme(<CategoryFilter selected={null} onSelect={vi.fn()} />);
       const buttons = container.querySelectorAll('button');
-      expect(buttons).toHaveLength(6);
+      expect(buttons).toHaveLength(10);
     });
   });
 
@@ -60,8 +64,8 @@ describe('CategoryFilter', () => {
     it('marks non-selected categories as inactive', () => {
       renderWithTheme(<CategoryFilter selected="game" onSelect={vi.fn()} />);
       expect(screen.getByTestId('chip-음악')).toHaveAttribute('data-active', 'false');
-      expect(screen.getByTestId('chip-문화')).toHaveAttribute('data-active', 'false');
-      expect(screen.getByTestId('chip-방송')).toHaveAttribute('data-active', 'false');
+      expect(screen.getByTestId('chip-영화')).toHaveAttribute('data-active', 'false');
+      expect(screen.getByTestId('chip-드라마')).toHaveAttribute('data-active', 'false');
       expect(screen.getByTestId('chip-기타')).toHaveAttribute('data-active', 'false');
     });
 
@@ -69,8 +73,8 @@ describe('CategoryFilter', () => {
       renderWithTheme(<CategoryFilter selected={null} onSelect={vi.fn()} />);
       expect(screen.getByTestId('chip-게임')).toHaveAttribute('data-active', 'false');
       expect(screen.getByTestId('chip-음악')).toHaveAttribute('data-active', 'false');
-      expect(screen.getByTestId('chip-문화')).toHaveAttribute('data-active', 'false');
-      expect(screen.getByTestId('chip-방송')).toHaveAttribute('data-active', 'false');
+      expect(screen.getByTestId('chip-영화')).toHaveAttribute('data-active', 'false');
+      expect(screen.getByTestId('chip-드라마')).toHaveAttribute('data-active', 'false');
       expect(screen.getByTestId('chip-기타')).toHaveAttribute('data-active', 'false');
     });
 
@@ -139,10 +143,14 @@ describe('CategoryFilter', () => {
       const { rerender } = renderWithTheme(<CategoryFilter selected={null} onSelect={onSelect} />);
 
       const testCases: Array<[string, Category]> = [
+        ['연예인', 'entertainment'],
+        ['영화', 'movie'],
+        ['드라마', 'drama'],
+        ['애니메이션', 'anime'],
         ['게임', 'game'],
         ['음악', 'music'],
-        ['문화', 'culture'],
-        ['방송', 'broadcast'],
+        ['스포츠', 'sports'],
+        ['상식', 'general'],
         ['기타', 'etc'],
       ];
 
@@ -174,21 +182,21 @@ describe('CategoryFilter', () => {
       expect(onSelect).toHaveBeenCalledWith(null);
     });
 
-    it('toggles off "culture" when it is selected and clicked', async () => {
+    it('toggles off "movie" when it is selected and clicked', async () => {
       const user = userEvent.setup();
       const onSelect = vi.fn();
-      renderWithTheme(<CategoryFilter selected="culture" onSelect={onSelect} />);
+      renderWithTheme(<CategoryFilter selected="movie" onSelect={onSelect} />);
 
-      await user.click(screen.getByText('문화'));
+      await user.click(screen.getByText('영화'));
       expect(onSelect).toHaveBeenCalledWith(null);
     });
 
-    it('toggles off "broadcast" when it is selected and clicked', async () => {
+    it('toggles off "sports" when it is selected and clicked', async () => {
       const user = userEvent.setup();
       const onSelect = vi.fn();
-      renderWithTheme(<CategoryFilter selected="broadcast" onSelect={onSelect} />);
+      renderWithTheme(<CategoryFilter selected="sports" onSelect={onSelect} />);
 
-      await user.click(screen.getByText('방송'));
+      await user.click(screen.getByText('스포츠'));
       expect(onSelect).toHaveBeenCalledWith(null);
     });
 
@@ -296,7 +304,7 @@ describe('CategoryFilter', () => {
       rerender(<CategoryFilter selected="music" onSelect={vi.fn()} />);
       expect(screen.getByTestId('chip-게임')).toHaveAttribute('data-active', 'false');
       expect(screen.getByTestId('chip-음악')).toHaveAttribute('data-active', 'true');
-      expect(screen.getByTestId('chip-문화')).toHaveAttribute('data-active', 'false');
+      expect(screen.getByTestId('chip-연예인')).toHaveAttribute('data-active', 'false');
     });
   });
 
@@ -312,11 +320,11 @@ describe('CategoryFilter', () => {
       await user.click(screen.getByText('음악'));
       expect(onSelect).toHaveBeenCalledWith('music');
 
-      await user.click(screen.getByText('문화'));
-      expect(onSelect).toHaveBeenCalledWith('culture');
+      await user.click(screen.getByText('영화'));
+      expect(onSelect).toHaveBeenCalledWith('movie');
 
-      await user.click(screen.getByText('방송'));
-      expect(onSelect).toHaveBeenCalledWith('broadcast');
+      await user.click(screen.getByText('드라마'));
+      expect(onSelect).toHaveBeenCalledWith('drama');
 
       await user.click(screen.getByText('기타'));
       expect(onSelect).toHaveBeenCalledWith('etc');
@@ -422,7 +430,7 @@ describe('CategoryFilter', () => {
 
     it('button elements are in DOM', () => {
       renderWithTheme(<CategoryFilter selected={null} onSelect={vi.fn()} />);
-      expect(screen.getAllByRole('button').length).toBe(6);
+      expect(screen.getAllByRole('button').length).toBe(10);
     });
   });
 

@@ -43,3 +43,38 @@ export const iconButtonStyle = (theme: Theme) => css`
     cursor: not-allowed;
   }
 `;
+
+export const sectionStyle = (theme: Theme) => css`
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing.sm};
+`;
+
+export const sectionHeadingStyle = (theme: Theme) => css`
+  ${text({ size: 'sm', weight: 'semibold' })({ theme })}
+  color: ${theme.colors.fg.secondary};
+  margin: 0;
+`;
+
+export const checkboxRowStyle = (theme: Theme) => css`
+  display: flex;
+  align-items: center;
+  gap: ${theme.spacing.xs};
+  ${text({ size: 'sm' })({ theme })}
+  color: ${theme.colors.fg.secondary};
+  cursor: pointer;
+  user-select: none;
+
+  & input[type='checkbox'] {
+    cursor: pointer;
+  }
+`;
+
+export const sameAsQuestionHintStyle = (theme: Theme) => css`
+  ${text({ size: 'sm' })({ theme })}
+  color: ${theme.colors.fg.tertiary};
+  padding: ${theme.spacing.sm} ${theme.spacing.md};
+  border: 1px dashed ${theme.colors.border.primary};
+  border-radius: ${theme.borderRadius.md};
+  background-color: ${theme.colors.bg.secondary};
+`;

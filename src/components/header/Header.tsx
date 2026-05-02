@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '@/store/authStore';
+import logoKo from '@/assets/logo/ongatmatchu-logo-horizontal-ko.svg';
 import { wrapperStyle, innerStyle, logoStyle, navActionsStyle } from './Header.style';
 
 const Header = memo(() => {
@@ -27,9 +28,7 @@ const Header = memo(() => {
   return (
     <header css={wrapperStyle}>
       <div css={innerStyle}>
-        <span css={logoStyle} onClick={handleLogoClick}>
-          OnGodMatchu
-        </span>
+        <img src={logoKo} alt="OnGodMatchu" css={logoStyle} onClick={handleLogoClick} />
         <div css={navActionsStyle}>
           {isLoggedIn ? (
             <>

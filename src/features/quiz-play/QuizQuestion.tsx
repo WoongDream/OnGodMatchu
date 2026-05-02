@@ -4,12 +4,18 @@ import { wrapperStyle, imageStyle, textStyle } from './QuizQuestion.style';
 
 type QuizQuestionProps = {
   question: Question;
+  revealAnswer?: boolean;
 };
 
-const QuizQuestion = memo(({ question }: QuizQuestionProps) => {
+const QuizQuestion = memo(({ question, revealAnswer = false }: QuizQuestionProps) => {
+  const displayImageUrl = revealAnswer
+    ? (question.answerImageUrl ?? question.imageUrl)
+    : question.imageUrl;
+  const imageAlt = revealAnswer && question.answerImageUrl ? '정답 이미지' : '문제 이미지';
+
   return (
     <div css={wrapperStyle}>
-      {question.imageUrl && <img css={imageStyle} src={question.imageUrl} alt="문제 이미지" />}
+      {displayImageUrl && <img css={imageStyle} src={displayImageUrl} alt={imageAlt} />}
       {question.questionText && <p css={textStyle}>{question.questionText}</p>}
     </div>
   );

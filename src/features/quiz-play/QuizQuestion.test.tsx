@@ -395,6 +395,67 @@ describe('QuizQuestion', () => {
     });
   });
 
+  describe('revealAnswer 모드 — 답 제출 후 정답 이미지로 교체', () => {
+    const baseQuestion: Question = {
+      id: 1,
+      quizId: 1,
+      orderNum: 1,
+      imageUrl: 'https://cdn.example.com/q.jpg',
+      answerImageUrl: 'https://cdn.example.com/a.jpg',
+      questionText: 'Q1',
+      answer: 'A1',
+    };
+
+    it('revealAnswer=false (기본) → 문제 이미지 표시', () => {
+      renderWithTheme(<QuizQuestion question={baseQuestion} />);
+      const img = screen.getByAltText('문제 이미지') as HTMLImageElement;
+      expect(img.src).toBe('https://cdn.example.com/q.jpg');
+      expect(screen.queryByAltText('정답 이미지')).not.toBeInTheDocument();
+    });
+
+    it('revealAnswer=true → 정답 이미지로 교체 + alt 변경', () => {
+      renderWithTheme(<QuizQuestion question={baseQuestion} revealAnswer />);
+      const img = screen.getByAltText('정답 이미지') as HTMLImageElement;
+      expect(img.src).toBe('https://cdn.example.com/a.jpg');
+      expect(screen.queryByAltText('문제 이미지')).not.toBeInTheDocument();
+    });
+
+    it('revealAnswer=true 인데 answerImageUrl 없으면 문제 이미지 유지 (alt 도 그대로)', () => {
+      renderWithTheme(
+        <QuizQuestion question={{ ...baseQuestion, answerImageUrl: null }} revealAnswer />,
+      );
+      const img = screen.getByAltText('문제 이미지') as HTMLImageElement;
+      expect(img.src).toBe('https://cdn.example.com/q.jpg');
+    });
+
+    it('imageUrl/answerImageUrl 둘 다 없으면 이미지 안 보임', () => {
+      renderWithTheme(
+        <QuizQuestion
+          question={{ ...baseQuestion, imageUrl: null, answerImageUrl: null }}
+          revealAnswer
+        />,
+      );
+      expect(screen.queryByAltText('문제 이미지')).not.toBeInTheDocument();
+      expect(screen.queryByAltText('정답 이미지')).not.toBeInTheDocument();
+    });
+
+    it('imageUrl === answerImageUrl 인 경우(문제와 동일 케이스) reveal 시에도 같은 이미지 표시', () => {
+      const sameUrl = 'https://cdn.example.com/same.jpg';
+      const { rerender } = renderWithTheme(
+        <QuizQuestion question={{ ...baseQuestion, imageUrl: sameUrl, answerImageUrl: sameUrl }} />,
+      );
+      expect((screen.getByAltText('문제 이미지') as HTMLImageElement).src).toBe(sameUrl);
+
+      rerender(
+        <QuizQuestion
+          question={{ ...baseQuestion, imageUrl: sameUrl, answerImageUrl: sameUrl }}
+          revealAnswer
+        />,
+      );
+      expect((screen.getByAltText('정답 이미지') as HTMLImageElement).src).toBe(sameUrl);
+    });
+  });
+
   describe('component structure', () => {
     it('renders with displayName set correctly', () => {
       expect(QuizQuestion.displayName).toBe('QuizQuestion');
