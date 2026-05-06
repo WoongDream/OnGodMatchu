@@ -22,7 +22,7 @@ const MESSAGES: Record<NicknameStatus, string | undefined> = {
   checking: '닉네임 확인 중...',
   available: '사용 가능한 닉네임입니다.',
   taken: '이미 사용 중인 닉네임입니다.',
-  invalid: '닉네임은 2~20자, 한글·영문·숫자·_ 만 사용할 수 있습니다.',
+  invalid: '닉네임은 2~10자, 한글·영문·숫자·_ 만 사용할 수 있습니다.',
   error: '닉네임 확인에 실패했습니다.',
 };
 

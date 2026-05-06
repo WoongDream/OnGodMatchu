@@ -13,8 +13,8 @@ describe('nickname/policy 상수', () => {
     expect(NICKNAME_MIN_LENGTH).toBe(2);
   });
 
-  it('NICKNAME_MAX_LENGTH 는 20 이다', () => {
-    expect(NICKNAME_MAX_LENGTH).toBe(20);
+  it('NICKNAME_MAX_LENGTH 는 10 이다', () => {
+    expect(NICKNAME_MAX_LENGTH).toBe(10);
   });
 
   it('NICKNAME_ALLOWED_REGEX 는 한글·영문·숫자·_ 만 허용한다', () => {
@@ -54,12 +54,16 @@ describe('isWithinNicknameLength', () => {
     expect(isWithinNicknameLength('ab')).toBe(true);
   });
 
-  it('20자는 true (경계)', () => {
-    expect(isWithinNicknameLength('a'.repeat(20))).toBe(true);
+  it('10자는 true (경계)', () => {
+    expect(isWithinNicknameLength('a'.repeat(10))).toBe(true);
   });
 
-  it('21자는 false', () => {
-    expect(isWithinNicknameLength('a'.repeat(21))).toBe(false);
+  it('11자는 false', () => {
+    expect(isWithinNicknameLength('a'.repeat(11))).toBe(false);
+  });
+
+  it('20자는 false (이전 정책 경계, 이제는 거부)', () => {
+    expect(isWithinNicknameLength('a'.repeat(20))).toBe(false);
   });
 });
 

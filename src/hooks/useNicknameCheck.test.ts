@@ -158,9 +158,9 @@ describe('useNicknameCheck', () => {
       expect(result.current.message).toBeUndefined();
     });
 
-    it('invalid 상태에서는 정책 안내 메시지 (2~20자, 한글·영문·숫자·_)', () => {
+    it('invalid 상태에서는 정책 안내 메시지 (2~10자, 한글·영문·숫자·_)', () => {
       const { result } = renderHook(() => useNicknameCheck('a'), { wrapper });
-      expect(result.current.message).toContain('2~20자');
+      expect(result.current.message).toContain('2~10자');
       expect(result.current.message).toContain('한글');
     });
   });
