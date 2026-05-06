@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { css, type Theme } from '@emotion/react';
 import Button from '@/components/button';
 import { pageWrapperStyle } from '@/styles/layout';
-import QuizInfoForm from '@/features/quiz-create/QuizInfoForm';
+import QuizInfoForm from '@/features/quiz/create/QuizInfoForm';
 import QuestionList, {
   type DraftQuestion,
   createEmptyQuestion,
-} from '@/features/quiz-create/QuestionList';
+} from '@/features/quiz/create/QuestionList';
 import useCreateQuiz from '@/hooks/useCreateQuiz';
 import type { Category } from '@/types';
 

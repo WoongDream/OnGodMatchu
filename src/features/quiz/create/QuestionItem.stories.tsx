@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import QuestionItem from './QuestionItem';
 
 const meta: Meta<typeof QuestionItem> = {
-  title: 'Features/QuizCreate/QuestionItem',
+  title: 'Features/Quiz/Create/QuestionItem',
   component: QuestionItem,
   tags: ['autodocs'],
 };

@@ -2,10 +2,10 @@ import { memo, useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Button from '@/components/button';
 import { pageWrapperStyle } from '@/styles/layout';
-import QuizProgress from '@/features/quiz-play/QuizProgress';
-import QuizQuestion from '@/features/quiz-play/QuizQuestion';
-import QuizAnswer from '@/features/quiz-play/QuizAnswer';
-import QuizFeedback from '@/features/quiz-play/QuizFeedback';
+import QuizProgress from '@/features/quiz/play/QuizProgress';
+import QuizQuestion from '@/features/quiz/play/QuizQuestion';
+import QuizAnswer from '@/features/quiz/play/QuizAnswer';
+import QuizFeedback from '@/features/quiz/play/QuizFeedback';
 import useQuizDetail from '@/hooks/useQuizDetail';
 import { incrementPlayCount, gradeAnswer } from '@/api/quiz';
 

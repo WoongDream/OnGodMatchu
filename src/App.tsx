@@ -5,14 +5,14 @@ import Footer from '@/components/footer';
 import { theme } from '@/styles/theme';
 import { appShellStyle, pageContentStyle } from '@/styles/layout';
 import MainPage from './pages/MainPage';
-import QuizPlayPage from './pages/QuizPlayPage';
-import QuizResultPage from './pages/QuizResultPage';
-import QuizCreatePage from './pages/QuizCreatePage';
-import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
-import OAuthCallbackPage from './pages/OAuthCallbackPage';
-import PrivacyPage from './pages/PrivacyPage';
-import TermsPage from './pages/TermsPage';
+import QuizPlayPage from './pages/quiz/QuizPlayPage';
+import QuizResultPage from './pages/quiz/QuizResultPage';
+import QuizCreatePage from './pages/quiz/QuizCreatePage';
+import LoginPage from './pages/auth/LoginPage';
+import SignupPage from './pages/auth/SignupPage';
+import OAuthCallbackPage from './pages/auth/OAuthCallbackPage';
+import PrivacyPage from './pages/legal/PrivacyPage';
+import TermsPage from './pages/legal/TermsPage';
 import ProtectedRoute from '@/components/protected-route/ProtectedRoute';
 
 const App = () => {

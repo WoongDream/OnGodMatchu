@@ -24,35 +24,35 @@ vi.mock('./pages/MainPage', () => ({
   default: () => <div data-testid="main-page">Main Page</div>,
 }));
 
-vi.mock('./pages/QuizPlayPage', () => ({
+vi.mock('./pages/quiz/QuizPlayPage', () => ({
   default: () => <div data-testid="quiz-play-page">Quiz Play Page</div>,
 }));
 
-vi.mock('./pages/QuizResultPage', () => ({
+vi.mock('./pages/quiz/QuizResultPage', () => ({
   default: () => <div data-testid="quiz-result-page">Quiz Result Page</div>,
 }));
 
-vi.mock('./pages/QuizCreatePage', () => ({
+vi.mock('./pages/quiz/QuizCreatePage', () => ({
   default: () => <div data-testid="quiz-create-page">Quiz Create Page</div>,
 }));
 
-vi.mock('./pages/LoginPage', () => ({
+vi.mock('./pages/auth/LoginPage', () => ({
   default: () => <div data-testid="login-page">Login Page</div>,
 }));
 
-vi.mock('./pages/SignupPage', () => ({
+vi.mock('./pages/auth/SignupPage', () => ({
   default: () => <div data-testid="signup-page">Signup Page</div>,
 }));
 
-vi.mock('./pages/OAuthCallbackPage', () => ({
+vi.mock('./pages/auth/OAuthCallbackPage', () => ({
   default: () => <div data-testid="oauth-callback-page">OAuth Callback Page</div>,
 }));
 
-vi.mock('./pages/PrivacyPage', () => ({
+vi.mock('./pages/legal/PrivacyPage', () => ({
   default: () => <div data-testid="privacy-page">Privacy Page</div>,
 }));
 
-vi.mock('./pages/TermsPage', () => ({
+vi.mock('./pages/legal/TermsPage', () => ({
   default: () => <div data-testid="terms-page">Terms Page</div>,
 }));
 

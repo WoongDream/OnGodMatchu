@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { pageWrapperStyle } from '@/styles/layout';
-import ResultScore from '@/features/quiz-result/ResultScore';
-import ResultActions from '@/features/quiz-result/ResultActions';
+import ResultScore from '@/features/quiz/result/ResultScore';
+import ResultActions from '@/features/quiz/result/ResultActions';
 
 type ResultState = {
   scores: number;
