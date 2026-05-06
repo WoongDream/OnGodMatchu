@@ -1,12 +1,19 @@
 import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '@/store/authStore';
+import ProfileImage from '@/components/profile-image';
 import logoKo from '@/assets/logo/ongatmatchu-logo-horizontal-ko.svg';
-import { wrapperStyle, innerStyle, logoStyle, navActionsStyle } from './Header.style';
+import {
+  wrapperStyle,
+  innerStyle,
+  logoStyle,
+  navActionsStyle,
+  profileButtonStyle,
+} from './Header.style';
 
 const Header = memo(() => {
   const navigate = useNavigate();
-  const { isLoggedIn, logout } = useAuthStore();
+  const { isLoggedIn, user } = useAuthStore();
 
   const handleLogoClick = () => {
     navigate('/');
@@ -16,9 +23,8 @@ const Header = memo(() => {
     navigate('/login');
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
+  const handleProfileClick = () => {
+    navigate('/profile');
   };
 
   const handleCreateClick = () => {
@@ -33,7 +39,18 @@ const Header = memo(() => {
           {isLoggedIn ? (
             <>
               <button onClick={handleCreateClick}>퀴즈 만들기</button>
-              <button onClick={handleLogout}>로그아웃</button>
+              <button
+                type="button"
+                onClick={handleProfileClick}
+                aria-label="프로필"
+                css={profileButtonStyle}
+              >
+                <ProfileImage
+                  nickname={user?.nickname ?? ''}
+                  imageUrl={user?.profileImageUrl}
+                  size="sm"
+                />
+              </button>
             </>
           ) : (
             <button onClick={handleLoginClick}>로그인</button>

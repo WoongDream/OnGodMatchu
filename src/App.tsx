@@ -4,6 +4,7 @@ import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { theme } from '@/styles/theme';
 import { appShellStyle, pageContentStyle } from '@/styles/layout';
+import useBootstrapAuth from '@/hooks/useBootstrapAuth';
 import MainPage from './pages/MainPage';
 import QuizPlayPage from './pages/quiz/QuizPlayPage';
 import QuizResultPage from './pages/quiz/QuizResultPage';
@@ -16,6 +17,7 @@ import TermsPage from './pages/legal/TermsPage';
 import ProtectedRoute from '@/components/protected-route/ProtectedRoute';
 
 const App = () => {
+  useBootstrapAuth();
   return (
     <ThemeProvider theme={theme}>
       <BrowserRouter>
