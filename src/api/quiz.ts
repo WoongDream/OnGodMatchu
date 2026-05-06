@@ -32,6 +32,7 @@ type QuizCreateRequest = {
   description?: string;
   category: Category;
   thumbnailKey?: string;
+  isPublic: boolean;
   questions: Array<{
     imageKey?: string;
     answerImageKey?: string;
@@ -83,5 +84,12 @@ export const gradeAnswer = async (
 
 export const createQuiz = async (data: QuizCreateRequest): Promise<Quiz> => {
   const res = await instance.post<ApiResponse<Quiz>>('/api/quizzes', data);
+  return res.data.data;
+};
+
+export const updateQuizVisibility = async (quizId: number, isPublic: boolean): Promise<Quiz> => {
+  const res = await instance.patch<ApiResponse<Quiz>>(`/api/quizzes/${quizId}/visibility`, {
+    isPublic,
+  });
   return res.data.data;
 };

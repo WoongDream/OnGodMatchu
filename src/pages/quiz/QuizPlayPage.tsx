@@ -16,7 +16,7 @@ const QuizPlayPage = memo(() => {
   const navigate = useNavigate();
   const quizId = Number(id);
 
-  const { quiz, isLoading } = useQuizDetail(quizId);
+  const { quiz, isLoading, error } = useQuizDetail(quizId);
   const questions = quiz?.questions ?? [];
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -30,8 +30,25 @@ const QuizPlayPage = memo(() => {
     }
   }, [quizId]);
 
-  if (isLoading || !quiz) {
+  if (isLoading) {
     return <div>로딩 중...</div>;
+  }
+
+  if (error || !quiz) {
+    const status = (error as { response?: { status?: number } } | null | undefined)?.response
+      ?.status;
+    const message =
+      status === 403 || status === 404
+        ? '비공개 퀴즈이거나 존재하지 않는 퀴즈입니다.'
+        : '퀴즈를 불러오지 못했습니다.';
+    return (
+      <div css={pageWrapperStyle('lg')}>
+        <p>{message}</p>
+        <Button fullWidth onClick={() => navigate('/')}>
+          홈으로
+        </Button>
+      </div>
+    );
   }
 
   const currentQuestion = questions[currentIndex];

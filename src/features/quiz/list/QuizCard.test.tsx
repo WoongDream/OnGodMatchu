@@ -19,6 +19,7 @@ describe('QuizCard', () => {
     thumbnailKey: 'quiz-thumbnails/abc',
     thumbnailUrl: 'https://example.com/image.jpg',
     playCount: 1234,
+    isPublic: true,
     createdAt: '2024-01-01T00:00:00Z',
   };
 
@@ -128,6 +129,7 @@ describe('QuizCard', () => {
       const quizWithHighPlayCount: Quiz = {
         ...mockQuiz,
         playCount: 1000000,
+        isPublic: true,
       };
       renderWithTheme(<QuizCard quiz={quizWithHighPlayCount} onClick={mockOnClick} />);
       expect(screen.getByText('· 1,000,000명 플레이')).toBeInTheDocument();
@@ -137,6 +139,7 @@ describe('QuizCard', () => {
       const quizWithLowPlayCount: Quiz = {
         ...mockQuiz,
         playCount: 0,
+        isPublic: true,
       };
       renderWithTheme(<QuizCard quiz={quizWithLowPlayCount} onClick={mockOnClick} />);
       expect(screen.getByText('· 0명 플레이')).toBeInTheDocument();
@@ -146,6 +149,7 @@ describe('QuizCard', () => {
       const quizWithOnePlay: Quiz = {
         ...mockQuiz,
         playCount: 1,
+        isPublic: true,
       };
       renderWithTheme(<QuizCard quiz={quizWithOnePlay} onClick={mockOnClick} />);
       expect(screen.getByText('· 1명 플레이')).toBeInTheDocument();
@@ -155,6 +159,7 @@ describe('QuizCard', () => {
       const quizWith999Plays: Quiz = {
         ...mockQuiz,
         playCount: 999,
+        isPublic: true,
       };
       renderWithTheme(<QuizCard quiz={quizWith999Plays} onClick={mockOnClick} />);
       expect(screen.getByText('· 999명 플레이')).toBeInTheDocument();
@@ -178,6 +183,7 @@ describe('QuizCard', () => {
       const updatedQuiz: Quiz = {
         ...mockQuiz,
         playCount: 5000,
+        isPublic: true,
       };
       rerender(<QuizCard quiz={updatedQuiz} onClick={mockOnClick} />);
 
@@ -460,6 +466,7 @@ describe('QuizCard', () => {
       const quizWith1000Plays: Quiz = {
         ...mockQuiz,
         playCount: 1000,
+        isPublic: true,
       };
       renderWithTheme(<QuizCard quiz={quizWith1000Plays} onClick={mockOnClick} />);
       expect(screen.getByText('· 1,000명 플레이')).toBeInTheDocument();
@@ -555,6 +562,7 @@ describe('QuizCard', () => {
         id: 2,
         title: 'Second Quiz',
         playCount: 5000,
+        isPublic: true,
       };
       rerender(<QuizCard quiz={secondQuiz} onClick={mockOnClick} />);
 

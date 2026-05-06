@@ -21,6 +21,7 @@ export type Quiz = {
   thumbnailKey?: string | null;
   thumbnailUrl: string | null;
   playCount: number;
+  isPublic: boolean;
   createdAt: string;
 };
 

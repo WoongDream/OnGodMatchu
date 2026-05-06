@@ -27,6 +27,7 @@ const createMockQuiz = (overrides?: Partial<Quiz>): Quiz => ({
   thumbnailKey: 'quiz-thumbnails/abc',
   thumbnailUrl: 'https://example.com/thumb.jpg',
   playCount: 42,
+  isPublic: true,
   createdAt: '2024-01-01T00:00:00Z',
   ...overrides,
 });

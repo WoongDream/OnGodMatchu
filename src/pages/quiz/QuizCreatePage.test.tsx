@@ -69,6 +69,7 @@ describe('QuizCreatePage', () => {
       title: '테스트 제목',
       category: 'game',
       thumbnailFile: null,
+      isPublic: false,
       questions: [
         expect.objectContaining({
           imageFile: null,
@@ -77,6 +78,28 @@ describe('QuizCreatePage', () => {
         }),
       ],
     });
+  });
+
+  it('공개 설정 토글 — 기본값 비공개, 클릭 시 공개로 전환', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    const toggle = screen.getByRole('switch', { name: '공개 설정' });
+    expect(toggle).toHaveAttribute('aria-checked', 'false');
+
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('공개 설정 토글 ON 후 저장 시 isPublic=true 로 submit', async () => {
+    mockSubmit.mockResolvedValue({ id: 1 });
+    const user = userEvent.setup();
+    renderPage();
+    await fillForm(user);
+    await user.click(screen.getByRole('switch', { name: '공개 설정' }));
+    await user.click(screen.getByRole('button', { name: '퀴즈 저장' }));
+
+    await waitFor(() => expect(mockSubmit).toHaveBeenCalledOnce());
+    expect(mockSubmit.mock.calls[0][0]).toMatchObject({ isPublic: true });
   });
 
   it('성공 시 /quiz/{id} 로 navigate', async () => {
