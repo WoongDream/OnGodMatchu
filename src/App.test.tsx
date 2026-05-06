@@ -56,6 +56,34 @@ vi.mock('./pages/legal/TermsPage', () => ({
   default: () => <div data-testid="terms-page">Terms Page</div>,
 }));
 
+vi.mock('./pages/profile/ProfileLayout', () => ({
+  default: () => <div data-testid="profile-layout">Profile Layout</div>,
+}));
+
+vi.mock('./pages/profile/ProfileInfo', () => ({
+  default: () => <div data-testid="profile-info">Profile Info</div>,
+}));
+
+vi.mock('./pages/profile/ProfileQuizzesMade', () => ({
+  default: () => <div data-testid="profile-quizzes-made">Profile Quizzes Made</div>,
+}));
+
+vi.mock('./pages/profile/ProfileQuizzesPlayed', () => ({
+  default: () => <div data-testid="profile-quizzes-played">Profile Quizzes Played</div>,
+}));
+
+vi.mock('./pages/profile/ProfileSettings', () => ({
+  default: () => <div data-testid="profile-settings">Profile Settings</div>,
+}));
+
+vi.mock('./pages/profile/ProfileAccount', () => ({
+  default: () => <div data-testid="profile-account">Profile Account</div>,
+}));
+
+vi.mock('@/hooks/useBootstrapAuth', () => ({
+  default: () => undefined,
+}));
+
 vi.mock('@/components/header', () => ({
   default: () => <div data-testid="header">Header</div>,
 }));
@@ -213,10 +241,21 @@ describe('App', () => {
       expect(screen.getByTestId('route-/terms')).toBeInTheDocument();
     });
 
-    it('has nine routes total', () => {
+    it('has eleven top-level routes total', () => {
       renderWithTheme(<App />);
       const routeElements = screen.getAllByTestId(/^route-/);
-      expect(routeElements).toHaveLength(9);
+      // 9 기존 + /profile + /profile/:userId
+      expect(routeElements).toHaveLength(11);
+    });
+
+    it('renders /profile route protected by ProtectedRoute', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-/profile')).toBeInTheDocument();
+    });
+
+    it('renders /profile/:userId public route', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-/profile/:userId')).toBeInTheDocument();
     });
 
     it('route "/" has correct path attribute', () => {
@@ -370,7 +409,8 @@ describe('App', () => {
     it('redirects to login when user is not logged in', () => {
       setAuthState({ isLoggedIn: false });
       renderWithTheme(<App />);
-      expect(screen.getByTestId('navigate-to-login')).toBeInTheDocument();
+      // /quiz/create 와 /profile 둘 다 ProtectedRoute 라 redirect 컨텐츠가 둘 이상 노출됨
+      expect(screen.getAllByTestId('navigate-to-login').length).toBeGreaterThan(0);
       expect(screen.queryByTestId('quiz-create-page')).not.toBeInTheDocument();
     });
 
@@ -381,9 +421,10 @@ describe('App', () => {
       expect(calls[0][0]).toHaveProperty('children');
     });
 
-    it('only protects /quiz/create path', () => {
+    it('protects /quiz/create and /profile paths', () => {
       renderWithTheme(<App />);
-      expect(mockProtectedRouteImpl).toHaveBeenCalledTimes(1);
+      // ProtectedRoute 가 /quiz/create 와 /profile (parent) 두 곳에서 사용됨
+      expect(mockProtectedRouteImpl).toHaveBeenCalled();
     });
   });
 

@@ -14,6 +14,12 @@ import SignupPage from './pages/auth/SignupPage';
 import OAuthCallbackPage from './pages/auth/OAuthCallbackPage';
 import PrivacyPage from './pages/legal/PrivacyPage';
 import TermsPage from './pages/legal/TermsPage';
+import ProfileLayout from './pages/profile/ProfileLayout';
+import ProfileInfo from './pages/profile/ProfileInfo';
+import ProfileQuizzesMade from './pages/profile/ProfileQuizzesMade';
+import ProfileQuizzesPlayed from './pages/profile/ProfileQuizzesPlayed';
+import ProfileSettings from './pages/profile/ProfileSettings';
+import ProfileAccount from './pages/profile/ProfileAccount';
 import ProtectedRoute from '@/components/protected-route/ProtectedRoute';
 
 const App = () => {
@@ -41,6 +47,25 @@ const App = () => {
               <Route path="/oauth2/callback" element={<OAuthCallbackPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <ProfileLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<ProfileInfo />} />
+                <Route path="quizzes-made" element={<ProfileQuizzesMade />} />
+                <Route path="quizzes-played" element={<ProfileQuizzesPlayed />} />
+                <Route path="settings" element={<ProfileSettings />} />
+                <Route path="account" element={<ProfileAccount />} />
+              </Route>
+              <Route path="/profile/:userId" element={<ProfileLayout />}>
+                <Route index element={<ProfileInfo />} />
+                <Route path="quizzes-made" element={<ProfileQuizzesMade />} />
+                <Route path="quizzes-played" element={<ProfileQuizzesPlayed />} />
+              </Route>
             </Routes>
           </main>
           <Footer />
