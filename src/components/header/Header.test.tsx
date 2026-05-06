@@ -119,9 +119,9 @@ describe('Header', () => {
       });
     });
 
-    it('shows the "퀴즈 만들기" button', () => {
+    it('does not show the "퀴즈 만들기" button (헤더에서 제거)', () => {
       renderWithTheme(<Header />);
-      expect(screen.getByRole('button', { name: '퀴즈 만들기' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '퀴즈 만들기' })).not.toBeInTheDocument();
     });
 
     it('shows the "프로필" button (aria-label)', () => {
@@ -137,15 +137,6 @@ describe('Header', () => {
     it('does not show a "로그아웃" button', () => {
       renderWithTheme(<Header />);
       expect(screen.queryByRole('button', { name: '로그아웃' })).not.toBeInTheDocument();
-    });
-
-    it('navigates to "/quiz/create" when "퀴즈 만들기" is clicked', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<Header />);
-      await user.click(screen.getByRole('button', { name: '퀴즈 만들기' }));
-
-      expect(mockNavigate).toHaveBeenCalledWith('/quiz/create');
-      expect(mockNavigate).toHaveBeenCalledTimes(1);
     });
 
     it('navigates to "/profile" when profile button is clicked', async () => {

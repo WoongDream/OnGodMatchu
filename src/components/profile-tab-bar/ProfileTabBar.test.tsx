@@ -30,8 +30,8 @@ describe('ProfileTabBar', () => {
     it('메뉴 5개가 모두 렌더된다', () => {
       renderTabBar({ isMe: true });
       expect(screen.getByText('내 정보')).toBeInTheDocument();
-      expect(screen.getByText('만든 퀴즈')).toBeInTheDocument();
-      expect(screen.getByText('푼 퀴즈')).toBeInTheDocument();
+      expect(screen.getByText('내가 만든 퀴즈')).toBeInTheDocument();
+      expect(screen.getByText('내가 푼 퀴즈')).toBeInTheDocument();
       expect(screen.getByText('환경설정')).toBeInTheDocument();
       expect(screen.getByText('계정')).toBeInTheDocument();
     });
@@ -65,15 +65,15 @@ describe('ProfileTabBar', () => {
   });
 
   describe('userId 지정 시 링크 경로', () => {
-    it('userId=42 이면 만든 퀴즈 링크가 /profile/42/quizzes-made 이다', () => {
+    it('userId=42 이면 내가 만든 퀴즈 링크가 /profile/42/quizzes-made 이다', () => {
       renderTabBar({ isMe: false, userId: 42 });
-      const link = screen.getByText('만든 퀴즈').closest('a');
+      const link = screen.getByText('내가 만든 퀴즈').closest('a');
       expect(link).toHaveAttribute('href', '/profile/42/quizzes-made');
     });
 
-    it('userId=42 이면 푼 퀴즈 링크가 /profile/42/quizzes-played 이다', () => {
+    it('userId=42 이면 내가 푼 퀴즈 링크가 /profile/42/quizzes-played 이다', () => {
       renderTabBar({ isMe: false, userId: 42 });
-      const link = screen.getByText('푼 퀴즈').closest('a');
+      const link = screen.getByText('내가 푼 퀴즈').closest('a');
       expect(link).toHaveAttribute('href', '/profile/42/quizzes-played');
     });
   });

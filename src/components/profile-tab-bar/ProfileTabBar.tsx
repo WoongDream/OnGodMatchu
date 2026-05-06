@@ -15,7 +15,7 @@ const ProfileTabBar = memo(({ isMe, userId, stats }: ProfileTabBarProps) => {
         const count = item.countKey && stats ? stats[item.countKey] : undefined;
         return (
           <NavLink key={item.key} to={to} end={item.to === ''} css={tabStyle}>
-            {item.label}
+            {item.mobileLabel ?? item.label}
             {count !== undefined && <span css={countStyle}>{count}</span>}
           </NavLink>
         );
