@@ -9,6 +9,7 @@ import {
   mapUserError,
   type UserErrorCode,
 } from '@/api/user';
+import useAuthStore from '@/store/authStore';
 import type { User } from '@/types';
 
 const ERROR_MESSAGES: Record<UserErrorCode, string> = {
@@ -60,6 +61,7 @@ const useProfileImage = (): UseProfileImageReturn => {
 
   const setProfileCache = async (user: User): Promise<User | null> => {
     const updated = await mutate<User>(MY_PROFILE_KEY, user, { revalidate: false });
+    useAuthStore.getState().setUser(user);
     return updated ?? null;
   };
 

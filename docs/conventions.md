@@ -234,6 +234,38 @@ import type { ButtonProps } from '@/components/button/Button.type';
 import type { ButtonProps } from './Button.type';
 ```
 
+### 단일 파일 내부 순서
+
+스타일이 짧을 때는 별도 `.style.ts` 로 분리하지 않고 같은 `.tsx` 파일에 둬도 된다.
+이 경우 다음 순서를 지킨다.
+
+1. **상단** — 보조 함수, 타입, 상수
+2. **중단** — 컴포넌트 (`React.memo` + `displayName`)
+3. **하단** — `css` literal 스타일
+
+```tsx
+// 1) 상단 — 함수 / 타입 / 상수
+type BadgeProps = {
+  label: string;
+};
+
+// 2) 중단 — 컴포넌트
+const Badge = memo(({ label }: BadgeProps) => {
+  return <span css={badgeStyle}>{label}</span>;
+});
+Badge.displayName = 'Badge';
+
+export default Badge;
+
+// 3) 하단 — 스타일
+const badgeStyle = (theme: Theme) => css`
+  color: ${theme.colors.fg.primary};
+`;
+```
+
+스타일이 길어지거나 (대략 한 화면을 넘기거나, 스타일 함수가 3~4개 이상으로 늘어나면)
+재사용·테스트 가시성을 위해 `Foo.style.ts` 로 분리한다.
+
 ---
 
 ## 커밋 메시지

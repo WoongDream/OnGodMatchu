@@ -9,6 +9,7 @@ import MainPage from './pages/MainPage';
 import QuizPlayPage from './pages/quiz/QuizPlayPage';
 import QuizResultPage from './pages/quiz/QuizResultPage';
 import QuizCreatePage from './pages/quiz/QuizCreatePage';
+import QuizEditPage from './pages/quiz/QuizEditPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
 import OAuthCallbackPage from './pages/auth/OAuthCallbackPage';
@@ -42,6 +43,14 @@ const App = () => {
               />
               <Route path="/quiz/:id" element={<QuizPlayPage />} />
               <Route path="/quiz/:id/result" element={<QuizResultPage />} />
+              <Route
+                path="/quiz/:id/edit"
+                element={
+                  <ProtectedRoute>
+                    <QuizEditPage />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
               <Route path="/oauth2/callback" element={<OAuthCallbackPage />} />

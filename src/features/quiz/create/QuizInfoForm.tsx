@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, type ReactNode } from 'react';
 import { CATEGORIES } from '@/types/quiz';
 import type { Category } from '@/types';
 import Input from '@/components/input';
@@ -19,6 +19,7 @@ type QuizInfoFormProps = {
   onCategoryChange: (value: Category) => void;
   onThumbnailChange: (file: File, url: string) => void;
   onThumbnailRemove: () => void;
+  belowTitleSlot?: ReactNode;
 };
 
 const QuizInfoForm = memo(
@@ -32,6 +33,7 @@ const QuizInfoForm = memo(
     onCategoryChange,
     onThumbnailChange,
     onThumbnailRemove,
+    belowTitleSlot,
   }: QuizInfoFormProps) => {
     const { categories } = useCategories();
     const items = categories ?? FALLBACK_CATEGORIES;
@@ -51,6 +53,7 @@ const QuizInfoForm = memo(
           onChange={onTitleChange}
           placeholder="퀴즈 제목을 입력하세요"
         />
+        {belowTitleSlot}
         <Input
           label="설명"
           value={description}

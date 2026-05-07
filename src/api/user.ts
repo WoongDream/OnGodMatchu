@@ -1,5 +1,5 @@
 import instance from './instance';
-import type { User } from '@/types';
+import type { User, MyQuizzesAggregate } from '@/types';
 
 type ApiResponse<T> = {
   success: boolean;
@@ -80,6 +80,11 @@ export const removeProfileImage = async (): Promise<User> => {
 
 export const regenerateDefaultProfileImage = async (): Promise<User> => {
   const res = await instance.post<ApiResponse<User>>('/api/users/me/profile-image/default');
+  return res.data.data;
+};
+
+export const getMyProfileStats = async (): Promise<MyQuizzesAggregate> => {
+  const res = await instance.get<ApiResponse<MyQuizzesAggregate>>('/api/users/me/profile/stats');
   return res.data.data;
 };
 

@@ -36,6 +36,10 @@ vi.mock('./pages/quiz/QuizCreatePage', () => ({
   default: () => <div data-testid="quiz-create-page">Quiz Create Page</div>,
 }));
 
+vi.mock('./pages/quiz/QuizEditPage', () => ({
+  default: () => <div data-testid="quiz-edit-page">Quiz Edit Page</div>,
+}));
+
 vi.mock('./pages/auth/LoginPage', () => ({
   default: () => <div data-testid="login-page">Login Page</div>,
 }));
@@ -241,11 +245,11 @@ describe('App', () => {
       expect(screen.getByTestId('route-/terms')).toBeInTheDocument();
     });
 
-    it('has eleven top-level routes total', () => {
+    it('has twelve top-level routes total', () => {
       renderWithTheme(<App />);
       const routeElements = screen.getAllByTestId(/^route-/);
-      // 9 기존 + /profile + /profile/:userId
-      expect(routeElements).toHaveLength(11);
+      // 9 기존 + /quiz/:id/edit + /profile + /profile/:userId
+      expect(routeElements).toHaveLength(12);
     });
 
     it('renders /profile route protected by ProtectedRoute', () => {

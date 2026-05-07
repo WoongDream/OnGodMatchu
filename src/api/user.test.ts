@@ -20,6 +20,7 @@ import {
   applyProfileImage,
   removeProfileImage,
   regenerateDefaultProfileImage,
+  getMyProfileStats,
   mapUserError,
 } from './user';
 
@@ -253,6 +254,44 @@ describe('regenerateDefaultProfileImage', () => {
     mockPost.mockRejectedValueOnce(new Error('server error'));
 
     await expect(regenerateDefaultProfileImage()).rejects.toThrow('server error');
+  });
+});
+
+describe('getMyProfileStats', () => {
+  it('GET /api/users/me/profile/stats 를 호출한다', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        success: true,
+        data: {
+          totalQuizCount: 12,
+          totalPlayCount: 10739,
+          totalShareCount: 5,
+          totalStarCount: 861,
+          totalCommentCount: 113,
+          weeklyPlayCount: 1204,
+        },
+      },
+    });
+
+    await getMyProfileStats();
+
+    expect(mockGet).toHaveBeenCalledWith('/api/users/me/profile/stats');
+  });
+
+  it('ApiResponse 에서 data.data 를 반환한다', async () => {
+    const stats = {
+      totalQuizCount: 12,
+      totalPlayCount: 10739,
+      totalShareCount: 5,
+      totalStarCount: 861,
+      totalCommentCount: 113,
+      weeklyPlayCount: 1204,
+    };
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: stats } });
+
+    const result = await getMyProfileStats();
+
+    expect(result).toEqual(stats);
   });
 });
 

@@ -28,18 +28,32 @@ export const imageRowStyle = (theme: Theme) => css`
   align-items: center;
   gap: ${theme.spacing.lg};
   flex-wrap: wrap;
+
+  @media (max-width: ${theme.breakpoints.tablet}) {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
 `;
 
 export const imageActionsStyle = (theme: Theme) => css`
   display: flex;
   flex-direction: column;
   gap: ${theme.spacing.sm};
+
+  @media (max-width: ${theme.breakpoints.tablet}) {
+    align-items: center;
+  }
 `;
 
 export const imageButtonsRowStyle = (theme: Theme) => css`
   display: flex;
   gap: ${theme.spacing.sm};
   flex-wrap: wrap;
+
+  @media (max-width: ${theme.breakpoints.tablet}) {
+    justify-content: center;
+  }
 `;
 
 export const policyTextStyle = (theme: Theme) => css`

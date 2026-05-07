@@ -10,6 +10,15 @@ const mockApplyProfileImage = vi.hoisted(() => vi.fn());
 const mockRemoveProfileImage = vi.hoisted(() => vi.fn());
 const mockRegenerateDefaultProfileImage = vi.hoisted(() => vi.fn());
 
+// ── authStore mock ────────────────────────────────────────────────────────────
+const mockSetUser = vi.hoisted(() => vi.fn());
+
+vi.mock('@/store/authStore', () => ({
+  default: {
+    getState: vi.fn(() => ({ setUser: mockSetUser })),
+  },
+}));
+
 vi.mock('@/api/user', () => ({
   requestProfileImageUpload: mockRequestProfileImageUpload,
   applyProfileImage: mockApplyProfileImage,
@@ -99,6 +108,7 @@ describe('useProfileImage', () => {
     mockRemoveProfileImage.mockReset();
     mockRegenerateDefaultProfileImage.mockReset();
     mockAxiosPut.mockReset();
+    mockSetUser.mockReset();
   });
 
   describe('upload(file)', () => {
@@ -272,6 +282,35 @@ describe('useProfileImage', () => {
       expect(result.current.errorCode).toBe('USER_NOT_FOUND');
     });
 
+    it('upload 성공 후 setUser 가 응답 user 로 호출된다', async () => {
+      mockRequestProfileImageUpload.mockResolvedValue(PRESIGNED);
+      mockAxiosPut.mockResolvedValue({ data: {} });
+      mockApplyProfileImage.mockResolvedValue(MOCK_USER);
+
+      const { result } = renderHook(() => useProfileImage(), { wrapper });
+      const file = new File(['data'], 'photo.jpg', { type: 'image/jpeg' });
+
+      await act(async () => {
+        await result.current.upload(file);
+      });
+
+      expect(mockSetUser).toHaveBeenCalledTimes(1);
+      expect(mockSetUser).toHaveBeenCalledWith(MOCK_USER);
+    });
+
+    it('upload 실패 시 setUser 가 호출되지 않는다', async () => {
+      mockRequestProfileImageUpload.mockRejectedValue(makeAxiosError(401));
+
+      const { result } = renderHook(() => useProfileImage(), { wrapper });
+      const file = new File(['data'], 'photo.jpg', { type: 'image/jpeg' });
+
+      await act(async () => {
+        await result.current.upload(file);
+      });
+
+      expect(mockSetUser).not.toHaveBeenCalled();
+    });
+
     it('isProcessing 이 호출 중 true → 완료 후 false', async () => {
       let resolveApply!: (v: User) => void;
       mockRequestProfileImageUpload.mockResolvedValue(PRESIGNED);
@@ -377,6 +416,32 @@ describe('useProfileImage', () => {
       expect(result.current.errorCode).toBe('UNAUTHORIZED');
     });
 
+    it('removeImage 성공 후 setUser 가 응답 user 로 호출된다', async () => {
+      const userWithoutImage = { ...MOCK_USER, profileImageUrl: null };
+      mockRemoveProfileImage.mockResolvedValue(userWithoutImage);
+
+      const { result } = renderHook(() => useProfileImage(), { wrapper });
+
+      await act(async () => {
+        await result.current.removeImage();
+      });
+
+      expect(mockSetUser).toHaveBeenCalledTimes(1);
+      expect(mockSetUser).toHaveBeenCalledWith(userWithoutImage);
+    });
+
+    it('removeImage 실패 시 setUser 가 호출되지 않는다', async () => {
+      mockRemoveProfileImage.mockRejectedValue(makeAxiosError(401));
+
+      const { result } = renderHook(() => useProfileImage(), { wrapper });
+
+      await act(async () => {
+        await result.current.removeImage();
+      });
+
+      expect(mockSetUser).not.toHaveBeenCalled();
+    });
+
     it('removeImage 진행 중 isRemoving 만 true (isUploading/isRegenerating 는 false)', async () => {
       let resolveRemove!: (v: User) => void;
       mockRemoveProfileImage.mockReturnValue(
@@ -452,6 +517,35 @@ describe('useProfileImage', () => {
 
       expect(returned).toBeNull();
       expect(result.current.errorCode).toBe('USER_NOT_FOUND');
+    });
+
+    it('regenerateDefault 성공 후 setUser 가 응답 user 로 호출된다', async () => {
+      const newDefaultUser = {
+        ...MOCK_USER,
+        profileImageUrl: 'https://cdn.example.com/default-new.png',
+      };
+      mockRegenerateDefaultProfileImage.mockResolvedValue(newDefaultUser);
+
+      const { result } = renderHook(() => useProfileImage(), { wrapper });
+
+      await act(async () => {
+        await result.current.regenerateDefault();
+      });
+
+      expect(mockSetUser).toHaveBeenCalledTimes(1);
+      expect(mockSetUser).toHaveBeenCalledWith(newDefaultUser);
+    });
+
+    it('regenerateDefault 실패 시 setUser 가 호출되지 않는다', async () => {
+      mockRegenerateDefaultProfileImage.mockRejectedValue(makeAxiosError(404));
+
+      const { result } = renderHook(() => useProfileImage(), { wrapper });
+
+      await act(async () => {
+        await result.current.regenerateDefault();
+      });
+
+      expect(mockSetUser).not.toHaveBeenCalled();
     });
 
     it('regenerateDefault 진행 중 isRegenerating 만 true (isUploading/isRemoving 는 false)', async () => {

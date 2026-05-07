@@ -7,6 +7,7 @@ import {
   type UserErrorCode,
   mapUserError,
 } from '@/api/user';
+import useAuthStore from '@/store/authStore';
 import type { User } from '@/types';
 
 const ERROR_MESSAGES: Record<UserErrorCode, string> = {
@@ -63,6 +64,9 @@ const useUpdateProfile = (): UseUpdateProfileReturn => {
         rollbackOnError: true,
         revalidate: false,
       });
+      if (updated) {
+        useAuthStore.getState().setUser(updated);
+      }
       return updated ?? null;
     } catch (err) {
       handleError(err);

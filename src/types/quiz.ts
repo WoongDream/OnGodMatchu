@@ -12,6 +12,8 @@ export const CATEGORIES = [
 
 export type Category = (typeof CATEGORIES)[number]['value'];
 
+export type QuizVisibility = 'PUBLIC' | 'PRIVATE';
+
 export type Quiz = {
   id: number;
   authorNickname: string;
@@ -35,4 +37,32 @@ export type Question = {
   answerImageUrl?: string | null;
   questionText: string | null;
   answer: string;
+};
+
+export type MyQuizListItem = {
+  id: number;
+  publicId: string;
+  title: string;
+  category: Category;
+  categoryLabel: string;
+  isPublic: boolean;
+  thumbnailKey?: string | null;
+  thumbnailUrl: string | null;
+  playCount: number;
+  shareCount: number;
+  starCount: number;
+  commentCount: number;
+  correctRate: number | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MyQuizzesAggregate = {
+  totalQuizCount: number;
+  totalPlayCount: number;
+  totalShareCount: number;
+  totalStarCount: number;
+  totalCommentCount: number;
+  weeklyPlayCount: number;
+  avgCorrectRate?: number | null;
 };

@@ -108,6 +108,24 @@ const QuizCreatePage = () => {
     }
   }, [form, submit, navigate]);
 
+  const visibilityCard = (
+    <section css={visibilityCardStyle} aria-label="공개 설정">
+      <div css={visibilityTextStyle}>
+        <span css={visibilityTitleStyle}>공개 설정</span>
+        <span css={visibilityHintStyle}>
+          {form.isPublic
+            ? '공개 시 다른 사용자가 풀 수 있습니다.'
+            : '비공개 상태입니다. 본인만 볼 수 있어요.'}
+        </span>
+      </div>
+      <Toggle
+        checked={form.isPublic}
+        onChange={(next) => setForm((prev) => ({ ...prev, isPublic: next }))}
+        ariaLabel="공개 설정"
+      />
+    </section>
+  );
+
   return (
     <div css={pageWrapperStyle('xl')}>
       <QuizInfoForm
@@ -124,27 +142,13 @@ const QuizCreatePage = () => {
         onThumbnailRemove={() =>
           setForm((prev) => ({ ...prev, thumbnailFile: null, thumbnailPreviewUrl: null }))
         }
+        belowTitleSlot={visibilityCard}
       />
       <hr css={dividerStyle} />
       <QuestionList
         questions={form.questions}
         onChange={(questions) => setForm((prev) => ({ ...prev, questions }))}
       />
-      <section css={visibilityCardStyle} aria-label="공개 설정">
-        <div css={visibilityTextStyle}>
-          <span css={visibilityTitleStyle}>공개 설정</span>
-          <span css={visibilityHintStyle}>
-            {form.isPublic
-              ? '공개 시 다른 사용자가 풀 수 있습니다.'
-              : '비공개 상태입니다. 본인만 볼 수 있어요.'}
-          </span>
-        </div>
-        <Toggle
-          checked={form.isPublic}
-          onChange={(next) => setForm((prev) => ({ ...prev, isPublic: next }))}
-          ariaLabel="공개 설정"
-        />
-      </section>
       {error && (
         <div css={errorBannerStyle} role="alert">
           {error}

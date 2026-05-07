@@ -8,6 +8,15 @@ import type { User } from '@/types';
 // ── API mock ─────────────────────────────────────────────────────────────────
 const mockUpdateProfile = vi.hoisted(() => vi.fn());
 
+// ── authStore mock ────────────────────────────────────────────────────────────
+const mockSetUser = vi.hoisted(() => vi.fn());
+
+vi.mock('@/store/authStore', () => ({
+  default: {
+    getState: vi.fn(() => ({ setUser: mockSetUser })),
+  },
+}));
+
 vi.mock('@/api/user', () => ({
   updateProfile: mockUpdateProfile,
   // mapUserError 는 실제 구현 인라인으로 제공
@@ -70,6 +79,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) =>
 describe('useUpdateProfile', () => {
   beforeEach(() => {
     mockUpdateProfile.mockReset();
+    mockSetUser.mockReset();
   });
 
   describe('update()', () => {
@@ -153,6 +163,30 @@ describe('useUpdateProfile', () => {
       expect(result.current.errorCode).toBe('NETWORK');
     });
 
+    it('update 성공 후 setUser 가 갱신된 user 로 호출된다', async () => {
+      const updated = { ...MOCK_USER, nickname: 'new' };
+      mockUpdateProfile.mockResolvedValue(updated);
+      const { result } = renderHook(() => useUpdateProfile(), { wrapper });
+
+      await act(async () => {
+        await result.current.update({ nickname: 'new' });
+      });
+
+      expect(mockSetUser).toHaveBeenCalledTimes(1);
+      expect(mockSetUser).toHaveBeenCalledWith(updated);
+    });
+
+    it('update 실패 시 setUser 가 호출되지 않는다', async () => {
+      mockUpdateProfile.mockRejectedValue(makeAxiosError(401));
+      const { result } = renderHook(() => useUpdateProfile(), { wrapper });
+
+      await act(async () => {
+        await result.current.update({ nickname: 'bad' });
+      });
+
+      expect(mockSetUser).not.toHaveBeenCalled();
+    });
+
     it('isSaving 이 호출 중 true → 완료 후 false', async () => {
       let resolveUpdate!: (v: User) => void;
       mockUpdateProfile.mockReturnValue(
@@ -226,6 +260,30 @@ describe('useUpdateProfile', () => {
 
       expect(returned).toBeNull();
       expect(result.current.errorCode).toBe('UNAUTHORIZED');
+    });
+
+    it('toggleVisibility 성공 후 setUser 가 갱신된 user 로 호출된다', async () => {
+      const updated = { ...MOCK_USER, isProfilePublic: false };
+      mockUpdateProfile.mockResolvedValue(updated);
+      const { result } = renderHook(() => useUpdateProfile(), { wrapper });
+
+      await act(async () => {
+        await result.current.toggleVisibility(false);
+      });
+
+      expect(mockSetUser).toHaveBeenCalledTimes(1);
+      expect(mockSetUser).toHaveBeenCalledWith(updated);
+    });
+
+    it('toggleVisibility 실패 시 setUser 가 호출되지 않는다', async () => {
+      mockUpdateProfile.mockRejectedValue(makeAxiosError(401));
+      const { result } = renderHook(() => useUpdateProfile(), { wrapper });
+
+      await act(async () => {
+        await result.current.toggleVisibility(true);
+      });
+
+      expect(mockSetUser).not.toHaveBeenCalled();
     });
 
     it('isToggling 이 호출 중 true → 완료 후 false, isSaving 은 영향 없음', async () => {
