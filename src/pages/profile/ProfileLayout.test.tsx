@@ -20,13 +20,13 @@ vi.mock('@/components/profile-card', () => ({
     nickname,
     imageUrl,
     bio,
-    isPublic,
+    isProfilePublic,
     stats,
   }: {
     nickname: string;
     imageUrl?: string | null;
     bio?: string;
-    isPublic: boolean;
+    isProfilePublic: boolean;
     stats?: object;
   }) => (
     <div
@@ -34,7 +34,7 @@ vi.mock('@/components/profile-card', () => ({
       data-nickname={nickname}
       data-image-url={imageUrl ?? ''}
       data-bio={bio ?? ''}
-      data-is-public={String(isPublic)}
+      data-is-public={String(isProfilePublic)}
       data-has-stats={stats ? 'true' : 'false'}
     />
   ),
@@ -63,7 +63,7 @@ const MOCK_PROFILE: User = {
   provider: 'GOOGLE',
   profileImageUrl: 'https://example.com/avatar.png',
   bio: '안녕하세요',
-  isPublic: true,
+  isProfilePublic: true,
   createdAt: '2025-01-01T00:00:00Z',
   stats: { playCount: 10, correctRate: 80, createdQuizCount: 3 },
 };
@@ -161,9 +161,9 @@ describe('ProfileLayout', () => {
   });
 
   describe('비공개 프로필', () => {
-    it('isMe=false && profile.isPublic=false 이면 "비공개 프로필입니다." 안내가 보인다', () => {
+    it('isMe=false && profile.isProfilePublic=false 이면 "비공개 프로필입니다." 안내가 보인다', () => {
       mockUseProfile.mockReturnValue({
-        profile: { ...MOCK_PROFILE, isPublic: false },
+        profile: { ...MOCK_PROFILE, isProfilePublic: false },
         isLoading: false,
         error: null,
         isMe: false,
@@ -176,7 +176,7 @@ describe('ProfileLayout', () => {
 
     it('비공개 안내 시 홈 링크가 렌더된다', () => {
       mockUseProfile.mockReturnValue({
-        profile: { ...MOCK_PROFILE, isPublic: false },
+        profile: { ...MOCK_PROFILE, isProfilePublic: false },
         isLoading: false,
         error: null,
         isMe: false,
@@ -187,9 +187,9 @@ describe('ProfileLayout', () => {
       expect(screen.getByText('홈으로')).toBeInTheDocument();
     });
 
-    it('isMe=true && profile.isPublic=false 이면 본인이므로 정상 렌더된다', () => {
+    it('isMe=true && profile.isProfilePublic=false 이면 본인이므로 정상 렌더된다', () => {
       mockUseProfile.mockReturnValue({
-        profile: { ...MOCK_PROFILE, isPublic: false },
+        profile: { ...MOCK_PROFILE, isProfilePublic: false },
         isLoading: false,
         error: null,
         isMe: true,
@@ -235,7 +235,7 @@ describe('ProfileLayout', () => {
   });
 
   describe('ProfileCard props 전달', () => {
-    it('nickname, imageUrl, bio, isPublic, stats 가 ProfileCard 에 전달된다', () => {
+    it('nickname, imageUrl, bio, isProfilePublic, stats 가 ProfileCard 에 전달된다', () => {
       mockUseProfile.mockReturnValue({
         profile: MOCK_PROFILE,
         isLoading: false,

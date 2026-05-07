@@ -15,7 +15,7 @@ export const Default: Story = {
   args: {
     nickname: '우진',
     bio: '영화·애니 퀴즈 위주로 만들고 있어요. 가끔 음악도.',
-    isPublic: true,
+    isProfilePublic: true,
     stats: { playCount: 348, correctRate: 64, createdQuizCount: 12 },
   },
 };
@@ -24,7 +24,7 @@ export const Private: Story = {
   args: {
     nickname: '우진',
     bio: '비공개 프로필',
-    isPublic: false,
+    isProfilePublic: false,
     stats: { playCount: 348, correctRate: 64, createdQuizCount: 12 },
   },
 };
@@ -32,7 +32,7 @@ export const Private: Story = {
 export const NoBio: Story = {
   args: {
     nickname: 'Alice',
-    isPublic: true,
+    isProfilePublic: true,
     stats: { playCount: 12, correctRate: 80, createdQuizCount: 1 },
   },
 };
@@ -41,7 +41,7 @@ export const NoStats: Story = {
   args: {
     nickname: 'Bob',
     bio: '신규 가입',
-    isPublic: true,
+    isProfilePublic: true,
   },
 };
 
@@ -50,7 +50,7 @@ export const WithImage: Story = {
     nickname: '우진',
     imageUrl: 'https://i.pravatar.cc/200?img=12',
     bio: '커스텀 이미지 사용 중',
-    isPublic: true,
+    isProfilePublic: true,
     stats: { playCount: 100, correctRate: 75, createdQuizCount: 5 },
   },
 };

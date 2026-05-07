@@ -35,7 +35,7 @@ const ProfileLayout = memo(() => {
     );
   }
 
-  if (!isMe && !profile.isPublic) {
+  if (!isMe && !profile.isProfilePublic) {
     return (
       <div css={noticeStyle}>
         <span>비공개 프로필입니다.</span>
@@ -53,7 +53,7 @@ const ProfileLayout = memo(() => {
           nickname={profile.nickname}
           imageUrl={profile.profileImageUrl}
           bio={profile.bio}
-          isPublic={profile.isPublic}
+          isProfilePublic={profile.isProfilePublic}
           stats={profile.stats}
         />
         <div css={desktopOnlyStyle}>

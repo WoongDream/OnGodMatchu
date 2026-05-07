@@ -12,7 +12,7 @@ export type User = {
   profileImageKey?: string | null;
   profileImageUrl?: string | null;
   bio?: string;
-  isPublic: boolean;
+  isProfilePublic: boolean;
   createdAt: string;
   stats?: UserStats;
 };

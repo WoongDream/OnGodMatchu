@@ -23,7 +23,7 @@ const TEST_USER: User = {
   email: 'a@b.com',
   nickname: 'nick',
   provider: 'local',
-  isPublic: true,
+  isProfilePublic: true,
   createdAt: '2026-01-01T00:00:00.000Z',
 };
 

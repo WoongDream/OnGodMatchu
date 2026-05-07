@@ -25,7 +25,7 @@ const MOCK_ME: User = {
   nickname: '나',
   provider: 'GOOGLE',
   profileImageUrl: null,
-  isPublic: true,
+  isProfilePublic: true,
   createdAt: '2025-01-01T00:00:00Z',
 };
 
@@ -35,7 +35,7 @@ const MOCK_OTHER: User = {
   nickname: '타인',
   provider: 'KAKAO',
   profileImageUrl: null,
-  isPublic: true,
+  isProfilePublic: true,
   createdAt: '2025-02-01T00:00:00Z',
 };
 

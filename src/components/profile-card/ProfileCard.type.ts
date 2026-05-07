@@ -4,6 +4,6 @@ export type ProfileCardProps = {
   nickname: string;
   imageUrl?: string | null;
   bio?: string;
-  isPublic: boolean;
+  isProfilePublic: boolean;
   stats?: UserStats;
 };

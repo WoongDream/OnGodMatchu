@@ -35,7 +35,7 @@ const MOCK_USER: User = {
   nickname: '우진',
   provider: 'GOOGLE',
   profileImageUrl: 'https://example.com/avatar.png',
-  isPublic: true,
+  isProfilePublic: true,
   createdAt: '2025-01-01T00:00:00Z',
 };
 

@@ -19,8 +19,8 @@ export const linkStyle = (theme: Theme) => css`
   text-decoration: none;
 
   &.active {
-    background-color: ${theme.colors.bg.secondary};
-    color: ${theme.colors.fg.primary};
+    background-color: ${theme.colors.accent.subtle};
+    color: ${theme.colors.accent.primary};
     font-weight: ${theme.fontWeight.semibold};
   }
 
@@ -40,8 +40,8 @@ export const childLinkStyle = (theme: Theme) => css`
   text-decoration: none;
 
   &.active {
-    background-color: ${theme.colors.bg.secondary};
-    color: ${theme.colors.fg.primary};
+    background-color: ${theme.colors.accent.subtle};
+    color: ${theme.colors.accent.primary};
     font-weight: ${theme.fontWeight.semibold};
   }
 

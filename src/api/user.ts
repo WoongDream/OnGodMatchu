@@ -9,12 +9,25 @@ type ApiResponse<T> = {
 export type UpdateProfilePayload = {
   nickname?: string;
   bio?: string;
-  profileImageKey?: string | null;
+  isProfilePublic?: boolean;
 };
 
 export type ChangePasswordPayload = {
   currentPassword: string;
   newPassword: string;
+};
+
+export type ProfileImagePresigned = {
+  uploadUrl: string;
+  key: string;
+  expiresIn?: number;
+  requiredHeaders?: Record<string, string>;
+};
+
+export type ProfileImageUploadRequest = {
+  filename: string;
+  contentType: string;
+  sizeBytes?: number;
 };
 
 export type UserErrorCode =
@@ -41,13 +54,33 @@ export const updateProfile = async (payload: UpdateProfilePayload): Promise<User
   return res.data.data;
 };
 
-export const updateProfileVisibility = async (isPublic: boolean): Promise<User> => {
-  const res = await instance.patch<ApiResponse<User>>('/api/users/me/visibility', { isPublic });
+export const changePassword = async (payload: ChangePasswordPayload): Promise<void> => {
+  await instance.patch('/api/users/me/password', payload);
+};
+
+export const requestProfileImageUpload = async (
+  payload: ProfileImageUploadRequest,
+): Promise<ProfileImagePresigned> => {
+  const res = await instance.post<ApiResponse<ProfileImagePresigned>>(
+    '/api/users/me/profile-image',
+    payload,
+  );
   return res.data.data;
 };
 
-export const changePassword = async (payload: ChangePasswordPayload): Promise<void> => {
-  await instance.patch('/api/users/me/password', payload);
+export const applyProfileImage = async (key: string): Promise<User> => {
+  const res = await instance.patch<ApiResponse<User>>('/api/users/me/profile-image', { key });
+  return res.data.data;
+};
+
+export const removeProfileImage = async (): Promise<User> => {
+  const res = await instance.delete<ApiResponse<User>>('/api/users/me/profile-image');
+  return res.data.data;
+};
+
+export const regenerateDefaultProfileImage = async (): Promise<User> => {
+  const res = await instance.post<ApiResponse<User>>('/api/users/me/profile-image/default');
+  return res.data.data;
 };
 
 type ErrorResponseBody = {

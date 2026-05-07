@@ -5,6 +5,8 @@ vi.mock('./instance', () => ({
   default: {
     get: vi.fn(),
     patch: vi.fn(),
+    post: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 
@@ -13,20 +15,25 @@ import {
   getMyProfile,
   getUserProfile,
   updateProfile,
-  updateProfileVisibility,
   changePassword,
+  requestProfileImageUpload,
+  applyProfileImage,
+  removeProfileImage,
+  regenerateDefaultProfileImage,
   mapUserError,
 } from './user';
 
 const mockGet = vi.mocked(instance.get);
 const mockPatch = vi.mocked(instance.patch);
+const mockPost = vi.mocked(instance.post);
+const mockDelete = vi.mocked(instance.delete);
 
 const makeUser = (overrides: Partial<User> = {}): User => ({
   id: 1,
   email: 'test@example.com',
   nickname: 'tester',
   profileImageUrl: null,
-  isPublic: true,
+  isProfilePublic: true,
   createdAt: '2026-01-01T00:00:00.000Z',
   provider: 'LOCAL',
   ...overrides,
@@ -112,13 +119,13 @@ describe('updateProfile', () => {
     expect(result).toEqual(user);
   });
 
-  it('profileImageKey 가 null 인 경우 페이로드에 포함한다', async () => {
-    const user = makeUser({ profileImageUrl: null });
+  it('isProfilePublic 만 담은 페이로드도 전달한다 (visibility 통합)', async () => {
+    const user = makeUser({ isProfilePublic: false });
     mockPatch.mockResolvedValueOnce({ data: { success: true, data: user } });
 
-    await updateProfile({ profileImageKey: null });
+    await updateProfile({ isProfilePublic: false });
 
-    expect(mockPatch).toHaveBeenCalledWith('/api/users/me', { profileImageKey: null });
+    expect(mockPatch).toHaveBeenCalledWith('/api/users/me', { isProfilePublic: false });
   });
 
   it('빈 페이로드도 전달한다', async () => {
@@ -131,32 +138,121 @@ describe('updateProfile', () => {
   });
 });
 
-describe('updateProfileVisibility', () => {
-  it('PATCH /api/users/me/visibility 를 isPublic 페이로드로 호출한다', async () => {
-    const user = makeUser({ isPublic: false });
-    mockPatch.mockResolvedValueOnce({ data: { success: true, data: user } });
+describe('requestProfileImageUpload', () => {
+  const PAYLOAD = { filename: 'avatar.png', contentType: 'image/png', sizeBytes: 102400 };
 
-    await updateProfileVisibility(false);
+  it('POST /api/users/me/profile-image 를 메타 body 와 함께 호출한다', async () => {
+    const presigned = { uploadUrl: 'https://s3.example.com/upload', key: 'img/abc.jpg' };
+    mockPost.mockResolvedValueOnce({ data: { success: true, data: presigned } });
 
-    expect(mockPatch).toHaveBeenCalledWith('/api/users/me/visibility', { isPublic: false });
+    await requestProfileImageUpload(PAYLOAD);
+
+    expect(mockPost).toHaveBeenCalledWith('/api/users/me/profile-image', PAYLOAD);
   });
 
-  it('isPublic true 로 호출한다', async () => {
-    const user = makeUser({ isPublic: true });
-    mockPatch.mockResolvedValueOnce({ data: { success: true, data: user } });
+  it('sizeBytes 가 없어도 동작한다 (선택 필드)', async () => {
+    const presigned = { uploadUrl: 'https://s3.example.com/upload', key: 'img/abc.jpg' };
+    mockPost.mockResolvedValueOnce({ data: { success: true, data: presigned } });
 
-    await updateProfileVisibility(true);
+    await requestProfileImageUpload({ filename: 'a.png', contentType: 'image/png' });
 
-    expect(mockPatch).toHaveBeenCalledWith('/api/users/me/visibility', { isPublic: true });
+    expect(mockPost).toHaveBeenCalledWith('/api/users/me/profile-image', {
+      filename: 'a.png',
+      contentType: 'image/png',
+    });
   });
 
-  it('ApiResponse 에서 data.data 를 반환한다', async () => {
-    const user = makeUser({ isPublic: false });
+  it('응답에서 { uploadUrl, key } 를 반환한다', async () => {
+    const presigned = { uploadUrl: 'https://s3.example.com/upload', key: 'img/abc.jpg' };
+    mockPost.mockResolvedValueOnce({ data: { success: true, data: presigned } });
+
+    const result = await requestProfileImageUpload(PAYLOAD);
+
+    expect(result).toEqual(presigned);
+  });
+
+  it('axios 에러를 그대로 throw 한다', async () => {
+    mockPost.mockRejectedValueOnce(new Error('network'));
+
+    await expect(requestProfileImageUpload(PAYLOAD)).rejects.toThrow('network');
+  });
+});
+
+describe('applyProfileImage', () => {
+  it('PATCH /api/users/me/profile-image 를 { key } body 로 호출한다', async () => {
+    const user = makeUser({ profileImageUrl: 'https://cdn.example.com/img/abc.jpg' });
     mockPatch.mockResolvedValueOnce({ data: { success: true, data: user } });
 
-    const result = await updateProfileVisibility(false);
+    await applyProfileImage('img/abc.jpg');
+
+    expect(mockPatch).toHaveBeenCalledWith('/api/users/me/profile-image', { key: 'img/abc.jpg' });
+  });
+
+  it('업데이트된 User 를 반환한다', async () => {
+    const user = makeUser({ profileImageUrl: 'https://cdn.example.com/img/abc.jpg' });
+    mockPatch.mockResolvedValueOnce({ data: { success: true, data: user } });
+
+    const result = await applyProfileImage('img/abc.jpg');
 
     expect(result).toEqual(user);
+  });
+
+  it('axios 에러를 그대로 throw 한다', async () => {
+    mockPatch.mockRejectedValueOnce(new Error('forbidden'));
+
+    await expect(applyProfileImage('img/abc.jpg')).rejects.toThrow('forbidden');
+  });
+});
+
+describe('removeProfileImage', () => {
+  it('DELETE /api/users/me/profile-image 를 호출한다', async () => {
+    const user = makeUser({ profileImageUrl: null });
+    mockDelete.mockResolvedValueOnce({ data: { success: true, data: user } });
+
+    await removeProfileImage();
+
+    expect(mockDelete).toHaveBeenCalledWith('/api/users/me/profile-image');
+  });
+
+  it('업데이트된 User 를 반환한다', async () => {
+    const user = makeUser({ profileImageUrl: null });
+    mockDelete.mockResolvedValueOnce({ data: { success: true, data: user } });
+
+    const result = await removeProfileImage();
+
+    expect(result).toEqual(user);
+  });
+
+  it('axios 에러를 그대로 throw 한다', async () => {
+    mockDelete.mockRejectedValueOnce(new Error('not found'));
+
+    await expect(removeProfileImage()).rejects.toThrow('not found');
+  });
+});
+
+describe('regenerateDefaultProfileImage', () => {
+  it('POST /api/users/me/profile-image/default 를 호출한다', async () => {
+    const user = makeUser({ profileImageUrl: 'https://cdn.example.com/default.png' });
+    mockPost.mockResolvedValueOnce({ data: { success: true, data: user } });
+
+    await regenerateDefaultProfileImage();
+
+    expect(mockPost).toHaveBeenCalledWith('/api/users/me/profile-image/default');
+  });
+
+  it('새로운 기본 이미지 URL 이 포함된 User 를 반환한다', async () => {
+    const user = makeUser({ profileImageUrl: 'https://cdn.example.com/default.png' });
+    mockPost.mockResolvedValueOnce({ data: { success: true, data: user } });
+
+    const result = await regenerateDefaultProfileImage();
+
+    expect(result).toEqual(user);
+  });
+
+  it('axios 에러를 그대로 throw 한다', async () => {
+    mockPost.mockRejectedValueOnce(new Error('server error'));
+
+    await expect(regenerateDefaultProfileImage()).rejects.toThrow('server error');
   });
 });
 

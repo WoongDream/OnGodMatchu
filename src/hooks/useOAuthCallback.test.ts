@@ -44,7 +44,7 @@ const TEST_USER: User = {
   email: 'test@example.com',
   nickname: 'testuser',
   provider: 'google',
-  isPublic: true,
+  isProfilePublic: true,
   createdAt: '2026-01-01T00:00:00.000Z',
 };
 

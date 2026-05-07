@@ -164,4 +164,63 @@ describe('useNicknameCheck', () => {
       expect(result.current.message).toContain('한글');
     });
   });
+
+  describe('exclude 옵션', () => {
+    it('exclude 와 동일한 닉네임 입력 시 fetch skip + status=idle + message=undefined', async () => {
+      mockCheck.mockResolvedValue({ available: true });
+      const { result } = renderHook(() => useNicknameCheck('woong', { exclude: 'woong' }), {
+        wrapper,
+      });
+
+      await act(async () => {
+        vi.advanceTimersByTime(NICKNAME_DEBOUNCE_MS);
+      });
+
+      expect(result.current.status).toBe('idle');
+      expect(result.current.message).toBeUndefined();
+      expect(mockCheck).not.toHaveBeenCalled();
+    });
+
+    it('exclude 와 다른 닉네임 입력 시 정상 검증 (fetch 호출, status=available)', async () => {
+      mockCheck.mockResolvedValue({ available: true });
+      const { result } = renderHook(() => useNicknameCheck('woong2', { exclude: 'woong' }), {
+        wrapper,
+      });
+
+      await act(async () => {
+        vi.advanceTimersByTime(NICKNAME_DEBOUNCE_MS);
+      });
+
+      await waitFor(() => expect(result.current.status).toBe('available'));
+      expect(mockCheck).toHaveBeenCalledWith('woong2');
+    });
+
+    it('exclude 미지정 시 동일 닉네임이라도 정상 검증 진행 (fetch 호출됨)', async () => {
+      mockCheck.mockResolvedValue({ available: true });
+      const { result } = renderHook(() => useNicknameCheck('woong'), { wrapper });
+
+      await act(async () => {
+        vi.advanceTimersByTime(NICKNAME_DEBOUNCE_MS);
+      });
+
+      await waitFor(() => expect(result.current.status).toBe('available'));
+      expect(mockCheck).toHaveBeenCalledWith('woong');
+    });
+
+    it('normalize 적용 — exclude 에 앞뒤 공백이 있어도 trim+NFC 후 일치하면 idle', async () => {
+      mockCheck.mockResolvedValue({ available: true });
+      // exclude=' woong  ' 는 normalize 후 'woong', input='woong' 도 normalize 후 'woong' → 일치
+      const { result } = renderHook(() => useNicknameCheck('woong', { exclude: ' woong  ' }), {
+        wrapper,
+      });
+
+      await act(async () => {
+        vi.advanceTimersByTime(NICKNAME_DEBOUNCE_MS);
+      });
+
+      expect(result.current.status).toBe('idle');
+      expect(result.current.message).toBeUndefined();
+      expect(mockCheck).not.toHaveBeenCalled();
+    });
+  });
 });
