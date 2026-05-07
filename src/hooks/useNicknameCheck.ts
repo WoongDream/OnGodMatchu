@@ -13,6 +13,7 @@ export type UseNicknameCheckReturn = {
 
 export type UseNicknameCheckOptions = {
   enabled?: boolean;
+  exclude?: string;
 };
 
 export const NICKNAME_DEBOUNCE_MS = 350;
@@ -22,7 +23,7 @@ const MESSAGES: Record<NicknameStatus, string | undefined> = {
   checking: '닉네임 확인 중...',
   available: '사용 가능한 닉네임입니다.',
   taken: '이미 사용 중인 닉네임입니다.',
-  invalid: '닉네임은 2~20자, 한글·영문·숫자·_ 만 사용할 수 있습니다.',
+  invalid: '닉네임은 2~10자, 한글·영문·숫자·_ 만 사용할 수 있습니다.',
   error: '닉네임 확인에 실패했습니다.',
 };
 
@@ -31,16 +32,19 @@ const useNicknameCheck = (
   options?: UseNicknameCheckOptions,
 ): UseNicknameCheckReturn => {
   const enabled = options?.enabled ?? true;
+  const exclude = options?.exclude;
 
   const normalized = normalizeNickname(raw);
+  const normalizedExclude = exclude ? normalizeNickname(exclude) : '';
   const isEmpty = normalized.length === 0;
+  const isExcluded = normalizedExclude.length > 0 && normalized === normalizedExclude;
   const isPolicyOk = matchesNicknamePolicy(normalized);
 
   const debounced = useDebouncedValue(normalized, NICKNAME_DEBOUNCE_MS);
   const isSettled = debounced === normalized;
 
   const swrKey =
-    enabled && !isEmpty && isPolicyOk && isSettled
+    enabled && !isEmpty && !isExcluded && isPolicyOk && isSettled
       ? (['check-nickname', debounced] as const)
       : null;
 
@@ -53,6 +57,9 @@ const useNicknameCheck = (
       return 'idle';
     }
     if (isEmpty) {
+      return 'idle';
+    }
+    if (isExcluded) {
       return 'idle';
     }
     if (!isPolicyOk) {
@@ -77,7 +84,7 @@ const useNicknameCheck = (
       return 'invalid';
     }
     return 'error';
-  }, [enabled, isEmpty, isPolicyOk, isSettled, error, isLoading, data]);
+  }, [enabled, isEmpty, isExcluded, isPolicyOk, isSettled, error, isLoading, data]);
 
   return { status, message: MESSAGES[status] };
 };

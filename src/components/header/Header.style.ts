@@ -39,3 +39,13 @@ export const navActionsStyle = (theme: Theme) => css`
   align-items: center;
   gap: ${theme.spacing.sm};
 `;
+
+export const profileButtonStyle = css`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+`;

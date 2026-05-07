@@ -47,6 +47,8 @@ describe('useAuthStore', () => {
         email: 'test@example.com',
         nickname: 'testuser',
         provider: 'local',
+        isProfilePublic: true,
+        createdAt: '2026-01-01T00:00:00.000Z',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -62,6 +64,8 @@ describe('useAuthStore', () => {
         email: 'user1@example.com',
         nickname: 'user1',
         provider: 'local',
+        isProfilePublic: true,
+        createdAt: '2026-01-01T00:00:00.000Z',
       };
 
       const user2: User = {
@@ -69,6 +73,8 @@ describe('useAuthStore', () => {
         email: 'user2@example.com',
         nickname: 'user2',
         provider: 'local',
+        isProfilePublic: true,
+        createdAt: '2026-01-01T00:00:00.000Z',
       };
 
       useAuthStore.getState().setUser(user1);
@@ -85,6 +91,8 @@ describe('useAuthStore', () => {
         email: 'complex@example.com',
         nickname: 'complexuser',
         provider: 'local',
+        isProfilePublic: true,
+        createdAt: '2026-01-01T00:00:00.000Z',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -105,6 +113,8 @@ describe('useAuthStore', () => {
         email: 'test@example.com',
         nickname: 'testuser',
         provider: 'local',
+        isProfilePublic: true,
+        createdAt: '2026-01-01T00:00:00.000Z',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -120,6 +130,8 @@ describe('useAuthStore', () => {
         email: 'test@example.com',
         nickname: 'testuser',
         provider: 'local',
+        isProfilePublic: true,
+        createdAt: '2026-01-01T00:00:00.000Z',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -164,6 +176,8 @@ describe('useAuthStore', () => {
         email: 'test@example.com',
         nickname: 'testuser',
         provider: 'local',
+        isProfilePublic: true,
+        createdAt: '2026-01-01T00:00:00.000Z',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -189,6 +203,8 @@ describe('useAuthStore', () => {
         email: 'test@example.com',
         nickname: 'testuser',
         provider: 'local',
+        isProfilePublic: true,
+        createdAt: '2026-01-01T00:00:00.000Z',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -201,6 +217,8 @@ describe('useAuthStore', () => {
         email: 'test@example.com',
         nickname: 'testuser',
         provider: 'local',
+        isProfilePublic: true,
+        createdAt: '2026-01-01T00:00:00.000Z',
       };
 
       expect(useAuthStore.getState().isLoggedIn).toBe(false);
@@ -214,6 +232,8 @@ describe('useAuthStore', () => {
         email: 'test@example.com',
         nickname: 'testuser',
         provider: 'local',
+        isProfilePublic: true,
+        createdAt: '2026-01-01T00:00:00.000Z',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -231,6 +251,8 @@ describe('useAuthStore', () => {
         email: 'test@example.com',
         nickname: 'testuser',
         provider: 'local',
+        isProfilePublic: true,
+        createdAt: '2026-01-01T00:00:00.000Z',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -264,6 +286,8 @@ describe('useAuthStore', () => {
         email: 'test@example.com',
         nickname: 'testuser',
         provider: 'local',
+        isProfilePublic: true,
+        createdAt: '2026-01-01T00:00:00.000Z',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -281,6 +305,8 @@ describe('useAuthStore', () => {
         email: 'test@example.com',
         nickname: 'testuser',
         provider: 'local',
+        isProfilePublic: true,
+        createdAt: '2026-01-01T00:00:00.000Z',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -300,6 +326,8 @@ describe('useAuthStore', () => {
         email: `user${i}@example.com`,
         nickname: `user${i}`,
         provider: 'local',
+        isProfilePublic: true,
+        createdAt: '2026-01-01T00:00:00.000Z',
       }));
 
       users.forEach((user) => useAuthStore.getState().setUser(user));
@@ -314,6 +342,8 @@ describe('useAuthStore', () => {
         email: 'test@example.com',
         nickname: 'testuser',
         provider: 'local',
+        isProfilePublic: true,
+        createdAt: '2026-01-01T00:00:00.000Z',
       };
 
       useAuthStore.getState().setUser(testUser);
@@ -331,6 +361,8 @@ describe('useAuthStore', () => {
         email: 'user1@example.com',
         nickname: 'user1',
         provider: 'local',
+        isProfilePublic: true,
+        createdAt: '2026-01-01T00:00:00.000Z',
       };
 
       const user2: User = {
@@ -338,6 +370,8 @@ describe('useAuthStore', () => {
         email: 'user2@example.com',
         nickname: 'user2',
         provider: 'local',
+        isProfilePublic: true,
+        createdAt: '2026-01-01T00:00:00.000Z',
       };
 
       useAuthStore.getState().setUser(user1);

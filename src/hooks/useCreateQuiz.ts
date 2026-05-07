@@ -71,6 +71,7 @@ type SubmitParams = {
   description: string;
   category: Category;
   thumbnailFile: File | null;
+  isPublic: boolean;
   questions: QuestionDraft[];
 };
 
@@ -119,6 +120,7 @@ const useCreateQuiz = (): UseCreateQuizReturn => {
           description: params.description.trim() || undefined,
           category: params.category,
           thumbnailKey: thumbnailKey ?? undefined,
+          isPublic: params.isPublic,
           questions: params.questions.map((q, index) => {
             const imageKey = questionImageKeys[index] ?? undefined;
             const answerImageKey = q.answerImageSameAsQuestion
