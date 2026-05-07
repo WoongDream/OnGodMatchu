@@ -7,5 +7,11 @@ export type {
   MyQuizListItem,
   MyQuizzesAggregate,
 } from './quiz';
+export type {
+  AttemptAnswerInput,
+  AttemptResultItem,
+  AttemptResponse,
+  AttemptListItem,
+} from './attempt';
 export type { OAuthProvider } from './oauth';
 export { SUPPORTED_OAUTH_PROVIDERS } from './oauth';
