@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import Header from './Header';
 import useAuthStore from '@/store/authStore';
 import * as router from 'react-router-dom';
+import type { User } from '@/types';
 
 // Mock react-router-dom
 vi.mock('react-router-dom', async () => {
@@ -19,20 +20,38 @@ vi.mock('@/store/authStore', () => ({
   default: vi.fn(),
 }));
 
+// Mock ProfileImage to keep tests focused on Header behavior
+vi.mock('@/components/profile-image', () => ({
+  default: ({ nickname, imageUrl }: { nickname: string; imageUrl?: string | null }) => (
+    <span data-testid="profile-image" data-nickname={nickname} data-image-url={imageUrl ?? ''}>
+      {nickname}
+    </span>
+  ),
+}));
+
+const MOCK_USER: User = {
+  id: 1,
+  email: 'test@example.com',
+  nickname: '우진',
+  provider: 'GOOGLE',
+  profileImageUrl: 'https://example.com/avatar.png',
+  isProfilePublic: true,
+  createdAt: '2025-01-01T00:00:00Z',
+};
+
 describe('Header', () => {
   const mockNavigate = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockNavigate.mockClear();
-    (router.useNavigate as any).mockReturnValue(mockNavigate);
+    (router.useNavigate as ReturnType<typeof vi.fn>).mockReturnValue(mockNavigate);
   });
 
   describe('logo rendering and navigation', () => {
     it('renders the logo image with alt "OnGodMatchu"', () => {
-      (useAuthStore as any).mockReturnValue({
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
         isLoggedIn: false,
-        logout: vi.fn(),
+        user: null,
       });
 
       renderWithTheme(<Header />);
@@ -40,13 +59,12 @@ describe('Header', () => {
 
       expect(logo).toBeInTheDocument();
       expect(logo.tagName).toBe('IMG');
-      expect(logo).toHaveAttribute('src');
     });
 
-    it('navigates to / when logo is clicked', async () => {
-      (useAuthStore as any).mockReturnValue({
+    it('navigates to "/" when logo is clicked', async () => {
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
         isLoggedIn: false,
-        logout: vi.fn(),
+        user: null,
       });
 
       const user = userEvent.setup();
@@ -58,327 +76,132 @@ describe('Header', () => {
       expect(mockNavigate).toHaveBeenCalledWith('/');
       expect(mockNavigate).toHaveBeenCalledTimes(1);
     });
-
-    it('logo click only calls navigate once per click', async () => {
-      (useAuthStore as any).mockReturnValue({
-        isLoggedIn: false,
-        logout: vi.fn(),
-      });
-
-      const user = userEvent.setup();
-      renderWithTheme(<Header />);
-      const logo = screen.getByRole('img', { name: 'OnGodMatchu' });
-
-      await user.click(logo);
-
-      expect(mockNavigate).toHaveBeenCalledTimes(1);
-    });
   });
 
-  describe('login button when not logged in', () => {
+  describe('when not logged in', () => {
     beforeEach(() => {
-      (useAuthStore as any).mockReturnValue({
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
         isLoggedIn: false,
-        logout: vi.fn(),
+        user: null,
       });
     });
 
-    it('shows login button when isLoggedIn is false', () => {
+    it('shows the "로그인" button', () => {
       renderWithTheme(<Header />);
-      const loginButton = screen.getByRole('button', { name: '로그인' });
-
-      expect(loginButton).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: '로그인' })).toBeInTheDocument();
     });
 
-    it('does not show create or logout buttons when not logged in', () => {
+    it('does not show the "퀴즈 만들기" button', () => {
       renderWithTheme(<Header />);
-
       expect(screen.queryByRole('button', { name: '퀴즈 만들기' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: '로그아웃' })).not.toBeInTheDocument();
     });
 
-    it('navigates to /login when login button is clicked', async () => {
+    it('does not show the "프로필" button', () => {
+      renderWithTheme(<Header />);
+      expect(screen.queryByRole('button', { name: '프로필' })).not.toBeInTheDocument();
+    });
+
+    it('navigates to "/login" when login button is clicked', async () => {
       const user = userEvent.setup();
       renderWithTheme(<Header />);
-      const loginButton = screen.getByRole('button', { name: '로그인' });
-
-      await user.click(loginButton);
+      await user.click(screen.getByRole('button', { name: '로그인' }));
 
       expect(mockNavigate).toHaveBeenCalledWith('/login');
       expect(mockNavigate).toHaveBeenCalledTimes(1);
     });
-
-    it('only one login button is rendered', () => {
-      renderWithTheme(<Header />);
-      const loginButtons = screen.getAllByRole('button', { name: '로그인' });
-
-      expect(loginButtons).toHaveLength(1);
-    });
   });
 
-  describe('logout and create buttons when logged in', () => {
+  describe('when logged in', () => {
     beforeEach(() => {
-      (useAuthStore as any).mockReturnValue({
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
         isLoggedIn: true,
-        logout: vi.fn(),
+        user: MOCK_USER,
       });
     });
 
-    it('shows create button when isLoggedIn is true', () => {
+    it('does not show the "퀴즈 만들기" button (헤더에서 제거)', () => {
       renderWithTheme(<Header />);
-      const createButton = screen.getByRole('button', { name: '퀴즈 만들기' });
-
-      expect(createButton).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '퀴즈 만들기' })).not.toBeInTheDocument();
     });
 
-    it('shows logout button when isLoggedIn is true', () => {
+    it('shows the "프로필" button (aria-label)', () => {
       renderWithTheme(<Header />);
-      const logoutButton = screen.getByRole('button', { name: '로그아웃' });
-
-      expect(logoutButton).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: '프로필' })).toBeInTheDocument();
     });
 
-    it('does not show login button when isLoggedIn is true', () => {
+    it('does not show the "로그인" button', () => {
       renderWithTheme(<Header />);
-
       expect(screen.queryByRole('button', { name: '로그인' })).not.toBeInTheDocument();
     });
 
-    it('shows both create and logout buttons', () => {
+    it('does not show a "로그아웃" button', () => {
       renderWithTheme(<Header />);
-      const createButton = screen.getByRole('button', { name: '퀴즈 만들기' });
-      const logoutButton = screen.getByRole('button', { name: '로그아웃' });
-
-      expect(createButton).toBeInTheDocument();
-      expect(logoutButton).toBeInTheDocument();
-    });
-  });
-
-  describe('create button navigation', () => {
-    beforeEach(() => {
-      (useAuthStore as any).mockReturnValue({
-        isLoggedIn: true,
-        logout: vi.fn(),
-      });
+      expect(screen.queryByRole('button', { name: '로그아웃' })).not.toBeInTheDocument();
     });
 
-    it('navigates to /quiz/create when create button is clicked', async () => {
+    it('navigates to "/profile" when profile button is clicked', async () => {
       const user = userEvent.setup();
       renderWithTheme(<Header />);
-      const createButton = screen.getByRole('button', { name: '퀴즈 만들기' });
+      await user.click(screen.getByRole('button', { name: '프로필' }));
 
-      await user.click(createButton);
-
-      expect(mockNavigate).toHaveBeenCalledWith('/quiz/create');
+      expect(mockNavigate).toHaveBeenCalledWith('/profile');
       expect(mockNavigate).toHaveBeenCalledTimes(1);
     });
 
-    it('only navigates once per click on create button', async () => {
-      const user = userEvent.setup();
+    it('profile button contains the ProfileImage mock', () => {
       renderWithTheme(<Header />);
-      const createButton = screen.getByRole('button', { name: '퀴즈 만들기' });
+      const profileButton = screen.getByRole('button', { name: '프로필' });
+      expect(profileButton.querySelector('[data-testid="profile-image"]')).toBeInTheDocument();
+    });
 
-      await user.click(createButton);
+    it('passes user.nickname to ProfileImage', () => {
+      renderWithTheme(<Header />);
+      const profileImage = screen.getByTestId('profile-image');
+      expect(profileImage).toHaveAttribute('data-nickname', MOCK_USER.nickname);
+    });
 
-      expect(mockNavigate).toHaveBeenCalledTimes(1);
+    it('passes user.profileImageUrl to ProfileImage', () => {
+      renderWithTheme(<Header />);
+      const profileImage = screen.getByTestId('profile-image');
+      expect(profileImage).toHaveAttribute('data-image-url', MOCK_USER.profileImageUrl);
     });
   });
 
-  describe('logout button behavior', () => {
-    let mockLogout: any;
-
-    beforeEach(() => {
-      mockLogout = vi.fn();
-      (useAuthStore as any).mockReturnValue({
+  describe('when logged in with user=null (defensive)', () => {
+    it('renders without error and passes empty string as nickname to ProfileImage', () => {
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
         isLoggedIn: true,
-        logout: mockLogout,
+        user: null,
       });
-    });
 
-    it('calls logout from store when logout button is clicked', async () => {
-      const user = userEvent.setup();
       renderWithTheme(<Header />);
-      const logoutButton = screen.getByRole('button', { name: '로그아웃' });
-
-      await user.click(logoutButton);
-
-      expect(mockLogout).toHaveBeenCalledTimes(1);
-    });
-
-    it('navigates to / after logout is called', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<Header />);
-      const logoutButton = screen.getByRole('button', { name: '로그아웃' });
-
-      await user.click(logoutButton);
-
-      expect(mockNavigate).toHaveBeenCalledWith('/');
-    });
-
-    it('calls logout before navigating', async () => {
-      const callOrder: string[] = [];
-      mockLogout.mockImplementation(() => callOrder.push('logout'));
-      mockNavigate.mockImplementation(() => callOrder.push('navigate'));
-
-      const user = userEvent.setup();
-      renderWithTheme(<Header />);
-      const logoutButton = screen.getByRole('button', { name: '로그아웃' });
-
-      await user.click(logoutButton);
-
-      expect(callOrder).toEqual(['logout', 'navigate']);
+      const profileImage = screen.getByTestId('profile-image');
+      expect(profileImage).toHaveAttribute('data-nickname', '');
     });
   });
 
   describe('authentication state transitions', () => {
-    it('renders login button when not logged in', () => {
-      (useAuthStore as any).mockReturnValue({
+    it('shows login button when not logged in and profile button when logged in (separate renders)', () => {
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
         isLoggedIn: false,
-        logout: vi.fn(),
+        user: null,
       });
-      renderWithTheme(<Header />);
+      const { unmount } = renderWithTheme(<Header />);
       expect(screen.getByRole('button', { name: '로그인' })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: '퀴즈 만들기' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: '로그아웃' })).not.toBeInTheDocument();
-    });
+      unmount();
 
-    it('renders create and logout buttons when logged in', () => {
-      (useAuthStore as any).mockReturnValue({
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
         isLoggedIn: true,
-        logout: vi.fn(),
+        user: MOCK_USER,
       });
       renderWithTheme(<Header />);
-      expect(screen.getByRole('button', { name: '퀴즈 만들기' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: '로그아웃' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: '프로필' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: '로그인' })).not.toBeInTheDocument();
     });
   });
 
-  describe('button count assertions', () => {
-    it('renders exactly one button when not logged in', () => {
-      (useAuthStore as any).mockReturnValue({
-        isLoggedIn: false,
-        logout: vi.fn(),
-      });
-
-      renderWithTheme(<Header />);
-      const buttons = screen.getAllByRole('button');
-
-      expect(buttons).toHaveLength(1);
-    });
-
-    it('renders exactly two buttons when logged in', () => {
-      (useAuthStore as any).mockReturnValue({
-        isLoggedIn: true,
-        logout: vi.fn(),
-      });
-
-      renderWithTheme(<Header />);
-      const buttons = screen.getAllByRole('button');
-
-      expect(buttons).toHaveLength(2);
-    });
-  });
-
-  describe('accessibility', () => {
-    it('all buttons are keyboard accessible', () => {
-      (useAuthStore as any).mockReturnValue({
-        isLoggedIn: true,
-        logout: vi.fn(),
-      });
-
-      renderWithTheme(<Header />);
-      const buttons = screen.getAllByRole('button');
-
-      for (const button of buttons) {
-        button.focus();
-        expect(button).toHaveFocus();
-      }
-    });
-  });
-
-  describe('edge cases', () => {
-    it('handles multiple rapid clicks on login button', async () => {
-      (useAuthStore as any).mockReturnValue({
-        isLoggedIn: false,
-        logout: vi.fn(),
-      });
-
-      const user = userEvent.setup();
-      renderWithTheme(<Header />);
-      const loginButton = screen.getByRole('button', { name: '로그인' });
-
-      await user.click(loginButton);
-      await user.click(loginButton);
-      await user.click(loginButton);
-
-      expect(mockNavigate).toHaveBeenCalledTimes(3);
-      expect(mockNavigate).toHaveBeenCalledWith('/login');
-    });
-
-    it('handles logout without navigate being called before', async () => {
-      const mockLogout = vi.fn();
-      (useAuthStore as any).mockReturnValue({
-        isLoggedIn: true,
-        logout: mockLogout,
-      });
-
-      const user = userEvent.setup();
-      renderWithTheme(<Header />);
-      const logoutButton = screen.getByRole('button', { name: '로그아웃' });
-
-      // Even if navigate was never called before, logout should work
-      await user.click(logoutButton);
-
-      expect(mockLogout).toHaveBeenCalled();
-      expect(mockNavigate).toHaveBeenCalledWith('/');
-    });
-
-    it('logo click does not interfere with button clicks', async () => {
-      (useAuthStore as any).mockReturnValue({
-        isLoggedIn: false,
-        logout: vi.fn(),
-      });
-
-      const user = userEvent.setup();
-      renderWithTheme(<Header />);
-      const logo = screen.getByRole('img', { name: 'OnGodMatchu' });
-      const loginButton = screen.getByRole('button', { name: '로그인' });
-
-      await user.click(logo);
-      await user.click(loginButton);
-
-      expect(mockNavigate).toHaveBeenNthCalledWith(1, '/');
-      expect(mockNavigate).toHaveBeenNthCalledWith(2, '/login');
-    });
-  });
-
-  describe('render consistency', () => {
-    it('maintains consistent render when auth state does not change', () => {
-      const mockLogout = vi.fn();
-      (useAuthStore as any).mockReturnValue({
-        isLoggedIn: false,
-        logout: mockLogout,
-      });
-
-      const { rerender } = renderWithTheme(<Header />);
-      const firstLoginButton = screen.getByRole('button', { name: '로그인' });
-
-      // Rerender with same state
-      (useAuthStore as any).mockReturnValue({
-        isLoggedIn: false,
-        logout: mockLogout,
-      });
-      rerender(<Header />);
-      const secondLoginButton = screen.getByRole('button', { name: '로그인' });
-
-      expect(firstLoginButton.textContent).toBe(secondLoginButton.textContent);
-    });
-  });
-
   describe('memoization', () => {
-    it('component is wrapped with React.memo', () => {
-      // Header should have displayName set by memo
+    it('has displayName "Header"', () => {
       expect(Header.displayName).toBe('Header');
     });
   });

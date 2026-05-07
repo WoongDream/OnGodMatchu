@@ -1,7 +1,7 @@
 import { memo, useState } from 'react';
 import type { Category } from '@/types';
-import CategoryFilter from '@/features/quiz-list/CategoryFilter';
-import QuizList from '@/features/quiz-list/QuizList';
+import CategoryFilter from '@/features/quiz/list/CategoryFilter';
+import QuizList from '@/features/quiz/list/QuizList';
 import useQuizzes from '@/hooks/useQuizzes';
 
 const MainPage = memo(() => {

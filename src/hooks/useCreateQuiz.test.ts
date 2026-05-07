@@ -46,12 +46,14 @@ const baseParams = (): {
   description: string;
   category: 'game';
   thumbnailFile: File | null;
+  isPublic: false;
   questions: Q[];
 } => ({
   title: '제목',
   description: '설명',
   category: 'game',
   thumbnailFile: null,
+  isPublic: false,
   questions: [
     {
       imageFile: null,
@@ -91,6 +93,7 @@ describe('useCreateQuiz', () => {
         description: '설명',
         category: 'game',
         thumbnailKey: undefined,
+        isPublic: false,
         questions: [
           {
             imageKey: undefined,

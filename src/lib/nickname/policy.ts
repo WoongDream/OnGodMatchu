@@ -1,5 +1,5 @@
 export const NICKNAME_MIN_LENGTH = 2;
-export const NICKNAME_MAX_LENGTH = 20;
+export const NICKNAME_MAX_LENGTH = 10;
 export const NICKNAME_ALLOWED_REGEX = /^[가-힣A-Za-z0-9_]+$/;
 
 export const normalizeNickname = (value: string): string => value.trim().normalize('NFC');
