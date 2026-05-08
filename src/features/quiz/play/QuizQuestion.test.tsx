@@ -177,8 +177,8 @@ describe('QuizQuestion', () => {
       const image = screen.getByAltText('문제 이미지');
       const text = screen.getByText('Question below image');
 
-      // Image should appear before text in DOM
-      expect(image.compareDocumentPosition(text)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+      // Text should appear before image in DOM
+      expect(text.compareDocumentPosition(image)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     });
   });
 
@@ -453,6 +453,47 @@ describe('QuizQuestion', () => {
         />,
       );
       expect((screen.getByAltText('정답 이미지') as HTMLImageElement).src).toBe(sameUrl);
+    });
+  });
+
+  describe('hideImage prop', () => {
+    const baseQuestion: Question = {
+      id: 1,
+      quizId: 1,
+      orderNum: 1,
+      imageUrl: 'https://cdn.example.com/q.jpg',
+      answerImageUrl: 'https://cdn.example.com/a.jpg',
+      questionText: '이미지와 텍스트가 모두 있는 문제',
+      answer: 'A1',
+    };
+
+    it('hideImage=true + imageUrl 있음 → img 렌더 안 됨', () => {
+      renderWithTheme(<QuizQuestion question={baseQuestion} hideImage />);
+      expect(screen.queryByRole('img')).toBeNull();
+    });
+
+    it('hideImage=true + questionText 있음 → 텍스트는 그대로 노출', () => {
+      renderWithTheme(<QuizQuestion question={baseQuestion} hideImage />);
+      expect(screen.getByText('이미지와 텍스트가 모두 있는 문제')).toBeInTheDocument();
+    });
+
+    it('hideImage=true + revealAnswer=true + answerImageUrl 있음 → 정답 이미지도 가려짐', () => {
+      renderWithTheme(<QuizQuestion question={baseQuestion} hideImage revealAnswer />);
+      expect(screen.queryByRole('img')).toBeNull();
+      expect(screen.queryByAltText('정답 이미지')).not.toBeInTheDocument();
+    });
+
+    it('hideImage=false (기본값) + imageUrl 있음 → img 정상 노출 (회귀 가드)', () => {
+      renderWithTheme(<QuizQuestion question={baseQuestion} hideImage={false} />);
+      const img = screen.getByRole('img') as HTMLImageElement;
+      expect(img).toBeInTheDocument();
+      expect(img.src).toBe('https://cdn.example.com/q.jpg');
+    });
+
+    it('hideImage=true + imageUrl null → img 없어도 에러 없음', () => {
+      renderWithTheme(<QuizQuestion question={{ ...baseQuestion, imageUrl: null }} hideImage />);
+      expect(screen.queryByRole('img')).toBeNull();
+      expect(screen.getByText('이미지와 텍스트가 모두 있는 문제')).toBeInTheDocument();
     });
   });
 

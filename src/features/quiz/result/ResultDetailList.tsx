@@ -41,7 +41,11 @@ const ResultDetailList = memo(({ questions, results }: ResultDetailListProps) =>
               <span css={userAnswerLabelStyle}>내 답: </span>
               {r.userAnswer || '(미입력)'}
             </p>
-            <QuizFeedback correct={r.correct} answer={r.correctAnswer} />
+            <QuizFeedback
+              correct={r.correct}
+              answer={r.correctAnswer}
+              answerImageUrl={r.correctAnswerImageUrl}
+            />
           </li>
         );
       })}

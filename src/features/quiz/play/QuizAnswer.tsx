@@ -1,6 +1,5 @@
 import { memo } from 'react';
 import Input from '@/components/input';
-import Button from '@/components/button';
 import { wrapperStyle } from './QuizAnswer.style';
 
 type QuizAnswerProps = {
@@ -25,9 +24,6 @@ const QuizAnswer = memo(({ value, onChange, onSubmit, disabled = false }: QuizAn
         placeholder="정답을 입력하세요"
         disabled={disabled}
       />
-      <Button fullWidth onClick={onSubmit} disabled={disabled || value.trim() === ''}>
-        제출
-      </Button>
     </div>
   );
 });
