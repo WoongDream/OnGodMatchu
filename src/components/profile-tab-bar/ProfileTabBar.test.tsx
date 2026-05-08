@@ -27,20 +27,19 @@ const renderTabBar = (
 
 describe('ProfileTabBar', () => {
   describe('isMe=true 일 때', () => {
-    it('메뉴 5개가 모두 렌더된다', () => {
+    it('메뉴 4개가 모두 렌더된다 (환경설정 제외)', () => {
       renderTabBar({ isMe: true });
       expect(screen.getByText('내 정보')).toBeInTheDocument();
       expect(screen.getByText('내가 만든 퀴즈')).toBeInTheDocument();
       expect(screen.getByText('내가 푼 퀴즈')).toBeInTheDocument();
-      expect(screen.getByText('환경설정')).toBeInTheDocument();
       expect(screen.getByText('계정')).toBeInTheDocument();
+      expect(screen.queryByText('환경설정')).not.toBeInTheDocument();
     });
   });
 
   describe('isMe=false 일 때', () => {
-    it('환경설정/계정이 숨겨지고 링크 3개만 렌더된다', () => {
+    it('계정이 숨겨지고 링크 3개만 렌더된다', () => {
       renderTabBar({ isMe: false });
-      expect(screen.queryByText('환경설정')).not.toBeInTheDocument();
       expect(screen.queryByText('계정')).not.toBeInTheDocument();
       expect(screen.getAllByRole('link')).toHaveLength(3);
     });

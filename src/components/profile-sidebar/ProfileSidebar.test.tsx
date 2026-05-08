@@ -26,12 +26,16 @@ const renderSidebar = (
 
 describe('ProfileSidebar', () => {
   describe('isMe=true 일 때', () => {
-    it('내 정보 / 퀴즈(그룹 헤더) / 환경설정 / 계정이 렌더된다', () => {
+    it('내 정보 / 퀴즈(그룹 헤더) / 계정이 렌더된다', () => {
       renderSidebar({ isMe: true });
       expect(screen.getByText('내 정보')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /퀴즈/ })).toBeInTheDocument();
-      expect(screen.getByText('환경설정')).toBeInTheDocument();
       expect(screen.getByText('계정')).toBeInTheDocument();
+    });
+
+    it('환경설정 메뉴는 LNB 에 노출되지 않는다', () => {
+      renderSidebar({ isMe: true });
+      expect(screen.queryByText('환경설정')).not.toBeInTheDocument();
     });
 
     it('퀴즈 그룹은 기본적으로 닫혀 있어 자식 항목이 보이지 않는다', () => {
@@ -49,11 +53,10 @@ describe('ProfileSidebar', () => {
   });
 
   describe('isMe=false 일 때', () => {
-    it('myOnly 메뉴(환경설정, 계정)가 숨겨진다', () => {
+    it('myOnly 메뉴(계정)가 숨겨진다', () => {
       renderSidebar({ isMe: false });
       expect(screen.getByText('내 정보')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /퀴즈/ })).toBeInTheDocument();
-      expect(screen.queryByText('환경설정')).not.toBeInTheDocument();
       expect(screen.queryByText('계정')).not.toBeInTheDocument();
     });
   });
