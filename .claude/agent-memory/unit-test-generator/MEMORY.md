@@ -15,3 +15,4 @@
 - [LoginForm Test Fixes](loginform_test_fixes.md) — Hoisted mocks, form submission with happy-dom, mock call count tracking
 - [Async Hook Testing Patterns](testing_hooks_async.md) — fake timers scoped per-test, flushPromises, Storage.prototype spy limitation in happy-dom, Zustand selector mock
 - [Password Policy & PasswordInput Testing](testing_password_policy.md) — zxcvbn mock, SignupForm PasswordInput mock, showChecklist selector pitfall, useSignup AxiosError construction
+- [Modal & Portal Testing Patterns](modal_portal_testing.md) — fireEvent.keyDown for focus trap, overlay target===currentTarget, React.memo+mock state change limitation

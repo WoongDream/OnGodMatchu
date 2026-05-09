@@ -30,6 +30,23 @@ const variantBlock = (variant: ButtonVariant, theme: Theme) => {
           background-color: ${theme.colors.bg.secondary};
         }
       `;
+    case 'danger':
+      return css`
+        background-color: ${theme.colors.status.error};
+        color: ${theme.colors.accent.fg};
+        &:hover:not(:disabled) {
+          background-color: #dc2626;
+        }
+      `;
+    case 'dangerOutline':
+      return css`
+        background-color: transparent;
+        color: ${theme.colors.status.error};
+        border: 1px solid ${theme.colors.status.error};
+        &:hover:not(:disabled) {
+          background-color: #fef2f2;
+        }
+      `;
   }
 };
 

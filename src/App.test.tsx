@@ -76,10 +76,6 @@ vi.mock('./pages/profile/ProfileQuizzesPlayed', () => ({
   default: () => <div data-testid="profile-quizzes-played">Profile Quizzes Played</div>,
 }));
 
-vi.mock('./pages/profile/ProfileSettings', () => ({
-  default: () => <div data-testid="profile-settings">Profile Settings</div>,
-}));
-
 vi.mock('./pages/profile/ProfileAccount', () => ({
   default: () => <div data-testid="profile-account">Profile Account</div>,
 }));

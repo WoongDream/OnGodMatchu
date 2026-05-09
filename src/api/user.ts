@@ -17,6 +17,18 @@ export type ChangePasswordPayload = {
   newPassword: string;
 };
 
+export type WithdrawReason =
+  | 'no_time'
+  | 'low_quality_quizzes'
+  | 'privacy_concern'
+  | 'will_recreate'
+  | 'other';
+
+export type WithdrawAccountPayload = {
+  reason?: WithdrawReason;
+  deleteMyQuizzes: boolean;
+};
+
 export type ProfileImagePresigned = {
   uploadUrl: string;
   key: string;
@@ -33,6 +45,9 @@ export type ProfileImageUploadRequest = {
 export type UserErrorCode =
   | 'NICKNAME_TAKEN'
   | 'INVALID_PASSWORD'
+  | 'INVALID_CURRENT_PASSWORD'
+  | 'OAUTH_USER_CANNOT_CHANGE_PASSWORD'
+  | 'WITHDRAWAL_FAILED'
   | 'PROFILE_PRIVATE'
   | 'USER_NOT_FOUND'
   | 'INVALID_INPUT'
@@ -56,6 +71,10 @@ export const updateProfile = async (payload: UpdateProfilePayload): Promise<User
 
 export const changePassword = async (payload: ChangePasswordPayload): Promise<void> => {
   await instance.patch('/api/users/me/password', payload);
+};
+
+export const withdrawAccount = async (payload: WithdrawAccountPayload): Promise<void> => {
+  await instance.delete('/api/users/me', { data: payload });
 };
 
 export const requestProfileImageUpload = async (
@@ -99,6 +118,15 @@ export const mapUserError = (error: unknown): UserErrorCode => {
 
   if (code === 'NICKNAME_TAKEN' || code === 'NICKNAME_ALREADY_EXISTS') {
     return 'NICKNAME_TAKEN';
+  }
+  if (code === 'INVALID_CURRENT_PASSWORD') {
+    return 'INVALID_CURRENT_PASSWORD';
+  }
+  if (code === 'OAUTH_USER_CANNOT_CHANGE_PASSWORD') {
+    return 'OAUTH_USER_CANNOT_CHANGE_PASSWORD';
+  }
+  if (code === 'WITHDRAWAL_FAILED') {
+    return 'WITHDRAWAL_FAILED';
   }
   if (code === 'INVALID_PASSWORD') {
     return 'INVALID_PASSWORD';

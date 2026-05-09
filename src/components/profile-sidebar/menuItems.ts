@@ -1,4 +1,4 @@
-export type MenuItemKey = 'info' | 'quizzes-made' | 'quizzes-played' | 'settings' | 'account';
+export type MenuItemKey = 'info' | 'quizzes-made' | 'quizzes-played' | 'account';
 
 export type MenuGroupId = 'quiz';
 

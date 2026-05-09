@@ -19,7 +19,6 @@ import ProfileLayout from './pages/profile/ProfileLayout';
 import ProfileInfo from './pages/profile/ProfileInfo';
 import ProfileQuizzesMade from './pages/profile/ProfileQuizzesMade';
 import ProfileQuizzesPlayed from './pages/profile/ProfileQuizzesPlayed';
-import ProfileSettings from './pages/profile/ProfileSettings';
 import ProfileAccount from './pages/profile/ProfileAccount';
 import ProtectedRoute from '@/components/protected-route/ProtectedRoute';
 
@@ -67,7 +66,6 @@ const App = () => {
                 <Route index element={<ProfileInfo />} />
                 <Route path="quizzes-made" element={<ProfileQuizzesMade />} />
                 <Route path="quizzes-played" element={<ProfileQuizzesPlayed />} />
-                <Route path="settings" element={<ProfileSettings />} />
                 <Route path="account" element={<ProfileAccount />} />
               </Route>
               <Route path="/profile/:userId" element={<ProfileLayout />}>

@@ -16,6 +16,7 @@ import {
   getUserProfile,
   updateProfile,
   changePassword,
+  withdrawAccount,
   requestProfileImageUpload,
   applyProfileImage,
   removeProfileImage,
@@ -295,6 +296,52 @@ describe('getMyProfileStats', () => {
   });
 });
 
+describe('withdrawAccount', () => {
+  it('DELETE /api/users/me 를 호출한다', async () => {
+    mockDelete.mockResolvedValueOnce({ data: {} });
+
+    await withdrawAccount({ reason: 'no_time', deleteMyQuizzes: false });
+
+    expect(mockDelete).toHaveBeenCalledWith('/api/users/me', {
+      data: { reason: 'no_time', deleteMyQuizzes: false },
+    });
+  });
+
+  it('payload 를 data body 로 전달한다 (deleteMyQuizzes: true)', async () => {
+    mockDelete.mockResolvedValueOnce({ data: {} });
+
+    await withdrawAccount({ deleteMyQuizzes: true });
+
+    expect(mockDelete).toHaveBeenCalledWith('/api/users/me', {
+      data: { deleteMyQuizzes: true },
+    });
+  });
+
+  it('reason 이 없어도 동작한다 (선택 필드)', async () => {
+    mockDelete.mockResolvedValueOnce({ data: {} });
+
+    await withdrawAccount({ deleteMyQuizzes: false });
+
+    expect(mockDelete).toHaveBeenCalledWith('/api/users/me', {
+      data: { deleteMyQuizzes: false },
+    });
+  });
+
+  it('반환값은 void (undefined) 이다', async () => {
+    mockDelete.mockResolvedValueOnce({ data: {} });
+
+    const result = await withdrawAccount({ deleteMyQuizzes: false });
+
+    expect(result).toBeUndefined();
+  });
+
+  it('axios 에러를 그대로 throw 한다', async () => {
+    mockDelete.mockRejectedValueOnce(new Error('forbidden'));
+
+    await expect(withdrawAccount({ deleteMyQuizzes: false })).rejects.toThrow('forbidden');
+  });
+});
+
 describe('changePassword', () => {
   it('PATCH /api/users/me/password 를 페이로드와 함께 호출한다', async () => {
     mockPatch.mockResolvedValueOnce({ data: {} });
@@ -345,6 +392,22 @@ describe('mapUserError', () => {
 
     it('code INVALID_PASSWORD → INVALID_PASSWORD', () => {
       expect(mapUserError(makeAxiosError(400, 'INVALID_PASSWORD'))).toBe('INVALID_PASSWORD');
+    });
+
+    it('code INVALID_CURRENT_PASSWORD → INVALID_CURRENT_PASSWORD', () => {
+      expect(mapUserError(makeAxiosError(400, 'INVALID_CURRENT_PASSWORD'))).toBe(
+        'INVALID_CURRENT_PASSWORD',
+      );
+    });
+
+    it('code OAUTH_USER_CANNOT_CHANGE_PASSWORD → OAUTH_USER_CANNOT_CHANGE_PASSWORD', () => {
+      expect(mapUserError(makeAxiosError(403, 'OAUTH_USER_CANNOT_CHANGE_PASSWORD'))).toBe(
+        'OAUTH_USER_CANNOT_CHANGE_PASSWORD',
+      );
+    });
+
+    it('code WITHDRAWAL_FAILED → WITHDRAWAL_FAILED', () => {
+      expect(mapUserError(makeAxiosError(500, 'WITHDRAWAL_FAILED'))).toBe('WITHDRAWAL_FAILED');
     });
 
     it('code PROFILE_PRIVATE → PROFILE_PRIVATE', () => {
