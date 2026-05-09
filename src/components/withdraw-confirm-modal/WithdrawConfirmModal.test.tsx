@@ -11,9 +11,9 @@ const mockCodeReset = vi.hoisted(() => vi.fn());
 let codeState = {
   codeSent: false,
   isSending: false,
-  secondsLeft: 300,
+  secondsLeft: 0,
   expired: false,
-  resendIn: 60,
+  resendIn: 0,
   canResend: false,
   errorCode: null as string | null,
   retryAfter: 0,
@@ -27,9 +27,9 @@ const resetCodeState = () => {
   codeState = {
     codeSent: false,
     isSending: false,
-    secondsLeft: 300,
+    secondsLeft: 0,
     expired: false,
-    resendIn: 60,
+    resendIn: 0,
     canResend: false,
     errorCode: null,
     retryAfter: 0,
@@ -587,12 +587,12 @@ describe('WithdrawConfirmModal', () => {
 
   // ─────────────────────────────────────────────────────────────────────────
   describe('Step 2 — RATE_LIMITED inline 에러', () => {
-    it('errorCode=RATE_LIMITED + retryAfter>0 시 inline 에러가 코드 영역에 노출된다', async () => {
+    it('errorCode=RATE_LIMITED + resendIn>0 시 inline 에러가 코드 영역에 노출된다', async () => {
       setCodeState({
         codeSent: true,
         secondsLeft: 200,
         errorCode: 'RATE_LIMITED',
-        retryAfter: 30,
+        resendIn: 30,
       });
       const user = userEvent.setup();
       renderModal();
@@ -600,17 +600,30 @@ describe('WithdrawConfirmModal', () => {
       expect(screen.getByText('잠시 후 다시 시도해주세요. (30초)')).toBeInTheDocument();
     });
 
-    it('retryAfter=0 이면 RATE_LIMITED inline 에러가 노출되지 않는다', async () => {
+    it('resendIn=0 이면 RATE_LIMITED inline 에러가 노출되지 않는다', async () => {
       setCodeState({
         codeSent: true,
         secondsLeft: 200,
         errorCode: 'RATE_LIMITED',
-        retryAfter: 0,
+        resendIn: 0,
       });
       const user = userEvent.setup();
       renderModal();
       await goToStep2(user);
       expect(screen.queryByText(/잠시 후 다시 시도해주세요/)).not.toBeInTheDocument();
+    });
+
+    it('미발송 상태 + RATE_LIMITED + resendIn>0 → [인증코드 받기] disabled + inline 안내 노출', async () => {
+      setCodeState({
+        codeSent: false,
+        errorCode: 'RATE_LIMITED',
+        resendIn: 45,
+      });
+      const user = userEvent.setup();
+      renderModal();
+      await goToStep2(user);
+      expect(screen.getByRole('button', { name: '인증코드 받기' })).toBeDisabled();
+      expect(screen.getByText('잠시 후 다시 시도해주세요. (45초)')).toBeInTheDocument();
     });
   });
 
@@ -975,6 +988,20 @@ describe('WithdrawConfirmModal', () => {
       // 재오픈 후 step 2 로 이동해서 확인
       await goToStep2(user);
       expect(screen.getByPlaceholderText('탈퇴하겠습니다.')).toHaveValue('');
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('overlay 닫힘 차단', () => {
+    it('overlay 클릭해도 모달이 닫히지 않는다 (closeOnOverlay=false)', async () => {
+      const onClose = vi.fn();
+      const user = userEvent.setup();
+      renderModal({ onClose });
+      // overlay = dialog 의 부모 (createPortal 의 첫 div)
+      const dialog = screen.getByRole('dialog');
+      const overlay = dialog.parentElement!;
+      await user.click(overlay);
+      expect(onClose).not.toHaveBeenCalled();
     });
   });
 });

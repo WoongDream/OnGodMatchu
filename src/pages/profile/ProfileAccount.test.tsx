@@ -62,7 +62,7 @@ const makeUser = (overrides: Partial<User> = {}): User => ({
   id: 1,
   email: 'test@example.com',
   nickname: 'testuser',
-  provider: 'local',
+  provider: 'LOCAL',
   profileImageUrl: 'https://example.com/avatar.png',
   bio: '안녕',
   isProfilePublic: true,
@@ -152,18 +152,18 @@ describe('ProfileAccount', () => {
 
   describe('local provider — 비밀번호 카드', () => {
     it('provider="local" 이면 비밀번호 카드가 렌더된다', () => {
-      renderProfileAccount({ profile: { provider: 'local' } });
+      renderProfileAccount({ profile: { provider: 'LOCAL' } });
       expect(screen.getByText('비밀번호')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: '비밀번호 변경' })).toBeInTheDocument();
     });
 
     it('provider="local" 이면 이메일 서브텍스트가 "변경할 수 없어요" 다', () => {
-      renderProfileAccount({ profile: { provider: 'local' } });
+      renderProfileAccount({ profile: { provider: 'LOCAL' } });
       expect(screen.getByText('변경할 수 없어요')).toBeInTheDocument();
     });
 
     it('provider="local" 이면 이메일 옆에 provider 배지가 미렌더된다', () => {
-      renderProfileAccount({ profile: { provider: 'local' } });
+      renderProfileAccount({ profile: { provider: 'LOCAL' } });
       expect(screen.queryByText('Google')).not.toBeInTheDocument();
       expect(screen.queryByText('Naver')).not.toBeInTheDocument();
       expect(screen.queryByText('Kakao')).not.toBeInTheDocument();
@@ -172,29 +172,29 @@ describe('ProfileAccount', () => {
 
   describe('OAuth provider — 이메일 배지 & 서브텍스트', () => {
     it('provider="google" 이면 비밀번호 카드가 미렌더된다', () => {
-      renderProfileAccount({ profile: { provider: 'google' } });
+      renderProfileAccount({ profile: { provider: 'GOOGLE' } });
       expect(screen.queryByText('비밀번호')).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: '비밀번호 변경' })).not.toBeInTheDocument();
     });
 
     it('provider="google" 이면 이메일 옆 "Google" 배지가 렌더된다', () => {
-      renderProfileAccount({ profile: { provider: 'google' } });
+      renderProfileAccount({ profile: { provider: 'GOOGLE' } });
       expect(screen.getByText('Google')).toBeInTheDocument();
     });
 
     it('provider="google" 이면 서브텍스트가 "소셜 로그인 계정 (Google)" 이다', () => {
-      renderProfileAccount({ profile: { provider: 'google' } });
+      renderProfileAccount({ profile: { provider: 'GOOGLE' } });
       expect(screen.getByText('소셜 로그인 계정 (Google)')).toBeInTheDocument();
     });
 
     it('provider="naver" 이면 "Naver" 배지와 서브텍스트가 렌더된다', () => {
-      renderProfileAccount({ profile: { provider: 'naver' } });
+      renderProfileAccount({ profile: { provider: 'NAVER' } });
       expect(screen.getByText('Naver')).toBeInTheDocument();
       expect(screen.getByText('소셜 로그인 계정 (Naver)')).toBeInTheDocument();
     });
 
     it('provider="kakao" 이면 "Kakao" 배지와 서브텍스트가 렌더된다', () => {
-      renderProfileAccount({ profile: { provider: 'kakao' } });
+      renderProfileAccount({ profile: { provider: 'KAKAO' } });
       expect(screen.getByText('Kakao')).toBeInTheDocument();
       expect(screen.getByText('소셜 로그인 계정 (Kakao)')).toBeInTheDocument();
     });
@@ -233,12 +233,12 @@ describe('ProfileAccount', () => {
 
   describe('비밀번호 변경 모달', () => {
     it('provider="local" 에서 "비밀번호 변경" 버튼 클릭 전 PasswordChangeModal 미노출', () => {
-      renderProfileAccount({ profile: { provider: 'local' } });
+      renderProfileAccount({ profile: { provider: 'LOCAL' } });
       expect(screen.queryByTestId('password-change-modal')).not.toBeInTheDocument();
     });
 
     it('"비밀번호 변경" 버튼 클릭 시 PasswordChangeModal 이 열린다', async () => {
-      renderProfileAccount({ profile: { provider: 'local' } });
+      renderProfileAccount({ profile: { provider: 'LOCAL' } });
       fireEvent.click(screen.getByRole('button', { name: '비밀번호 변경' }));
       await waitFor(() => expect(screen.getByTestId('password-change-modal')).toBeInTheDocument());
     });
@@ -265,7 +265,7 @@ describe('ProfileAccount', () => {
   describe('전체 레이아웃 — isMe=true + local', () => {
     it('활동 / 이메일 / 비밀번호 / 현재 세션 / 회원 탈퇴 카드가 모두 렌더된다', () => {
       mockGetActivityDays.mockReturnValue({ days: 100, joinedDate: '2025-01-01' });
-      renderProfileAccount({ profile: { provider: 'local' } });
+      renderProfileAccount({ profile: { provider: 'LOCAL' } });
 
       expect(screen.getByText(/활동한지/)).toBeInTheDocument();
       expect(screen.getByText('이메일')).toBeInTheDocument();
@@ -276,7 +276,7 @@ describe('ProfileAccount', () => {
 
     it('isMe=true + google provider — 비밀번호 카드 제외 나머지 모두 렌더된다', () => {
       mockGetActivityDays.mockReturnValue({ days: 100, joinedDate: '2025-01-01' });
-      renderProfileAccount({ profile: { provider: 'google' } });
+      renderProfileAccount({ profile: { provider: 'GOOGLE' } });
 
       expect(screen.getByText(/활동한지/)).toBeInTheDocument();
       expect(screen.getByText('이메일')).toBeInTheDocument();

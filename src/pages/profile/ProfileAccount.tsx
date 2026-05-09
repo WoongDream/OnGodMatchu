@@ -32,9 +32,9 @@ type OutletContext = {
 };
 
 const PROVIDER_LABELS: Record<string, string> = {
-  google: 'Google',
-  naver: 'Naver',
-  kakao: 'Kakao',
+  GOOGLE: 'Google',
+  NAVER: 'Naver',
+  KAKAO: 'Kakao',
 };
 
 const ProfileAccount = memo(() => {
@@ -58,7 +58,7 @@ const ProfileAccountView = memo(({ profile }: ViewProps) => {
   const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
   const [isWithdrawModalOpen, setWithdrawModalOpen] = useState(false);
 
-  const isLocalProvider = profile.provider === 'local';
+  const isLocalProvider = profile.provider === 'LOCAL';
   const providerLabel = profile.provider ? PROVIDER_LABELS[profile.provider] : null;
   const activity = getActivityDays(profile.createdAt);
   const deviceLabel = formatDeviceLabel(parseUserAgent(navigator.userAgent));

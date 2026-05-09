@@ -19,12 +19,27 @@ instance.interceptors.request.use((config) => {
 let isRefreshing = false;
 let pendingRequests: Array<(token: string) => void> = [];
 
+const PUBLIC_AUTH_PATHS = [
+  '/api/auth/login',
+  '/api/auth/signup',
+  '/api/auth/refresh',
+  '/api/auth/send-verification-code',
+  '/api/auth/check-nickname',
+];
+
+const isPublicAuthRequest = (url?: string): boolean =>
+  url ? PUBLIC_AUTH_PATHS.some((path) => url.includes(path)) : false;
+
 instance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status !== 401 || originalRequest?._retry) {
+    if (
+      error.response?.status !== 401 ||
+      originalRequest?._retry ||
+      isPublicAuthRequest(originalRequest?.url)
+    ) {
       return Promise.reject(error);
     }
 

@@ -581,6 +581,55 @@ describe('axios instance', () => {
     });
   });
 
+  describe('public auth endpoints (401 without refresh)', () => {
+    const publicEndpoints = [
+      '/api/auth/login',
+      '/api/auth/signup',
+      '/api/auth/refresh',
+      '/api/auth/send-verification-code',
+      '/api/auth/check-nickname',
+    ];
+
+    publicEndpoints.forEach((endpoint) => {
+      it(`${endpoint} 의 401 은 토큰 제거·redirect 없이 그대로 reject 한다`, async () => {
+        localStorageMock['refreshToken'] = 'some-refresh';
+        localStorageMock['accessToken'] = 'some-access';
+        let responseErrorHandler: any;
+
+        mockAxios = vi.mocked(axios);
+        mockAxios.create.mockReturnValue({
+          interceptors: {
+            request: { use: vi.fn() },
+            response: {
+              use: vi.fn((_s, errorHandler) => {
+                responseErrorHandler = errorHandler;
+              }),
+            },
+          },
+        } as any);
+        // refresh 시도 시 axios.post 가 호출되면 안 됨 → spy
+        mockAxios.post = vi.fn();
+
+        await import('./instance');
+
+        const error = {
+          config: { url: endpoint, _retry: false, headers: {} },
+          response: { status: 401, data: { error: 'INVALID_CREDENTIALS' } },
+        };
+
+        await expect(responseErrorHandler(error)).rejects.toBe(error);
+
+        // refresh API 미호출
+        expect(mockAxios.post).not.toHaveBeenCalled();
+        // 토큰 제거 안 함 (로그인 실패 시 기존 세션 보존)
+        expect(localStorageMock['accessToken']).toBe('some-access');
+        expect(localStorageMock['refreshToken']).toBe('some-refresh');
+        // location 변경 안 함
+        expect(window.location.href).toBe('');
+      });
+    });
+  });
+
   describe('interceptor registration', () => {
     it('registers request interceptor', async () => {
       const mockRequestUse = vi.fn();

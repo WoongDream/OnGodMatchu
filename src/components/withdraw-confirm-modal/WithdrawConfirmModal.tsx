@@ -164,7 +164,13 @@ const WithdrawConfirmModal = memo(({ isOpen, onClose, createdQuizCount, email }:
     );
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="회원 탈퇴" footer={stepFooter}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="회원 탈퇴"
+      footer={stepFooter}
+      closeOnOverlay={false}
+    >
       <div css={stepRowStyle}>
         <span css={stepLabelStyle}>STEP {step} / 2</span>
         <div css={[progressTrackStyle, stepRowTrackStyle]}>
@@ -235,14 +241,21 @@ const WithdrawConfirmModal = memo(({ isOpen, onClose, createdQuizCount, email }:
             </p>
 
             {!code.codeSent ? (
-              <Button
-                variant="secondary"
-                onClick={handleSendCode}
-                disabled={code.isSending}
-                fullWidth
-              >
-                {code.isSending ? '발송 중...' : '인증코드 받기'}
-              </Button>
+              <>
+                <Button
+                  variant="secondary"
+                  onClick={handleSendCode}
+                  disabled={code.isSending || code.resendIn > 0}
+                  fullWidth
+                >
+                  {code.isSending ? '발송 중...' : '인증코드 받기'}
+                </Button>
+                {code.errorCode === 'RATE_LIMITED' && code.resendIn > 0 && (
+                  <span css={inlineErrorStyle} role="alert">
+                    잠시 후 다시 시도해주세요. ({code.resendIn}초)
+                  </span>
+                )}
+              </>
             ) : (
               <>
                 <input
@@ -269,9 +282,9 @@ const WithdrawConfirmModal = memo(({ isOpen, onClose, createdQuizCount, email }:
                     ✓ 인증코드를 이메일로 보냈어요. 5분 내 입력해 주세요.
                   </span>
                 )}
-                {code.errorCode === 'RATE_LIMITED' && code.retryAfter > 0 && (
+                {code.errorCode === 'RATE_LIMITED' && code.resendIn > 0 && (
                   <span css={inlineErrorStyle} role="alert">
-                    잠시 후 다시 시도해주세요. ({code.retryAfter}초)
+                    잠시 후 다시 시도해주세요. ({code.resendIn}초)
                   </span>
                 )}
                 {codeError && (

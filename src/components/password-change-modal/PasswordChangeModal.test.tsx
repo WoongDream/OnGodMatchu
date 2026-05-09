@@ -417,4 +417,16 @@ describe('PasswordChangeModal', () => {
       expect(screen.getByText('변경 중...')).toBeInTheDocument();
     });
   });
+
+  describe('overlay 닫힘 차단', () => {
+    it('overlay 클릭해도 모달이 닫히지 않는다 (closeOnOverlay=false)', async () => {
+      const onClose = vi.fn();
+      const user = userEvent.setup();
+      renderWithTheme(<PasswordChangeModal {...defaultProps} onClose={onClose} />);
+      const dialog = screen.getByRole('dialog');
+      const overlay = dialog.parentElement!;
+      await user.click(overlay);
+      expect(onClose).not.toHaveBeenCalled();
+    });
+  });
 });

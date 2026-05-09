@@ -107,7 +107,13 @@ const PasswordChangeModal = memo(({ isOpen, onClose, onSuccess, userInputs }: Pr
     );
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="비밀번호 변경" footer={stepFooter}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="비밀번호 변경"
+      footer={stepFooter}
+      closeOnOverlay={false}
+    >
       <div css={stepRowStyle}>
         <span css={stepLabelStyle}>STEP {step} / 2</span>
         <div css={[progressTrackStyle, stepRowTrackStyle]}>
