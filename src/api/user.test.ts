@@ -18,6 +18,7 @@ import {
   changePassword,
   withdrawAccount,
   requestWithdrawalCode,
+  agreeTerms,
   requestProfileImageUpload,
   applyProfileImage,
   removeProfileImage,
@@ -334,6 +335,50 @@ describe('requestWithdrawalCode', () => {
   });
 });
 
+describe('agreeTerms', () => {
+  it('인자 없이 호출하면 POST /api/users/me/terms-agreement 를 {} body 로 호출한다', async () => {
+    mockPost.mockResolvedValueOnce({ data: {} });
+
+    await agreeTerms();
+
+    expect(mockPost).toHaveBeenCalledWith('/api/users/me/terms-agreement', {});
+  });
+
+  it('{ agreedToMarketing: true } 를 payload 그대로 전달한다', async () => {
+    mockPost.mockResolvedValueOnce({ data: {} });
+
+    await agreeTerms({ agreedToMarketing: true });
+
+    expect(mockPost).toHaveBeenCalledWith('/api/users/me/terms-agreement', {
+      agreedToMarketing: true,
+    });
+  });
+
+  it('{ agreedToMarketing: false } 를 payload 그대로 전달한다', async () => {
+    mockPost.mockResolvedValueOnce({ data: {} });
+
+    await agreeTerms({ agreedToMarketing: false });
+
+    expect(mockPost).toHaveBeenCalledWith('/api/users/me/terms-agreement', {
+      agreedToMarketing: false,
+    });
+  });
+
+  it('반환값은 void (undefined) 이다', async () => {
+    mockPost.mockResolvedValueOnce({ data: {} });
+
+    const result = await agreeTerms();
+
+    expect(result).toBeUndefined();
+  });
+
+  it('에러 시 그대로 throw 한다', async () => {
+    mockPost.mockRejectedValueOnce(new Error('unauthorized'));
+
+    await expect(agreeTerms()).rejects.toThrow('unauthorized');
+  });
+});
+
 describe('withdrawAccount', () => {
   const BASE_PAYLOAD = {
     verificationCode: '123456',
@@ -483,6 +528,12 @@ describe('mapUserError', () => {
     it('code INVALID_INPUT → INVALID_INPUT', () => {
       expect(mapUserError(makeAxiosError(400, 'INVALID_INPUT'))).toBe('INVALID_INPUT');
     });
+
+    it('code TERMS_AGREEMENT_OUTDATED → TERMS_AGREEMENT_OUTDATED', () => {
+      expect(mapUserError(makeAxiosError(403, 'TERMS_AGREEMENT_OUTDATED'))).toBe(
+        'TERMS_AGREEMENT_OUTDATED',
+      );
+    });
   });
 
   describe('status 기반 매핑 (code 없음)', () => {
@@ -596,12 +647,17 @@ describe('USER_ERROR_MESSAGES', () => {
     'INVALID_VERIFICATION_CODE',
     'VERIFICATION_CODE_EXPIRED',
     'RATE_LIMITED',
+    'TERMS_AGREEMENT_OUTDATED',
     'PROFILE_PRIVATE',
     'USER_NOT_FOUND',
     'INVALID_INPUT',
     'UNAUTHORIZED',
     'NETWORK',
   ] as const;
+
+  it('TERMS_AGREEMENT_OUTDATED 메시지는 "약관 동의가 필요합니다." 이다', () => {
+    expect(USER_ERROR_MESSAGES['TERMS_AGREEMENT_OUTDATED']).toBe('약관 동의가 필요합니다.');
+  });
 
   it.each(ALL_CODES)('%s 에 해당하는 한국어 메시지가 존재한다', (code) => {
     expect(USER_ERROR_MESSAGES[code]).toBeTruthy();

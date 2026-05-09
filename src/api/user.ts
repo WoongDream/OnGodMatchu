@@ -45,6 +45,7 @@ export type UserErrorCode =
   | 'INVALID_VERIFICATION_CODE'
   | 'VERIFICATION_CODE_EXPIRED'
   | 'RATE_LIMITED'
+  | 'TERMS_AGREEMENT_OUTDATED'
   | 'PROFILE_PRIVATE'
   | 'USER_NOT_FOUND'
   | 'INVALID_INPUT'
@@ -72,6 +73,14 @@ export const changePassword = async (payload: ChangePasswordPayload): Promise<vo
 
 export const requestWithdrawalCode = async (): Promise<void> => {
   await instance.post('/api/users/me/withdrawal-code');
+};
+
+export type AgreeTermsPayload = {
+  agreedToMarketing?: boolean;
+};
+
+export const agreeTerms = async (payload: AgreeTermsPayload = {}): Promise<void> => {
+  await instance.post('/api/users/me/terms-agreement', payload);
 };
 
 export const withdrawAccount = async (payload: WithdrawAccountPayload): Promise<void> => {
@@ -135,6 +144,9 @@ export const mapUserError = (error: unknown): UserErrorCode => {
   if (code === 'RATE_LIMITED' || status === 429) {
     return 'RATE_LIMITED';
   }
+  if (code === 'TERMS_AGREEMENT_OUTDATED') {
+    return 'TERMS_AGREEMENT_OUTDATED';
+  }
   if (code === 'INVALID_PASSWORD') {
     return 'INVALID_PASSWORD';
   }
@@ -169,6 +181,7 @@ export const USER_ERROR_MESSAGES: Record<UserErrorCode, string> = {
   INVALID_VERIFICATION_CODE: '인증코드가 올바르지 않습니다.',
   VERIFICATION_CODE_EXPIRED: '인증코드가 만료되었어요. 다시 받아주세요.',
   RATE_LIMITED: '요청이 너무 잦습니다. 잠시 후 다시 시도해주세요.',
+  TERMS_AGREEMENT_OUTDATED: '약관 동의가 필요합니다.',
   PROFILE_PRIVATE: '비공개 프로필입니다.',
   USER_NOT_FOUND: '사용자를 찾을 수 없습니다.',
   INVALID_INPUT: '입력값을 다시 확인해주세요.',

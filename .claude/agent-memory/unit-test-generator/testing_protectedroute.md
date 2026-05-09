@@ -1,18 +1,39 @@
 ---
 name: ProtectedRoute Component Testing
-description: Comprehensive test suite for ProtectedRoute auth guard component with 40+ test cases
+description: Test suite for ProtectedRoute with auth guard and terms-agreement gate, 27 cases passing
 type: project
 ---
 
 ## ProtectedRoute Component Testing
 
-A 442-line comprehensive test suite for the ProtectedRoute component that guards protected pages from unauthenticated users.
+Test suite for the ProtectedRoute component that guards protected pages.
 
 ### Component Behavior
 
-The component has a simple contract:
-- **When authenticated (`isLoggedIn: true`)**: Renders children
-- **When unauthenticated (`isLoggedIn: false`)**: Renders `<Navigate to="/login" replace />`
+- `isLoggedIn: false` → `<Navigate to="/login" replace />`
+- `isLoggedIn: true && user.needsTermsAgreement === true && pathname not in whitelist` → `<Navigate to="/terms-agreement" replace />`
+- Whitelist: `/terms-agreement`, `/terms`, `/privacy`
+- Otherwise → renders children
+
+### Critical: MemoryRouter + Navigate redirect pitfall
+
+When testing `Navigate` redirect in MemoryRouter without Routes:
+- ProtectedRoute renders Navigate to `/terms-agreement`
+- MemoryRouter actually navigates to `/terms-agreement`
+- ProtectedRoute re-renders with new pathname — now in whitelist → children render!
+
+**Fix**: Use `Routes` + `Route` to define separate sentinel at redirect target:
+```tsx
+<MemoryRouter initialEntries={['/']}>
+  <Routes>
+    <Route path="/" element={<ProtectedRoute><div data-testid="protected-child" /></ProtectedRoute>} />
+    <Route path="/terms-agreement" element={<div data-testid="terms-sentinel" />} />
+  </Routes>
+</MemoryRouter>
+```
+Assert `protected-child` not present and `terms-sentinel` present.
+
+This pitfall does NOT affect `/login` redirect tests because the repeated Navigate to same `/login` path stops the loop and children never render.
 
 ### Test Coverage (40+ test cases)
 

@@ -30,10 +30,24 @@ const PUBLIC_AUTH_PATHS = [
 const isPublicAuthRequest = (url?: string): boolean =>
   url ? PUBLIC_AUTH_PATHS.some((path) => url.includes(path)) : false;
 
+type ErrorResponseBody = { error?: { code?: string } };
+
 instance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
+    // 약관 미동의 가드 — 403 + TERMS_AGREEMENT_OUTDATED 시 약관 페이지 강제 이동
+    if (error.response?.status === 403) {
+      const code = (error.response?.data as ErrorResponseBody | undefined)?.error?.code;
+      if (
+        code === 'TERMS_AGREEMENT_OUTDATED' &&
+        !window.location.pathname.startsWith('/terms-agreement')
+      ) {
+        window.location.href = '/terms-agreement';
+        return Promise.reject(error);
+      }
+    }
 
     if (
       error.response?.status !== 401 ||

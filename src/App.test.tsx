@@ -80,6 +80,10 @@ vi.mock('./pages/profile/ProfileAccount', () => ({
   default: () => <div data-testid="profile-account">Profile Account</div>,
 }));
 
+vi.mock('./pages/auth/TermsAgreementPage', () => ({
+  default: () => <div data-testid="terms-agreement-page">Terms Agreement</div>,
+}));
+
 vi.mock('@/hooks/useBootstrapAuth', () => ({
   default: () => undefined,
 }));
@@ -241,11 +245,11 @@ describe('App', () => {
       expect(screen.getByTestId('route-/terms')).toBeInTheDocument();
     });
 
-    it('has twelve top-level routes total', () => {
+    it('has thirteen top-level routes total', () => {
       renderWithTheme(<App />);
       const routeElements = screen.getAllByTestId(/^route-/);
-      // 9 기존 + /quiz/:id/edit + /profile + /profile/:userId
-      expect(routeElements).toHaveLength(12);
+      // 9 기존 + /quiz/:id/edit + /terms-agreement + /profile + /profile/:userId
+      expect(routeElements).toHaveLength(13);
     });
 
     it('renders /profile route protected by ProtectedRoute', () => {
@@ -519,6 +523,7 @@ describe('App', () => {
       expect(screen.getByTestId('oauth-callback-page')).toBeInTheDocument();
       expect(screen.getByTestId('privacy-page')).toBeInTheDocument();
       expect(screen.getByTestId('terms-page')).toBeInTheDocument();
+      expect(screen.getByTestId('terms-agreement-page')).toBeInTheDocument();
     });
   });
 });

@@ -16,5 +16,6 @@ export type User = {
   bio?: string;
   isProfilePublic: boolean;
   createdAt: string;
+  needsTermsAgreement?: boolean;
   stats?: UserStats;
 };

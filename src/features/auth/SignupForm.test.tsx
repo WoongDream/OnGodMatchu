@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithTheme, screen } from '@/test/renderWithTheme';
 import userEvent from '@testing-library/user-event';
 import SignupForm from './SignupForm';
+import type { TermsAgreementState } from '@/components/terms-agreement-checkboxes';
 
 const mockNavigate = vi.hoisted(() => vi.fn());
 const mockSubmit = vi.hoisted(() => vi.fn());
@@ -76,6 +77,55 @@ vi.mock('@/hooks/useNicknameCheck', () => ({
 
 vi.mock('./SocialLoginButtons', () => ({
   default: () => <div data-testid="social-login-buttons">Social Login Buttons</div>,
+}));
+
+vi.mock('@/components/terms-agreement-checkboxes', () => ({
+  default: ({
+    value,
+    onChange,
+    disabled,
+  }: {
+    value: TermsAgreementState;
+    onChange: (next: TermsAgreementState) => void;
+    disabled?: boolean;
+  }) => (
+    <div data-testid="terms-agreement-checkboxes">
+      <input
+        type="checkbox"
+        aria-label="전체 동의"
+        checked={value.agreedToTerms && value.agreedToPrivacy && value.agreedToMarketing}
+        disabled={disabled}
+        onChange={(e) =>
+          onChange({
+            agreedToTerms: e.target.checked,
+            agreedToPrivacy: e.target.checked,
+            agreedToMarketing: e.target.checked,
+          })
+        }
+      />
+      <input
+        type="checkbox"
+        aria-label="이용약관 동의 (필수)"
+        checked={value.agreedToTerms}
+        disabled={disabled}
+        onChange={(e) => onChange({ ...value, agreedToTerms: e.target.checked })}
+      />
+      <input
+        type="checkbox"
+        aria-label="개인정보처리방침 동의 (필수)"
+        checked={value.agreedToPrivacy}
+        disabled={disabled}
+        onChange={(e) => onChange({ ...value, agreedToPrivacy: e.target.checked })}
+      />
+      <input
+        type="checkbox"
+        aria-label="마케팅 수신 동의 (선택)"
+        checked={value.agreedToMarketing}
+        disabled={disabled}
+        onChange={(e) => onChange({ ...value, agreedToMarketing: e.target.checked })}
+      />
+    </div>
+  ),
 }));
 
 vi.mock('@/components/input', () => ({
@@ -162,6 +212,12 @@ vi.mock('@/lib/password', () => ({
 }));
 
 const STRONG_PASSWORD = '내고양이는오늘도잠만잔다';
+
+/** showProfile 단계에서 필수 약관 2개를 체크하는 헬퍼 */
+const fillRequiredTerms = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.click(screen.getByRole('checkbox', { name: '이용약관 동의 (필수)' }));
+  await user.click(screen.getByRole('checkbox', { name: '개인정보처리방침 동의 (필수)' }));
+};
 
 const resetState = () => {
   signupState = { isSubmitting: false, error: null, errorCode: null, retryAfter: 0 };
@@ -312,12 +368,13 @@ describe('SignupForm', () => {
       expect(screen.queryByRole('button', { name: '재발송' })).not.toBeInTheDocument();
     });
 
-    it('비밀번호가 강함(10자 이상) + 닉네임 입력 시 가입 버튼이 활성화된다', async () => {
+    it('비밀번호가 강함(10자 이상) + 닉네임 + 필수 약관 체크 시 가입 버튼이 활성화된다', async () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
       await enterCodeAndVerify(user);
       await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
       await user.type(screen.getByLabelText('닉네임'), 'nick');
+      await fillRequiredTerms(user);
       expect(screen.getByRole('button', { name: '가입하기' })).toBeEnabled();
     });
 
@@ -336,6 +393,7 @@ describe('SignupForm', () => {
       await enterCodeAndVerify(user);
       await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
       await user.type(screen.getByLabelText('닉네임'), 'nick');
+      await fillRequiredTerms(user);
       await user.click(screen.getByRole('button', { name: '가입하기' }));
       expect(mockSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -344,6 +402,98 @@ describe('SignupForm', () => {
           code: '123456',
         }),
       );
+    });
+  });
+
+  describe('약관 동의 체크박스', () => {
+    beforeEach(() => {
+      setVerificationState({ codeSent: true, secondsLeft: 300, resendIn: 60 });
+    });
+
+    const enterCodeAndVerify = async (user: ReturnType<typeof userEvent.setup>) => {
+      await user.type(screen.getByLabelText('인증 코드'), '123456');
+      await user.click(screen.getByRole('button', { name: '인증' }));
+    };
+
+    const fillProfileInputs = async (user: ReturnType<typeof userEvent.setup>) => {
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
+      await user.type(screen.getByLabelText('닉네임'), 'nick');
+    };
+
+    it('showProfile 단계 진입 시 약관 체크박스 4개가 노출된다', async () => {
+      const user = userEvent.setup();
+      renderWithTheme(<SignupForm />);
+      await enterCodeAndVerify(user);
+      expect(screen.getByRole('checkbox', { name: '전체 동의' })).toBeInTheDocument();
+      expect(screen.getByRole('checkbox', { name: '이용약관 동의 (필수)' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('checkbox', { name: '개인정보처리방침 동의 (필수)' }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole('checkbox', { name: '마케팅 수신 동의 (선택)' })).toBeInTheDocument();
+    });
+
+    it('모든 입력 정상이지만 필수 약관 미체크 시 가입하기 버튼이 비활성', async () => {
+      const user = userEvent.setup();
+      renderWithTheme(<SignupForm />);
+      await enterCodeAndVerify(user);
+      await fillProfileInputs(user);
+      // 약관 체크 없이 확인
+      expect(screen.getByRole('button', { name: '가입하기' })).toBeDisabled();
+    });
+
+    it('필수 약관 2개 체크 후 가입하기 버튼이 활성화된다', async () => {
+      const user = userEvent.setup();
+      renderWithTheme(<SignupForm />);
+      await enterCodeAndVerify(user);
+      await fillProfileInputs(user);
+      await fillRequiredTerms(user);
+      expect(screen.getByRole('button', { name: '가입하기' })).toBeEnabled();
+    });
+
+    it('필수 2개 체크 + 마케팅 미체크 상태로 submit 호출 시 agreedToMarketing: false 포함', async () => {
+      const user = userEvent.setup();
+      renderWithTheme(<SignupForm />);
+      await enterCodeAndVerify(user);
+      await fillProfileInputs(user);
+      await fillRequiredTerms(user);
+      // 마케팅은 체크하지 않음
+      await user.click(screen.getByRole('button', { name: '가입하기' }));
+      expect(mockSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          agreedToTerms: true,
+          agreedToPrivacy: true,
+          agreedToMarketing: false,
+        }),
+      );
+    });
+
+    it('필수 2개 + 마케팅까지 체크 후 submit 호출 시 agreedToMarketing: true 포함', async () => {
+      const user = userEvent.setup();
+      renderWithTheme(<SignupForm />);
+      await enterCodeAndVerify(user);
+      await fillProfileInputs(user);
+      await fillRequiredTerms(user);
+      await user.click(screen.getByRole('checkbox', { name: '마케팅 수신 동의 (선택)' }));
+      await user.click(screen.getByRole('button', { name: '가입하기' }));
+      expect(mockSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          agreedToTerms: true,
+          agreedToPrivacy: true,
+          agreedToMarketing: true,
+        }),
+      );
+    });
+
+    it('signup.errorCode === TERMS_AGREEMENT_REQUIRED 일 때 인라인 에러 메시지가 노출된다', async () => {
+      setSignupState({
+        errorCode: 'TERMS_AGREEMENT_REQUIRED',
+        error: '필수 약관에 동의해주세요.',
+      });
+      setVerificationState({ codeSent: true, secondsLeft: 300, resendIn: 60 });
+      const user = userEvent.setup();
+      renderWithTheme(<SignupForm />);
+      await enterCodeAndVerify(user);
+      expect(screen.getByText('필수 약관에 동의해주세요.')).toBeInTheDocument();
     });
   });
 
