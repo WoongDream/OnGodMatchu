@@ -8,20 +8,13 @@ import {
   regenerateDefaultProfileImage,
   mapUserError,
   type UserErrorCode,
+  USER_ERROR_MESSAGES,
 } from '@/api/user';
 import useAuthStore from '@/store/authStore';
 import type { User } from '@/types';
 
 const ERROR_MESSAGES: Record<UserErrorCode, string> = {
-  NICKNAME_TAKEN: '이미 사용 중인 닉네임입니다.',
-  INVALID_PASSWORD: '비밀번호가 올바르지 않습니다.',
-  INVALID_CURRENT_PASSWORD: '현재 비밀번호가 올바르지 않습니다.',
-  OAUTH_USER_CANNOT_CHANGE_PASSWORD: '소셜 로그인 계정은 비밀번호를 변경할 수 없습니다.',
-  WITHDRAWAL_FAILED: '회원 탈퇴 처리에 실패했습니다.',
-  PROFILE_PRIVATE: '비공개 프로필입니다.',
-  USER_NOT_FOUND: '사용자를 찾을 수 없습니다.',
-  INVALID_INPUT: '입력값을 다시 확인해주세요.',
-  UNAUTHORIZED: '로그인이 필요합니다.',
+  ...USER_ERROR_MESSAGES,
   NETWORK: '이미지 처리에 실패했어요.',
 };
 

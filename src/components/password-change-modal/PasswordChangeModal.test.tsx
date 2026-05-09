@@ -1,4 +1,3 @@
-import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithTheme, screen, waitFor } from '@/test/renderWithTheme';
 import userEvent from '@testing-library/user-event';

@@ -157,6 +157,7 @@ const ProfileAccountView = memo(({ profile }: ViewProps) => {
         isOpen={isWithdrawModalOpen}
         onClose={() => setWithdrawModalOpen(false)}
         createdQuizCount={createdQuizCount}
+        email={profile.email}
       />
     </div>
   );

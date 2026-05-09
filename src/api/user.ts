@@ -17,16 +17,11 @@ export type ChangePasswordPayload = {
   newPassword: string;
 };
 
-export type WithdrawReason =
-  | 'no_time'
-  | 'low_quality_quizzes'
-  | 'privacy_concern'
-  | 'will_recreate'
-  | 'other';
-
 export type WithdrawAccountPayload = {
-  reason?: WithdrawReason;
-  deleteMyQuizzes: boolean;
+  verificationCode: string;
+  confirmationPhrase: string;
+  deleteOwnQuizzes?: boolean;
+  reasonText?: string;
 };
 
 export type ProfileImagePresigned = {
@@ -46,8 +41,10 @@ export type UserErrorCode =
   | 'NICKNAME_TAKEN'
   | 'INVALID_PASSWORD'
   | 'INVALID_CURRENT_PASSWORD'
-  | 'OAUTH_USER_CANNOT_CHANGE_PASSWORD'
-  | 'WITHDRAWAL_FAILED'
+  | 'INVALID_WITHDRAWAL_CONFIRMATION'
+  | 'INVALID_VERIFICATION_CODE'
+  | 'VERIFICATION_CODE_EXPIRED'
+  | 'RATE_LIMITED'
   | 'PROFILE_PRIVATE'
   | 'USER_NOT_FOUND'
   | 'INVALID_INPUT'
@@ -71,6 +68,10 @@ export const updateProfile = async (payload: UpdateProfilePayload): Promise<User
 
 export const changePassword = async (payload: ChangePasswordPayload): Promise<void> => {
   await instance.patch('/api/users/me/password', payload);
+};
+
+export const requestWithdrawalCode = async (): Promise<void> => {
+  await instance.post('/api/users/me/withdrawal-code');
 };
 
 export const withdrawAccount = async (payload: WithdrawAccountPayload): Promise<void> => {
@@ -108,7 +109,7 @@ export const getMyProfileStats = async (): Promise<MyQuizzesAggregate> => {
 };
 
 type ErrorResponseBody = {
-  error?: { code?: string };
+  error?: { code?: string; retryAfter?: number };
 };
 
 export const mapUserError = (error: unknown): UserErrorCode => {
@@ -122,11 +123,17 @@ export const mapUserError = (error: unknown): UserErrorCode => {
   if (code === 'INVALID_CURRENT_PASSWORD') {
     return 'INVALID_CURRENT_PASSWORD';
   }
-  if (code === 'OAUTH_USER_CANNOT_CHANGE_PASSWORD') {
-    return 'OAUTH_USER_CANNOT_CHANGE_PASSWORD';
+  if (code === 'INVALID_WITHDRAWAL_CONFIRMATION') {
+    return 'INVALID_WITHDRAWAL_CONFIRMATION';
   }
-  if (code === 'WITHDRAWAL_FAILED') {
-    return 'WITHDRAWAL_FAILED';
+  if (code === 'INVALID_VERIFICATION_CODE') {
+    return 'INVALID_VERIFICATION_CODE';
+  }
+  if (code === 'VERIFICATION_CODE_EXPIRED') {
+    return 'VERIFICATION_CODE_EXPIRED';
+  }
+  if (code === 'RATE_LIMITED' || status === 429) {
+    return 'RATE_LIMITED';
   }
   if (code === 'INVALID_PASSWORD') {
     return 'INVALID_PASSWORD';
@@ -147,4 +154,24 @@ export const mapUserError = (error: unknown): UserErrorCode => {
     return 'PROFILE_PRIVATE';
   }
   return 'NETWORK';
+};
+
+export const getRetryAfter = (error: unknown): number => {
+  const err = error as { response?: { data?: ErrorResponseBody } };
+  return err.response?.data?.error?.retryAfter ?? 0;
+};
+
+export const USER_ERROR_MESSAGES: Record<UserErrorCode, string> = {
+  NICKNAME_TAKEN: '이미 사용 중인 닉네임입니다.',
+  INVALID_PASSWORD: '비밀번호가 올바르지 않습니다.',
+  INVALID_CURRENT_PASSWORD: '현재 비밀번호가 올바르지 않습니다.',
+  INVALID_WITHDRAWAL_CONFIRMATION: '확인 문구가 일치하지 않습니다.',
+  INVALID_VERIFICATION_CODE: '인증코드가 올바르지 않습니다.',
+  VERIFICATION_CODE_EXPIRED: '인증코드가 만료되었어요. 다시 받아주세요.',
+  RATE_LIMITED: '요청이 너무 잦습니다. 잠시 후 다시 시도해주세요.',
+  PROFILE_PRIVATE: '비공개 프로필입니다.',
+  USER_NOT_FOUND: '사용자를 찾을 수 없습니다.',
+  INVALID_INPUT: '입력값을 다시 확인해주세요.',
+  UNAUTHORIZED: '로그인이 필요합니다.',
+  NETWORK: '네트워크 오류가 발생했습니다.',
 };

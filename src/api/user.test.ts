@@ -17,12 +17,15 @@ import {
   updateProfile,
   changePassword,
   withdrawAccount,
+  requestWithdrawalCode,
   requestProfileImageUpload,
   applyProfileImage,
   removeProfileImage,
   regenerateDefaultProfileImage,
   getMyProfileStats,
   mapUserError,
+  getRetryAfter,
+  USER_ERROR_MESSAGES,
 } from './user';
 
 const mockGet = vi.mocked(instance.get);
@@ -296,41 +299,88 @@ describe('getMyProfileStats', () => {
   });
 });
 
+describe('requestWithdrawalCode', () => {
+  it('POST /api/users/me/withdrawal-code 를 호출한다', async () => {
+    mockPost.mockResolvedValueOnce({ data: {} });
+
+    await requestWithdrawalCode();
+
+    expect(mockPost).toHaveBeenCalledWith('/api/users/me/withdrawal-code');
+  });
+
+  it('body 없이 호출한다 (인자 1개)', async () => {
+    mockPost.mockResolvedValueOnce({ data: {} });
+
+    await requestWithdrawalCode();
+
+    // post 가 URL 인자 하나만 받았는지 확인 (body 인자 없음)
+    expect(mockPost).toHaveBeenCalledTimes(1);
+    const callArgs = mockPost.mock.calls[0];
+    expect(callArgs).toHaveLength(1);
+  });
+
+  it('반환값은 void (undefined) 이다', async () => {
+    mockPost.mockResolvedValueOnce({ data: {} });
+
+    const result = await requestWithdrawalCode();
+
+    expect(result).toBeUndefined();
+  });
+
+  it('axios 에러를 그대로 throw 한다', async () => {
+    mockPost.mockRejectedValueOnce(new Error('too many requests'));
+
+    await expect(requestWithdrawalCode()).rejects.toThrow('too many requests');
+  });
+});
+
 describe('withdrawAccount', () => {
-  it('DELETE /api/users/me 를 호출한다', async () => {
+  const BASE_PAYLOAD = {
+    verificationCode: '123456',
+    confirmationPhrase: '탈퇴하겠습니다.',
+    deleteOwnQuizzes: false,
+    reasonText: '시간이 부족해서요',
+  };
+
+  it('DELETE /api/users/me 를 올바른 payload 로 호출한다', async () => {
     mockDelete.mockResolvedValueOnce({ data: {} });
 
-    await withdrawAccount({ reason: 'no_time', deleteMyQuizzes: false });
+    await withdrawAccount(BASE_PAYLOAD);
 
     expect(mockDelete).toHaveBeenCalledWith('/api/users/me', {
-      data: { reason: 'no_time', deleteMyQuizzes: false },
+      data: BASE_PAYLOAD,
     });
   });
 
-  it('payload 를 data body 로 전달한다 (deleteMyQuizzes: true)', async () => {
+  it('deleteOwnQuizzes: true 도 data body 로 전달한다', async () => {
     mockDelete.mockResolvedValueOnce({ data: {} });
 
-    await withdrawAccount({ deleteMyQuizzes: true });
+    const payload = { ...BASE_PAYLOAD, deleteOwnQuizzes: true };
+    await withdrawAccount(payload);
 
     expect(mockDelete).toHaveBeenCalledWith('/api/users/me', {
-      data: { deleteMyQuizzes: true },
+      data: payload,
     });
   });
 
-  it('reason 이 없어도 동작한다 (선택 필드)', async () => {
+  it('deleteOwnQuizzes 와 reasonText 가 없어도 동작한다 (선택 필드)', async () => {
     mockDelete.mockResolvedValueOnce({ data: {} });
 
-    await withdrawAccount({ deleteMyQuizzes: false });
+    const payload = {
+      verificationCode: '123456',
+      confirmationPhrase: '탈퇴하겠습니다.',
+    };
+    await withdrawAccount(payload);
 
     expect(mockDelete).toHaveBeenCalledWith('/api/users/me', {
-      data: { deleteMyQuizzes: false },
+      data: payload,
     });
   });
 
   it('반환값은 void (undefined) 이다', async () => {
     mockDelete.mockResolvedValueOnce({ data: {} });
 
-    const result = await withdrawAccount({ deleteMyQuizzes: false });
+    const result = await withdrawAccount(BASE_PAYLOAD);
 
     expect(result).toBeUndefined();
   });
@@ -338,7 +388,7 @@ describe('withdrawAccount', () => {
   it('axios 에러를 그대로 throw 한다', async () => {
     mockDelete.mockRejectedValueOnce(new Error('forbidden'));
 
-    await expect(withdrawAccount({ deleteMyQuizzes: false })).rejects.toThrow('forbidden');
+    await expect(withdrawAccount(BASE_PAYLOAD)).rejects.toThrow('forbidden');
   });
 });
 
@@ -400,14 +450,26 @@ describe('mapUserError', () => {
       );
     });
 
-    it('code OAUTH_USER_CANNOT_CHANGE_PASSWORD → OAUTH_USER_CANNOT_CHANGE_PASSWORD', () => {
-      expect(mapUserError(makeAxiosError(403, 'OAUTH_USER_CANNOT_CHANGE_PASSWORD'))).toBe(
-        'OAUTH_USER_CANNOT_CHANGE_PASSWORD',
+    it('code INVALID_WITHDRAWAL_CONFIRMATION → INVALID_WITHDRAWAL_CONFIRMATION', () => {
+      expect(mapUserError(makeAxiosError(400, 'INVALID_WITHDRAWAL_CONFIRMATION'))).toBe(
+        'INVALID_WITHDRAWAL_CONFIRMATION',
       );
     });
 
-    it('code WITHDRAWAL_FAILED → WITHDRAWAL_FAILED', () => {
-      expect(mapUserError(makeAxiosError(500, 'WITHDRAWAL_FAILED'))).toBe('WITHDRAWAL_FAILED');
+    it('code INVALID_VERIFICATION_CODE → INVALID_VERIFICATION_CODE', () => {
+      expect(mapUserError(makeAxiosError(400, 'INVALID_VERIFICATION_CODE'))).toBe(
+        'INVALID_VERIFICATION_CODE',
+      );
+    });
+
+    it('code VERIFICATION_CODE_EXPIRED → VERIFICATION_CODE_EXPIRED', () => {
+      expect(mapUserError(makeAxiosError(400, 'VERIFICATION_CODE_EXPIRED'))).toBe(
+        'VERIFICATION_CODE_EXPIRED',
+      );
+    });
+
+    it('code RATE_LIMITED → RATE_LIMITED', () => {
+      expect(mapUserError(makeAxiosError(429, 'RATE_LIMITED'))).toBe('RATE_LIMITED');
     });
 
     it('code PROFILE_PRIVATE → PROFILE_PRIVATE', () => {
@@ -438,6 +500,10 @@ describe('mapUserError', () => {
 
     it('status 403 (code 없음) → PROFILE_PRIVATE', () => {
       expect(mapUserError(makeAxiosError(403))).toBe('PROFILE_PRIVATE');
+    });
+
+    it('status 429 (code 없음) → RATE_LIMITED', () => {
+      expect(mapUserError(makeAxiosError(429))).toBe('RATE_LIMITED');
     });
   });
 
@@ -476,5 +542,69 @@ describe('mapUserError', () => {
     it('문자열 에러 → NETWORK', () => {
       expect(mapUserError('some string error')).toBe('NETWORK');
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getRetryAfter
+// ---------------------------------------------------------------------------
+
+const makeRetryAfterError = (retryAfter?: number) => ({
+  response: {
+    data: {
+      error: retryAfter !== undefined ? { retryAfter } : {},
+    },
+  },
+});
+
+describe('getRetryAfter', () => {
+  it('error.response.data.error.retryAfter 값을 반환한다', () => {
+    expect(getRetryAfter(makeRetryAfterError(60))).toBe(60);
+  });
+
+  it('retryAfter 가 0 이면 0 을 반환한다', () => {
+    expect(getRetryAfter(makeRetryAfterError(0))).toBe(0);
+  });
+
+  it('retryAfter 필드가 없으면 0 을 반환한다', () => {
+    expect(getRetryAfter(makeRetryAfterError())).toBe(0);
+  });
+
+  it('error.response 가 없으면 0 을 반환한다', () => {
+    expect(getRetryAfter({})).toBe(0);
+  });
+
+  it('error.response.data 가 없으면 0 을 반환한다', () => {
+    expect(getRetryAfter({ response: {} })).toBe(0);
+  });
+
+  it('문자열 에러에도 0 을 반환한다', () => {
+    expect(getRetryAfter('some error')).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// USER_ERROR_MESSAGES
+// ---------------------------------------------------------------------------
+
+describe('USER_ERROR_MESSAGES', () => {
+  const ALL_CODES = [
+    'NICKNAME_TAKEN',
+    'INVALID_PASSWORD',
+    'INVALID_CURRENT_PASSWORD',
+    'INVALID_WITHDRAWAL_CONFIRMATION',
+    'INVALID_VERIFICATION_CODE',
+    'VERIFICATION_CODE_EXPIRED',
+    'RATE_LIMITED',
+    'PROFILE_PRIVATE',
+    'USER_NOT_FOUND',
+    'INVALID_INPUT',
+    'UNAUTHORIZED',
+    'NETWORK',
+  ] as const;
+
+  it.each(ALL_CODES)('%s 에 해당하는 한국어 메시지가 존재한다', (code) => {
+    expect(USER_ERROR_MESSAGES[code]).toBeTruthy();
+    expect(typeof USER_ERROR_MESSAGES[code]).toBe('string');
   });
 });

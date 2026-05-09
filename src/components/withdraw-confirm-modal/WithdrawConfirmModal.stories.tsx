@@ -27,7 +27,12 @@ const Demo = ({ count = 12 }: { count?: number }) => {
       <Button variant="dangerOutline" onClick={() => setOpen(true)}>
         회원 탈퇴
       </Button>
-      <WithdrawConfirmModal isOpen={open} onClose={() => setOpen(false)} createdQuizCount={count} />
+      <WithdrawConfirmModal
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        createdQuizCount={count}
+        email="user@example.com"
+      />
     </div>
   );
 };

@@ -51,6 +51,20 @@ vi.mock('@/api/user', () => ({
     }
     return 'NETWORK';
   },
+  USER_ERROR_MESSAGES: {
+    NICKNAME_TAKEN: '이미 사용 중인 닉네임입니다.',
+    INVALID_PASSWORD: '비밀번호가 올바르지 않습니다.',
+    INVALID_CURRENT_PASSWORD: '현재 비밀번호가 올바르지 않습니다.',
+    INVALID_WITHDRAWAL_CONFIRMATION: '확인 문구가 일치하지 않습니다.',
+    INVALID_VERIFICATION_CODE: '인증코드가 올바르지 않습니다.',
+    VERIFICATION_CODE_EXPIRED: '인증코드가 만료되었어요. 다시 받아주세요.',
+    RATE_LIMITED: '요청이 너무 잦습니다. 잠시 후 다시 시도해주세요.',
+    PROFILE_PRIVATE: '비공개 프로필입니다.',
+    USER_NOT_FOUND: '사용자를 찾을 수 없습니다.',
+    INVALID_INPUT: '입력값을 다시 확인해주세요.',
+    UNAUTHORIZED: '로그인이 필요합니다.',
+    NETWORK: '이미지 처리에 실패했어요.',
+  },
 }));
 
 // ── axios.put mock ────────────────────────────────────────────────────────────

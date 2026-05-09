@@ -78,6 +78,7 @@ export const buttonStyle =
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    white-space: nowrap;
     transition:
       background-color 0.15s,
       opacity 0.15s;

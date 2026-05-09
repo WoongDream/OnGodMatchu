@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseUserAgent, formatDeviceLabel, DeviceInfo } from './userAgent';
+import { parseUserAgent, formatDeviceLabel, type DeviceInfo } from './userAgent';
 
 // 실제 브라우저 UA 문자열 샘플
 const UA = {
