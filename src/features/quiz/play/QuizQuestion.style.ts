@@ -1,11 +1,11 @@
 import { css, type Theme } from '@emotion/react';
 import { text } from '@/styles/text';
 
-export const wrapperStyle = (theme: Theme) => css`
+export const wrapperStyle = (hideImage: boolean) => (theme: Theme) => css`
   display: flex;
   flex-direction: column;
   gap: ${theme.spacing.lg};
-  padding: ${theme.spacing.xl} 0;
+  padding: ${theme.spacing.xl} 0 ${hideImage ? '0' : theme.spacing.xl};
 `;
 
 export const imageStyle = (theme: Theme) => css`

@@ -5,9 +5,14 @@ import { pageWrapperStyle } from '@/styles/layout';
 import QuizProgress from '@/features/quiz/play/QuizProgress';
 import QuizQuestion from '@/features/quiz/play/QuizQuestion';
 import QuizAnswer from '@/features/quiz/play/QuizAnswer';
+import QuizFeedback from '@/features/quiz/play/QuizFeedback';
 import useQuizDetail from '@/hooks/useQuizDetail';
 import useSubmitAttempt from '@/hooks/useSubmitAttempt';
 import type { AttemptAnswerInput } from '@/types';
+
+type Phase = 'answering' | 'feedback';
+
+const normalize = (value: string) => value.trim().normalize('NFC').toLowerCase();
 
 const QuizPlayPage = memo(() => {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +25,8 @@ const QuizPlayPage = memo(() => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [inputValue, setInputValue] = useState('');
   const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [phase, setPhase] = useState<Phase>('answering');
+  const [lastCorrect, setLastCorrect] = useState(false);
 
   const { submit, isSubmitting, error: submitError } = useSubmitAttempt();
 
@@ -64,42 +71,80 @@ const QuizPlayPage = memo(() => {
   const total = questions.length;
   const isLastQuestion = currentIndex === total - 1;
 
-  const handleNext = () => {
+  const handleSubmitAnswer = () => {
+    if (phase !== 'answering') {
+      return;
+    }
     const trimmed = inputValue.trim();
-    const next = { ...answers, [currentQuestion.id]: trimmed };
-    setAnswers(next);
+    if (trimmed === '') {
+      return;
+    }
+    const correct = normalize(trimmed) === normalize(currentQuestion.answer);
+    setAnswers((prev) => ({ ...prev, [currentQuestion.id]: trimmed }));
+    setLastCorrect(correct);
+    setPhase('feedback');
+  };
 
+  const handleAdvance = () => {
     if (isLastQuestion) {
-      void finalize(next);
+      void finalize({ ...answers, [currentQuestion.id]: inputValue.trim() });
       return;
     }
     setCurrentIndex((prev) => prev + 1);
     setInputValue('');
+    setPhase('answering');
   };
 
-  const canSubmit = inputValue.trim() !== '' && !isSubmitting;
+  const handlePrimary = () => {
+    if (phase === 'answering') {
+      handleSubmitAnswer();
+    } else {
+      handleAdvance();
+    }
+  };
+
+  const buttonLabel = (() => {
+    if (phase === 'answering') {
+      return '제출';
+    }
+    if (isLastQuestion) {
+      return isSubmitting ? '채점 중...' : '결과 보기';
+    }
+    return '다음 문제';
+  })();
+
+  const buttonDisabled =
+    phase === 'answering' ? inputValue.trim() === '' || isSubmitting : isSubmitting;
 
   return (
     <div css={pageWrapperStyle('lg')}>
       <QuizProgress current={currentIndex + 1} total={total} />
-      <QuizQuestion question={currentQuestion} />
+      <QuizQuestion question={currentQuestion} hideImage={phase === 'feedback'} />
+      {phase === 'feedback' && (
+        <QuizFeedback
+          correct={lastCorrect}
+          answer={currentQuestion.answer}
+          answerImageUrl={currentQuestion.answerImageUrl ?? currentQuestion.imageUrl}
+        />
+      )}
       <QuizAnswer
         value={inputValue}
         onChange={setInputValue}
-        onSubmit={handleNext}
-        disabled={isSubmitting}
+        onSubmit={handleSubmitAnswer}
+        disabled={phase === 'feedback' || isSubmitting}
       />
       {submitError && <p role="alert">{submitError}</p>}
       <Button
         fullWidth
-        variant={isLastQuestion ? 'primary' : 'secondary'}
-        onClick={handleNext}
-        disabled={!canSubmit}
+        variant={phase === 'feedback' && isLastQuestion ? 'primary' : 'secondary'}
+        onClick={handlePrimary}
+        disabled={buttonDisabled}
       >
-        {isLastQuestion ? (isSubmitting ? '채점 중...' : '결과 보기') : '다음 문제'}
+        {buttonLabel}
       </Button>
     </div>
   );
 });
 
+QuizPlayPage.displayName = 'QuizPlayPage';
 export default QuizPlayPage;

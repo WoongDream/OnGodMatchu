@@ -23,18 +23,18 @@ export const sendVerificationCode = async (email: string): Promise<void> => {
   await instance.post('/api/auth/send-verification-code', { email });
 };
 
-export const signup = async (
-  email: string,
-  password: string,
-  nickname: string,
-  code: string,
-): Promise<TokenResponse> => {
-  const res = await instance.post<ApiResponse<TokenResponse>>('/api/auth/signup', {
-    email,
-    password,
-    nickname,
-    code,
-  });
+export type SignupPayload = {
+  email: string;
+  password: string;
+  nickname: string;
+  code: string;
+  agreedToTerms: boolean;
+  agreedToPrivacy: boolean;
+  agreedToMarketing?: boolean;
+};
+
+export const signup = async (payload: SignupPayload): Promise<TokenResponse> => {
+  const res = await instance.post<ApiResponse<TokenResponse>>('/api/auth/signup', payload);
   return res.data.data;
 };
 

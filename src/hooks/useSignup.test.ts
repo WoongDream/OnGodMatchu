@@ -42,6 +42,8 @@ const PARAMS = {
   password: 'StrongPass1!extra',
   nickname: 'nick',
   code: '123456',
+  agreedToTerms: true,
+  agreedToPrivacy: true,
 };
 
 describe('useSignup', () => {
@@ -77,17 +79,41 @@ describe('useSignup', () => {
       mockSignup.mockResolvedValue({ accessToken: 'A', refreshToken: 'R' });
     });
 
-    it('signup API 를 (email, password, nickname, code) 순서로 호출한다', async () => {
+    it('signup API 를 단일 객체 인자로 호출한다', async () => {
       const { result } = renderUseSignup();
       await act(async () => {
         await result.current.submit(PARAMS);
       });
-      expect(mockSignup).toHaveBeenCalledWith(
-        PARAMS.email,
-        PARAMS.password,
-        PARAMS.nickname,
-        PARAMS.code,
-      );
+      expect(mockSignup).toHaveBeenCalledWith(PARAMS);
+    });
+
+    it('agreedToMarketing: true 포함 시 객체 그대로 전달한다', async () => {
+      const paramsWithMarketing = { ...PARAMS, agreedToMarketing: true };
+      const { result } = renderUseSignup();
+      await act(async () => {
+        await result.current.submit(paramsWithMarketing);
+      });
+      expect(mockSignup).toHaveBeenCalledWith(paramsWithMarketing);
+    });
+
+    it('agreedToMarketing: false 포함 시 객체 그대로 전달한다', async () => {
+      const paramsWithMarketing = { ...PARAMS, agreedToMarketing: false };
+      const { result } = renderUseSignup();
+      await act(async () => {
+        await result.current.submit(paramsWithMarketing);
+      });
+      expect(mockSignup).toHaveBeenCalledWith(paramsWithMarketing);
+    });
+
+    it('agreedToMarketing 생략 시에도 signup 이 정상 호출된다', async () => {
+      const { result } = renderUseSignup();
+      await act(async () => {
+        await result.current.submit(PARAMS);
+      });
+      // PARAMS 에 agreedToMarketing 없음 — 선택 필드 생략 케이스
+      expect(mockSignup).toHaveBeenCalledTimes(1);
+      const callArg = mockSignup.mock.calls[0][0];
+      expect(callArg).not.toHaveProperty('agreedToMarketing');
     });
 
     it('signup 응답 토큰을 setAuthSession 으로 전달한다', async () => {
@@ -179,6 +205,11 @@ describe('useSignup', () => {
         err: makeAxiosError(400),
         expectedCode: 'POLICY',
       },
+      {
+        name: 'TERMS_AGREEMENT_REQUIRED via code',
+        err: makeAxiosError(400, { error: { code: 'TERMS_AGREEMENT_REQUIRED' } }),
+        expectedCode: 'TERMS_AGREEMENT_REQUIRED',
+      },
     ];
 
     cases.forEach(({ name, err, expectedCode, expectedRetryAfter }) => {
@@ -222,6 +253,42 @@ describe('useSignup', () => {
         returned = await result.current.submit(PARAMS);
       });
       expect(returned).toBe(false);
+    });
+  });
+
+  describe('TERMS_AGREEMENT_REQUIRED 에러', () => {
+    it('errorCode 를 TERMS_AGREEMENT_REQUIRED 로 세팅한다', async () => {
+      mockSignup.mockRejectedValueOnce(
+        makeAxiosError(400, { error: { code: 'TERMS_AGREEMENT_REQUIRED' } }),
+      );
+      const { result } = renderUseSignup();
+      await act(async () => {
+        await result.current.submit(PARAMS);
+      });
+      expect(result.current.errorCode).toBe('TERMS_AGREEMENT_REQUIRED');
+    });
+
+    it('error 메시지를 "필수 약관에 동의해야 합니다." 로 세팅한다', async () => {
+      mockSignup.mockRejectedValueOnce(
+        makeAxiosError(400, { error: { code: 'TERMS_AGREEMENT_REQUIRED' } }),
+      );
+      const { result } = renderUseSignup();
+      await act(async () => {
+        await result.current.submit(PARAMS);
+      });
+      expect(result.current.error).toBe('필수 약관에 동의해야 합니다.');
+    });
+
+    it('setAuthSession 과 navigate 가 호출되지 않는다', async () => {
+      mockSignup.mockRejectedValueOnce(
+        makeAxiosError(400, { error: { code: 'TERMS_AGREEMENT_REQUIRED' } }),
+      );
+      const { result } = renderUseSignup();
+      await act(async () => {
+        await result.current.submit(PARAMS);
+      });
+      expect(mockSetAuthSession).not.toHaveBeenCalled();
+      expect(mockNavigate).not.toHaveBeenCalled();
     });
   });
 

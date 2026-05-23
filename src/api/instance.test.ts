@@ -29,7 +29,7 @@ describe('axios instance', () => {
 
     // Mock window.location to prevent jsdom navigation errors
     Object.defineProperty(window, 'location', {
-      value: { href: '' },
+      value: { href: '', pathname: '/' },
       writable: true,
     });
 
@@ -578,6 +578,207 @@ describe('axios instance', () => {
       const result = responseErrorHandler(error);
 
       await expect(result).rejects.toEqual(error);
+    });
+  });
+
+  describe('public auth endpoints (401 without refresh)', () => {
+    const publicEndpoints = [
+      '/api/auth/login',
+      '/api/auth/signup',
+      '/api/auth/refresh',
+      '/api/auth/send-verification-code',
+      '/api/auth/check-nickname',
+    ];
+
+    publicEndpoints.forEach((endpoint) => {
+      it(`${endpoint} 의 401 은 토큰 제거·redirect 없이 그대로 reject 한다`, async () => {
+        localStorageMock['refreshToken'] = 'some-refresh';
+        localStorageMock['accessToken'] = 'some-access';
+        let responseErrorHandler: any;
+
+        mockAxios = vi.mocked(axios);
+        mockAxios.create.mockReturnValue({
+          interceptors: {
+            request: { use: vi.fn() },
+            response: {
+              use: vi.fn((_s, errorHandler) => {
+                responseErrorHandler = errorHandler;
+              }),
+            },
+          },
+        } as any);
+        // refresh 시도 시 axios.post 가 호출되면 안 됨 → spy
+        mockAxios.post = vi.fn();
+
+        await import('./instance');
+
+        const error = {
+          config: { url: endpoint, _retry: false, headers: {} },
+          response: { status: 401, data: { error: 'INVALID_CREDENTIALS' } },
+        };
+
+        await expect(responseErrorHandler(error)).rejects.toBe(error);
+
+        // refresh API 미호출
+        expect(mockAxios.post).not.toHaveBeenCalled();
+        // 토큰 제거 안 함 (로그인 실패 시 기존 세션 보존)
+        expect(localStorageMock['accessToken']).toBe('some-access');
+        expect(localStorageMock['refreshToken']).toBe('some-refresh');
+        // location 변경 안 함
+        expect(window.location.href).toBe('');
+      });
+    });
+  });
+
+  describe('403 TERMS_AGREEMENT_OUTDATED 가드', () => {
+    it('status 403 + TERMS_AGREEMENT_OUTDATED 코드 + pathname이 / 이면 /terms-agreement 로 이동하고 error reject 한다', async () => {
+      let responseErrorHandler: any;
+      mockAxios = vi.mocked(axios);
+      mockAxios.create.mockReturnValue({
+        interceptors: {
+          request: { use: vi.fn() },
+          response: {
+            use: vi.fn((_s, errorHandler) => {
+              responseErrorHandler = errorHandler;
+            }),
+          },
+        },
+      } as any);
+
+      window.location = { href: '', pathname: '/' } as any;
+
+      await import('./instance');
+
+      const error = {
+        response: {
+          status: 403,
+          data: { error: { code: 'TERMS_AGREEMENT_OUTDATED' } },
+        },
+      };
+
+      await expect(responseErrorHandler(error)).rejects.toBe(error);
+      expect(window.location.href).toBe('/terms-agreement');
+    });
+
+    it('status 403 + TERMS_AGREEMENT_OUTDATED 이고 pathname이 /terms-agreement 이면 location 변경 없이 error reject 한다', async () => {
+      let responseErrorHandler: any;
+      mockAxios = vi.mocked(axios);
+      mockAxios.create.mockReturnValue({
+        interceptors: {
+          request: { use: vi.fn() },
+          response: {
+            use: vi.fn((_s, errorHandler) => {
+              responseErrorHandler = errorHandler;
+            }),
+          },
+        },
+      } as any);
+
+      window.location = { href: '', pathname: '/terms-agreement' } as any;
+
+      await import('./instance');
+
+      const error = {
+        response: {
+          status: 403,
+          data: { error: { code: 'TERMS_AGREEMENT_OUTDATED' } },
+        },
+      };
+
+      await expect(responseErrorHandler(error)).rejects.toBe(error);
+      // href는 변경되지 않아야 함 (무한 redirect 방지)
+      expect(window.location.href).toBe('');
+    });
+
+    it('status 403 + TERMS_AGREEMENT_OUTDATED 이고 pathname이 /terms-agreement/foo 이면 location 변경 없이 error reject 한다 (startsWith 체크)', async () => {
+      let responseErrorHandler: any;
+      mockAxios = vi.mocked(axios);
+      mockAxios.create.mockReturnValue({
+        interceptors: {
+          request: { use: vi.fn() },
+          response: {
+            use: vi.fn((_s, errorHandler) => {
+              responseErrorHandler = errorHandler;
+            }),
+          },
+        },
+      } as any);
+
+      window.location = { href: '', pathname: '/terms-agreement/foo' } as any;
+
+      await import('./instance');
+
+      const error = {
+        response: {
+          status: 403,
+          data: { error: { code: 'TERMS_AGREEMENT_OUTDATED' } },
+        },
+      };
+
+      await expect(responseErrorHandler(error)).rejects.toBe(error);
+      expect(window.location.href).toBe('');
+    });
+
+    it('status 403 이지만 다른 code 이면 location 변경 없이 error reject 한다', async () => {
+      let responseErrorHandler: any;
+      mockAxios = vi.mocked(axios);
+      mockAxios.create.mockReturnValue({
+        interceptors: {
+          request: { use: vi.fn() },
+          response: {
+            use: vi.fn((_s, errorHandler) => {
+              responseErrorHandler = errorHandler;
+            }),
+          },
+        },
+      } as any);
+
+      window.location = { href: '', pathname: '/' } as any;
+
+      await import('./instance');
+
+      const error = {
+        response: {
+          status: 403,
+          data: { error: { code: 'FORBIDDEN' } },
+        },
+      };
+
+      await expect(responseErrorHandler(error)).rejects.toBe(error);
+      expect(window.location.href).toBe('');
+    });
+
+    it('401 케이스는 기존 동작대로 토큰 제거 후 error reject 한다 (회귀)', async () => {
+      localStorageMock['accessToken'] = 'expired-token';
+      let responseErrorHandler: any;
+
+      mockAxios = vi.mocked(axios);
+      mockAxios.create.mockReturnValue({
+        interceptors: {
+          request: { use: vi.fn() },
+          response: {
+            use: vi.fn((_s, errorHandler) => {
+              responseErrorHandler = errorHandler;
+            }),
+          },
+        },
+      } as any);
+
+      window.location = { href: '', pathname: '/' } as any;
+
+      await import('./instance');
+
+      const error = {
+        config: { _retry: false, headers: {}, url: '/api/protected' },
+        response: {
+          status: 401,
+          data: { error: 'Unauthorized' },
+        },
+      };
+
+      await expect(responseErrorHandler(error)).rejects.toBe(error);
+      // 401 처리 시 href가 /terms-agreement 로 변경되지 않아야 함
+      expect(window.location.href).not.toBe('/terms-agreement');
     });
   });
 

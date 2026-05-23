@@ -12,8 +12,19 @@ vi.mock('@/features/quiz/play/QuizQuestion', () => ({
 }));
 
 vi.mock('@/features/quiz/play/QuizFeedback', () => ({
-  default: ({ correct, answer }: { correct: boolean; answer: string }) => (
-    <div data-testid={`quiz-feedback-${correct ? 'correct' : 'wrong'}`}>
+  default: ({
+    correct,
+    answer,
+    answerImageUrl,
+  }: {
+    correct: boolean;
+    answer: string;
+    answerImageUrl?: string | null;
+  }) => (
+    <div
+      data-testid={`quiz-feedback-${correct ? 'correct' : 'wrong'}`}
+      data-answer-image-url={answerImageUrl ?? ''}
+    >
       {correct ? '정답이에요!' : `오답이에요 - ${answer}`}
     </div>
   ),
@@ -249,6 +260,34 @@ describe('ResultDetailList', () => {
       renderWithTheme(<ResultDetailList questions={questions} results={results} />);
 
       expect(screen.getByTestId('quiz-feedback-correct')).toBeInTheDocument();
+    });
+
+    it('correctAnswerImageUrl 이 있으면 QuizFeedback 에 answerImageUrl prop 으로 전달된다', () => {
+      const questions = [makeQuestion(1, '문제')];
+      const results: AttemptResultItem[] = [
+        { ...makeResult(1, '답', false), correctAnswerImageUrl: 'https://example.com/answer.jpg' },
+      ];
+
+      renderWithTheme(<ResultDetailList questions={questions} results={results} />);
+
+      expect(screen.getByTestId('quiz-feedback-wrong')).toHaveAttribute(
+        'data-answer-image-url',
+        'https://example.com/answer.jpg',
+      );
+    });
+
+    it('correctAnswerImageUrl 이 null 이면 QuizFeedback 에 answerImageUrl 이 빈 문자열로 노출된다', () => {
+      const questions = [makeQuestion(1, '문제')];
+      const results: AttemptResultItem[] = [
+        { ...makeResult(1, '답', false), correctAnswerImageUrl: null },
+      ];
+
+      renderWithTheme(<ResultDetailList questions={questions} results={results} />);
+
+      expect(screen.getByTestId('quiz-feedback-wrong')).toHaveAttribute(
+        'data-answer-image-url',
+        '',
+      );
     });
   });
 

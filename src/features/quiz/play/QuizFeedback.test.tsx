@@ -279,4 +279,47 @@ describe('QuizFeedback', () => {
       expect(screen.getByText('정답: 서울 🎓')).toBeInTheDocument();
     });
   });
+
+  describe('answerImageUrl prop', () => {
+    it('오답 + answerImageUrl 있음 → 이미지를 노출하고 alt="정답 이미지" 를 갖는다', () => {
+      renderWithTheme(
+        <QuizFeedback
+          correct={false}
+          answer="정답"
+          answerImageUrl="https://example.com/answer.jpg"
+        />,
+      );
+      const img = screen.getByAltText('정답 이미지');
+      expect(img).toBeInTheDocument();
+      expect(img).toHaveAttribute('src', 'https://example.com/answer.jpg');
+    });
+
+    it('오답 + answerImageUrl=null → 이미지를 노출하지 않는다', () => {
+      renderWithTheme(<QuizFeedback correct={false} answer="정답" answerImageUrl={null} />);
+      expect(screen.queryByAltText('정답 이미지')).not.toBeInTheDocument();
+    });
+
+    it('오답 + answerImageUrl 미전달(undefined) → 이미지를 노출하지 않는다', () => {
+      renderWithTheme(<QuizFeedback correct={false} answer="정답" />);
+      expect(screen.queryByAltText('정답 이미지')).not.toBeInTheDocument();
+    });
+
+    it('정답 + answerImageUrl 있음 → 이미지를 노출한다 (정답·오답 모두 표시)', () => {
+      renderWithTheme(
+        <QuizFeedback
+          correct={true}
+          answer="정답"
+          answerImageUrl="https://example.com/answer.jpg"
+        />,
+      );
+      const img = screen.getByAltText('정답 이미지');
+      expect(img).toBeInTheDocument();
+      expect(img).toHaveAttribute('src', 'https://example.com/answer.jpg');
+    });
+
+    it('오답 + answerImageUrl 빈 문자열 → 이미지를 노출하지 않는다', () => {
+      renderWithTheme(<QuizFeedback correct={false} answer="정답" answerImageUrl="" />);
+      expect(screen.queryByAltText('정답 이미지')).not.toBeInTheDocument();
+    });
+  });
 });
