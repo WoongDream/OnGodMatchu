@@ -13,6 +13,7 @@ export type SignupErrorCode =
   | 'INVALID_EMAIL_FORMAT'
   | 'RATE_LIMITED'
   | 'NICKNAME_TAKEN'
+  | 'TERMS_AGREEMENT_REQUIRED'
   | 'NETWORK'
   | null;
 
@@ -25,6 +26,7 @@ const ERROR_MESSAGES: Record<Exclude<SignupErrorCode, null>, string> = {
   INVALID_EMAIL_FORMAT: '이메일 형식이 올바르지 않습니다.',
   RATE_LIMITED: '잠시 후 다시 시도해주세요.',
   NICKNAME_TAKEN: '이미 사용 중인 닉네임입니다.',
+  TERMS_AGREEMENT_REQUIRED: '필수 약관에 동의해야 합니다.',
   NETWORK: '회원가입 요청에 실패했습니다.',
 };
 
@@ -59,6 +61,8 @@ const resolveSignupError = (err: unknown): Resolved => {
           return 'RATE_LIMITED';
         case 'NICKNAME_ALREADY_EXISTS':
           return 'NICKNAME_TAKEN';
+        case 'TERMS_AGREEMENT_REQUIRED':
+          return 'TERMS_AGREEMENT_REQUIRED';
         default:
           return undefined;
       }
@@ -92,6 +96,9 @@ type SignupParams = {
   password: string;
   nickname: string;
   code: string;
+  agreedToTerms: boolean;
+  agreedToPrivacy: boolean;
+  agreedToMarketing?: boolean;
 };
 
 type UseSignupReturn = {
@@ -123,7 +130,7 @@ const useSignup = (): UseSignupReturn => {
       setErrorCode(null);
       setRetryAfter(0);
       try {
-        const tokens = await signup(params.email, params.password, params.nickname, params.code);
+        const tokens = await signup(params);
         await setAuthSession(tokens);
         navigate('/');
         return true;

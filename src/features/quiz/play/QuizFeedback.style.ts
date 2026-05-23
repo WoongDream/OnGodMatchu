@@ -22,3 +22,11 @@ export const answerStyle = (theme: Theme) => css`
   ${text({ size: 'sm' })({ theme })}
   color: ${theme.colors.fg.secondary};
 `;
+
+export const answerImageStyle = (theme: Theme) => css`
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: ${theme.borderRadius.md};
+  background-color: ${theme.colors.bg.secondary};
+`;

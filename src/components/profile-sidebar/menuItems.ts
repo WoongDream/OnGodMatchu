@@ -1,4 +1,4 @@
-export type MenuItemKey = 'info' | 'quizzes-made' | 'quizzes-played' | 'settings' | 'account';
+export type MenuItemKey = 'info' | 'quizzes-made' | 'quizzes-played' | 'account';
 
 export type MenuGroupId = 'quiz';
 
@@ -39,7 +39,6 @@ export const PROFILE_MENU_ITEMS: MenuItem[] = [
     countKey: 'playCount',
     groupId: 'quiz',
   },
-  { key: 'settings', label: '환경설정', to: 'settings', myOnly: true },
   { key: 'account', label: '계정', to: 'account', myOnly: true },
 ];
 

@@ -46,7 +46,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        provider: 'local',
+        provider: 'LOCAL',
         isProfilePublic: true,
         createdAt: '2026-01-01T00:00:00.000Z',
       };
@@ -63,7 +63,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'user1@example.com',
         nickname: 'user1',
-        provider: 'local',
+        provider: 'LOCAL',
         isProfilePublic: true,
         createdAt: '2026-01-01T00:00:00.000Z',
       };
@@ -72,7 +72,7 @@ describe('useAuthStore', () => {
         id: 2,
         email: 'user2@example.com',
         nickname: 'user2',
-        provider: 'local',
+        provider: 'LOCAL',
         isProfilePublic: true,
         createdAt: '2026-01-01T00:00:00.000Z',
       };
@@ -90,7 +90,7 @@ describe('useAuthStore', () => {
         id: 42,
         email: 'complex@example.com',
         nickname: 'complexuser',
-        provider: 'local',
+        provider: 'LOCAL',
         isProfilePublic: true,
         createdAt: '2026-01-01T00:00:00.000Z',
       };
@@ -101,7 +101,7 @@ describe('useAuthStore', () => {
       expect(user?.id).toBe(42);
       expect(user?.email).toBe('complex@example.com');
       expect(user?.nickname).toBe('complexuser');
-      expect(user?.provider).toBe('local');
+      expect(user?.provider).toBe('LOCAL');
     });
 
     it('triggers store subscribers on setUser', () => {
@@ -112,7 +112,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        provider: 'local',
+        provider: 'LOCAL',
         isProfilePublic: true,
         createdAt: '2026-01-01T00:00:00.000Z',
       };
@@ -129,7 +129,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        provider: 'local',
+        provider: 'LOCAL',
         isProfilePublic: true,
         createdAt: '2026-01-01T00:00:00.000Z',
       };
@@ -175,7 +175,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        provider: 'local',
+        provider: 'LOCAL',
         isProfilePublic: true,
         createdAt: '2026-01-01T00:00:00.000Z',
       };
@@ -202,7 +202,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        provider: 'local',
+        provider: 'LOCAL',
         isProfilePublic: true,
         createdAt: '2026-01-01T00:00:00.000Z',
       };
@@ -216,7 +216,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        provider: 'local',
+        provider: 'LOCAL',
         isProfilePublic: true,
         createdAt: '2026-01-01T00:00:00.000Z',
       };
@@ -231,7 +231,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        provider: 'local',
+        provider: 'LOCAL',
         isProfilePublic: true,
         createdAt: '2026-01-01T00:00:00.000Z',
       };
@@ -250,7 +250,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        provider: 'local',
+        provider: 'LOCAL',
         isProfilePublic: true,
         createdAt: '2026-01-01T00:00:00.000Z',
       };
@@ -285,7 +285,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        provider: 'local',
+        provider: 'LOCAL',
         isProfilePublic: true,
         createdAt: '2026-01-01T00:00:00.000Z',
       };
@@ -304,7 +304,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        provider: 'local',
+        provider: 'LOCAL',
         isProfilePublic: true,
         createdAt: '2026-01-01T00:00:00.000Z',
       };
@@ -325,7 +325,7 @@ describe('useAuthStore', () => {
         id: i,
         email: `user${i}@example.com`,
         nickname: `user${i}`,
-        provider: 'local',
+        provider: 'LOCAL',
         isProfilePublic: true,
         createdAt: '2026-01-01T00:00:00.000Z',
       }));
@@ -341,7 +341,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'test@example.com',
         nickname: 'testuser',
-        provider: 'local',
+        provider: 'LOCAL',
         isProfilePublic: true,
         createdAt: '2026-01-01T00:00:00.000Z',
       };
@@ -360,7 +360,7 @@ describe('useAuthStore', () => {
         id: 1,
         email: 'user1@example.com',
         nickname: 'user1',
-        provider: 'local',
+        provider: 'LOCAL',
         isProfilePublic: true,
         createdAt: '2026-01-01T00:00:00.000Z',
       };
@@ -369,7 +369,7 @@ describe('useAuthStore', () => {
         id: 2,
         email: 'user2@example.com',
         nickname: 'user2',
-        provider: 'local',
+        provider: 'LOCAL',
         isProfilePublic: true,
         createdAt: '2026-01-01T00:00:00.000Z',
       };

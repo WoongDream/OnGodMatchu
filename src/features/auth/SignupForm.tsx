@@ -4,6 +4,9 @@ import Input from '@/components/input';
 import Button from '@/components/button';
 import PasswordInput from '@/components/password-input';
 import type { PasswordRuleStatus, PasswordStrength } from '@/components/password-input';
+import TermsAgreementCheckboxes, {
+  type TermsAgreementState,
+} from '@/components/terms-agreement-checkboxes';
 import { canSubmitByStrength, isLengthValid } from '@/lib/password';
 import SocialLoginButtons from './SocialLoginButtons';
 import {
@@ -47,6 +50,11 @@ const SignupForm = memo(() => {
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
   const [strength, setStrength] = useState<PasswordStrength | null>(null);
+  const [agreements, setAgreements] = useState<TermsAgreementState>({
+    agreedToTerms: false,
+    agreedToPrivacy: false,
+    agreedToMarketing: false,
+  });
 
   const verification = useVerificationCode();
   const signup = useSignup();
@@ -111,6 +119,8 @@ const SignupForm = memo(() => {
     !isNicknameRaceConflict &&
     isLengthValid(password) &&
     canSubmitByStrength(strength?.score ?? 0) &&
+    agreements.agreedToTerms &&
+    agreements.agreedToPrivacy &&
     signup.errorCode !== 'BREACH';
 
   const emailErrorCode =
@@ -169,7 +179,15 @@ const SignupForm = memo(() => {
     if (!canSubmit || signup.isSubmitting) {
       return;
     }
-    await signup.submit({ email: email.trim(), password, nickname, code: code.trim() });
+    await signup.submit({
+      email: email.trim(),
+      password,
+      nickname,
+      code: code.trim(),
+      agreedToTerms: agreements.agreedToTerms,
+      agreedToPrivacy: agreements.agreedToPrivacy,
+      agreedToMarketing: agreements.agreedToMarketing,
+    });
   };
 
   return (
@@ -268,6 +286,14 @@ const SignupForm = memo(() => {
           <Input label="닉네임" value={nickname} onChange={setNickname} placeholder="닉네임 입력" />
           {effectiveNicknameMessage && (
             <p css={nicknameStatusTextStyle(nicknameTone)}>{effectiveNicknameMessage}</p>
+          )}
+          <TermsAgreementCheckboxes
+            value={agreements}
+            onChange={setAgreements}
+            disabled={signup.isSubmitting}
+          />
+          {signup.errorCode === 'TERMS_AGREEMENT_REQUIRED' && (
+            <p css={errorTextStyle}>{signup.error}</p>
           )}
           <Button fullWidth type="submit" disabled={!canSubmit || signup.isSubmitting}>
             {signup.isSubmitting ? '가입 중...' : '가입하기'}

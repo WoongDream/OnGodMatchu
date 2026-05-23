@@ -24,3 +24,21 @@ Why: Vitest imports from multiple sources cause circular dependencies and declar
 **How to apply:**
 - Always: `import { renderWithTheme, screen } from '@/test/renderWithTheme'`
 - Never: `import { renderWithTheme } from '@/components/...` or `import { renderWithTheme, CATEGORIES } from '@/types/quiz'`
+
+Zustand store selector mock (authStore pattern):
+- `vi.mock('@/store/authStore', () => ({ default: (selector) => selector({ logout: mockLogout }) }))`
+- This works when the component calls `useAuthStore((state) => state.logout)` as a selector
+- The mock directly calls the selector function inline — no `create` or `getState` needed
+
+Child modal mock pattern (ProfileAccount style):
+- Mock child modals as data-testid elements controlled by `isOpen` prop
+- `vi.mock('@/components/password-change-modal', () => ({ default: ({ isOpen }) => isOpen ? createElement('div', { 'data-testid': 'password-change-modal' }) : null }))`
+- Test open state by checking `getByTestId('...')` after clicking the trigger button
+
+useOutletContext mock with profile overrides:
+- Define `mockUseOutletContext` with `vi.hoisted`, use `mockUseOutletContext.mockReturnValue({ profile, isMe })`
+- Use `makeUser(overrides.profile)` helper to build fixture from partial overrides
+
+lib/device mock:
+- `vi.mock('@/lib/device', () => ({ parseUserAgent: vi.fn().mockReturnValue({...}), formatDeviceLabel: vi.fn().mockReturnValue('Chrome · macOS') }))`
+- navigator.userAgent does not need to be mocked separately when device lib is mocked at module level
