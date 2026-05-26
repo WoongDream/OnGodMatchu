@@ -79,8 +79,9 @@ export type AgreeTermsPayload = {
   agreedToMarketing?: boolean;
 };
 
-export const agreeTerms = async (payload: AgreeTermsPayload = {}): Promise<void> => {
-  await instance.post('/api/users/me/terms-agreement', payload);
+export const agreeTerms = async (payload: AgreeTermsPayload = {}): Promise<User> => {
+  const res = await instance.post<ApiResponse<User>>('/api/users/me/terms-agreement', payload);
+  return res.data.data;
 };
 
 export const withdrawAccount = async (payload: WithdrawAccountPayload): Promise<void> => {

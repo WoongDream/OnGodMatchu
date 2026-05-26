@@ -9,8 +9,8 @@ import useOAuthCallback from '@/hooks/useOAuthCallback';
 // Hoisted mock variables — must be declared before vi.mock() calls
 // -----------------------------------------------------------------------
 const mockNavigate = vi.hoisted(() => vi.fn());
-const mockGetMe = vi.hoisted(() => vi.fn());
-const mockSetUser = vi.hoisted(() => vi.fn());
+const mockSetAuthSession = vi.hoisted(() => vi.fn());
+const mockClearAuthSession = vi.hoisted(() => vi.fn());
 
 // -----------------------------------------------------------------------
 // Module mocks
@@ -23,23 +23,15 @@ vi.mock('react-router-dom', async (importOriginal) => {
   };
 });
 
-vi.mock('@/api/auth', () => ({
-  getMe: mockGetMe,
+vi.mock('@/lib/auth', () => ({
+  setAuthSession: mockSetAuthSession,
+  clearAuthSession: mockClearAuthSession,
 }));
 
-vi.mock('@/store/authStore', () => {
-  const store = { setUser: mockSetUser };
-  const useAuthStore = ((selector: (s: typeof store) => unknown) => selector(store)) as ((
-    selector: (s: typeof store) => unknown,
-  ) => unknown) & { getState: () => typeof store };
-  useAuthStore.getState = () => store;
-  return { default: useAuthStore };
-});
-
 // -----------------------------------------------------------------------
-// Helpers
+// Fixtures
 // -----------------------------------------------------------------------
-const TEST_USER: User = {
+const BASE_USER: User = {
   id: 1,
   email: 'test@example.com',
   nickname: 'testuser',
@@ -48,6 +40,18 @@ const TEST_USER: User = {
   createdAt: '2026-01-01T00:00:00.000Z',
 };
 
+/** needsTermsAgreement: false — 바로 홈으로 */
+const USER_NO_TERMS: User = { ...BASE_USER, needsTermsAgreement: false };
+
+/** needsTermsAgreement: true — 약관 동의 페이지로 */
+const USER_NEEDS_TERMS: User = { ...BASE_USER, needsTermsAgreement: true };
+
+/** needsTermsAgreement 필드 없음(undefined) — false 와 동일하게 홈으로 */
+const USER_MISSING_TERMS: User = { ...BASE_USER };
+
+// -----------------------------------------------------------------------
+// Helpers
+// -----------------------------------------------------------------------
 /**
  * Wrap renderHook with MemoryRouter so useSearchParams / useNavigate work.
  * initialUrl controls which query string the hook sees.
@@ -60,10 +64,9 @@ function renderOAuthHook(initialUrl: string) {
 
 /**
  * Flush all pending promise microtasks.
- * Needed after mockGetMe resolves/rejects so catch/then handlers run.
+ * Needed after setAuthSession resolves/rejects so then/catch handlers run.
  */
 async function flushPromises() {
-  // Two rounds to handle chained promises
   await act(async () => {
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
   });
@@ -79,7 +82,7 @@ describe('useOAuthCallback', () => {
   });
 
   // =====================================================================
-  // Case A — missing tokens
+  // 케이스 A — 토큰 누락
   // =====================================================================
   describe('케이스 A: 토큰 누락', () => {
     it('accessToken 이 없으면 error 를 "인증 정보가 누락되었습니다." 로 세팅한다', async () => {
@@ -144,78 +147,43 @@ describe('useOAuthCallback', () => {
       }
     });
 
-    it('getMe 를 호출하지 않는다', async () => {
+    it('setAuthSession 을 호출하지 않는다', async () => {
       renderOAuthHook('/oauth2/callback?accessToken=a');
 
       await act(async () => {});
 
-      expect(mockGetMe).not.toHaveBeenCalled();
-    });
-
-    it('localStorage 에 아무 것도 저장하지 않는다', async () => {
-      const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
-      renderOAuthHook('/oauth2/callback');
-
-      await act(async () => {});
-
-      expect(setItemSpy).not.toHaveBeenCalled();
-      setItemSpy.mockRestore();
+      expect(mockSetAuthSession).not.toHaveBeenCalled();
     });
   });
 
   // =====================================================================
-  // Case B — 정상 흐름
+  // 케이스 B — 정상 흐름 (needsTermsAgreement: false)
   // =====================================================================
-  describe('케이스 B: 두 토큰 모두 존재 (정상)', () => {
+  describe('케이스 B: 토큰 존재 — needsTermsAgreement: false → / 로 이동', () => {
     beforeEach(() => {
-      mockGetMe.mockResolvedValue(TEST_USER);
+      mockSetAuthSession.mockResolvedValue(USER_NO_TERMS);
     });
 
-    it('localStorage 에 accessToken 을 저장한다', async () => {
+    it('setAuthSession 을 accessToken, refreshToken 과 함께 호출한다', async () => {
       renderOAuthHook('/oauth2/callback?accessToken=myAccess&refreshToken=myRefresh');
 
       await flushPromises();
 
-      expect(localStorage.getItem('accessToken')).toBe('myAccess');
+      expect(mockSetAuthSession).toHaveBeenCalledWith({
+        accessToken: 'myAccess',
+        refreshToken: 'myRefresh',
+      });
     });
 
-    it('localStorage 에 refreshToken 을 저장한다', async () => {
-      renderOAuthHook('/oauth2/callback?accessToken=myAccess&refreshToken=myRefresh');
-
-      await flushPromises();
-
-      expect(localStorage.getItem('refreshToken')).toBe('myRefresh');
-    });
-
-    it('localStorage.setItem 을 accessToken, refreshToken 키로 각각 저장한다', async () => {
-      // happy-dom 에서 Storage.prototype spy 가 hook 실행 이전을 인터셉트하지 못하는 경우가 있으므로
-      // 실제 저장 결과를 통해 setItem 호출을 검증한다
-      renderOAuthHook('/oauth2/callback?accessToken=myAccess&refreshToken=myRefresh');
-
-      await flushPromises();
-
-      // setItem('accessToken', ...) 과 setItem('refreshToken', ...) 이 호출된 결과 검증
-      expect(localStorage.getItem('accessToken')).toBe('myAccess');
-      expect(localStorage.getItem('refreshToken')).toBe('myRefresh');
-    });
-
-    it('getMe 를 호출한다', async () => {
+    it('setAuthSession 을 한 번만 호출한다', async () => {
       renderOAuthHook('/oauth2/callback?accessToken=a&refreshToken=b');
 
       await flushPromises();
 
-      expect(mockGetMe).toHaveBeenCalledTimes(1);
+      expect(mockSetAuthSession).toHaveBeenCalledTimes(1);
     });
 
-    it('getMe 성공 시 setUser 를 반환된 user 로 호출한다', async () => {
-      renderOAuthHook('/oauth2/callback?accessToken=a&refreshToken=b');
-
-      await flushPromises();
-
-      expect(mockSetUser).toHaveBeenCalledWith(TEST_USER);
-    });
-
-    it('getMe 성공 시 / 로 replace navigate 한다', async () => {
+    it('/ 로 replace navigate 한다', async () => {
       renderOAuthHook('/oauth2/callback?accessToken=a&refreshToken=b');
 
       await flushPromises();
@@ -230,50 +198,96 @@ describe('useOAuthCallback', () => {
 
       expect(result.current.error).toBeNull();
     });
+
+    it('clearAuthSession 을 호출하지 않는다', async () => {
+      renderOAuthHook('/oauth2/callback?accessToken=a&refreshToken=b');
+
+      await flushPromises();
+
+      expect(mockClearAuthSession).not.toHaveBeenCalled();
+    });
   });
 
   // =====================================================================
-  // Case C — getMe 실패
+  // 케이스 C — needsTermsAgreement: true → /terms-agreement 로 이동
   // =====================================================================
-  describe('케이스 C: getMe 실패', () => {
+  describe('케이스 C: 토큰 존재 — needsTermsAgreement: true → /terms-agreement 로 이동', () => {
     beforeEach(() => {
-      mockGetMe.mockRejectedValue(new Error('Network error'));
+      mockSetAuthSession.mockResolvedValue(USER_NEEDS_TERMS);
     });
 
-    it('localStorage 에서 accessToken 을 제거한다', async () => {
-      localStorage.setItem('accessToken', 'myAccess');
-      localStorage.setItem('refreshToken', 'myRefresh');
-
-      renderOAuthHook('/oauth2/callback?accessToken=myAccess&refreshToken=myRefresh');
+    it('/terms-agreement 로 replace navigate 한다', async () => {
+      renderOAuthHook('/oauth2/callback?accessToken=a&refreshToken=b');
 
       await flushPromises();
 
-      expect(localStorage.getItem('accessToken')).toBeNull();
+      expect(mockNavigate).toHaveBeenCalledWith('/terms-agreement', { replace: true });
     });
 
-    it('localStorage 에서 refreshToken 을 제거한다', async () => {
-      localStorage.setItem('accessToken', 'myAccess');
-      localStorage.setItem('refreshToken', 'myRefresh');
-
-      renderOAuthHook('/oauth2/callback?accessToken=myAccess&refreshToken=myRefresh');
+    it('/ 로는 navigate 하지 않는다', async () => {
+      renderOAuthHook('/oauth2/callback?accessToken=a&refreshToken=b');
 
       await flushPromises();
 
-      expect(localStorage.getItem('refreshToken')).toBeNull();
+      expect(mockNavigate).not.toHaveBeenCalledWith('/', { replace: true });
     });
 
-    it('localStorage.removeItem 을 accessToken 과 refreshToken 키로 각각 제거한다', async () => {
-      // 사전에 토큰 세팅
-      localStorage.setItem('accessToken', 'myAccess');
-      localStorage.setItem('refreshToken', 'myRefresh');
-
-      renderOAuthHook('/oauth2/callback?accessToken=myAccess&refreshToken=myRefresh');
+    it('error state 가 null 로 유지된다', async () => {
+      const { result } = renderOAuthHook('/oauth2/callback?accessToken=a&refreshToken=b');
 
       await flushPromises();
 
-      // removeItem 결과로 실제 삭제됐는지 검증
-      expect(localStorage.getItem('accessToken')).toBeNull();
-      expect(localStorage.getItem('refreshToken')).toBeNull();
+      expect(result.current.error).toBeNull();
+    });
+
+    it('clearAuthSession 을 호출하지 않는다', async () => {
+      renderOAuthHook('/oauth2/callback?accessToken=a&refreshToken=b');
+
+      await flushPromises();
+
+      expect(mockClearAuthSession).not.toHaveBeenCalled();
+    });
+  });
+
+  // =====================================================================
+  // 케이스 D — needsTermsAgreement 필드 없음(undefined) → / 로 분기
+  // =====================================================================
+  describe('케이스 D: needsTermsAgreement undefined/missing → / 로 이동 (false 동일)', () => {
+    beforeEach(() => {
+      mockSetAuthSession.mockResolvedValue(USER_MISSING_TERMS);
+    });
+
+    it('needsTermsAgreement 가 undefined 이면 / 로 replace navigate 한다', async () => {
+      renderOAuthHook('/oauth2/callback?accessToken=a&refreshToken=b');
+
+      await flushPromises();
+
+      expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
+    });
+
+    it('/terms-agreement 로는 navigate 하지 않는다', async () => {
+      renderOAuthHook('/oauth2/callback?accessToken=a&refreshToken=b');
+
+      await flushPromises();
+
+      expect(mockNavigate).not.toHaveBeenCalledWith('/terms-agreement', { replace: true });
+    });
+  });
+
+  // =====================================================================
+  // 케이스 E — setAuthSession 실패
+  // =====================================================================
+  describe('케이스 E: setAuthSession 실패', () => {
+    beforeEach(() => {
+      mockSetAuthSession.mockRejectedValue(new Error('Network error'));
+    });
+
+    it('clearAuthSession 을 호출한다', async () => {
+      renderOAuthHook('/oauth2/callback?accessToken=a&refreshToken=b');
+
+      await flushPromises();
+
+      expect(mockClearAuthSession).toHaveBeenCalledTimes(1);
     });
 
     it('error state 를 "사용자 정보를 불러오지 못했습니다." 로 세팅한다', async () => {
@@ -289,7 +303,7 @@ describe('useOAuthCallback', () => {
       try {
         renderOAuthHook('/oauth2/callback?accessToken=a&refreshToken=b');
 
-        // getMe rejection + catch 핸들러 완료 대기
+        // setAuthSession rejection + catch 핸들러 완료 대기
         await act(async () => {
           await Promise.resolve();
           await Promise.resolve();
@@ -327,14 +341,6 @@ describe('useOAuthCallback', () => {
         vi.useRealTimers();
       }
     });
-
-    it('setUser 를 호출하지 않는다', async () => {
-      renderOAuthHook('/oauth2/callback?accessToken=a&refreshToken=b');
-
-      await flushPromises();
-
-      expect(mockSetUser).not.toHaveBeenCalled();
-    });
   });
 
   // =====================================================================
@@ -342,7 +348,7 @@ describe('useOAuthCallback', () => {
   // =====================================================================
   describe('반환값', () => {
     it('초기 error state 는 null 이다', () => {
-      mockGetMe.mockResolvedValue(TEST_USER);
+      mockSetAuthSession.mockResolvedValue(USER_NO_TERMS);
       const { result } = renderOAuthHook('/oauth2/callback?accessToken=a&refreshToken=b');
 
       // effect 실행 전 초기 상태 확인
@@ -350,7 +356,7 @@ describe('useOAuthCallback', () => {
     });
 
     it('{ error } 형태의 객체를 반환한다', () => {
-      mockGetMe.mockResolvedValue(TEST_USER);
+      mockSetAuthSession.mockResolvedValue(USER_NO_TERMS);
       const { result } = renderOAuthHook('/oauth2/callback?accessToken=a&refreshToken=b');
 
       expect(result.current).toHaveProperty('error');
