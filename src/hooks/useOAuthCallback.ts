@@ -23,11 +23,12 @@ const useOAuthCallback = (): UseOAuthCallbackReturn => {
 
     let cancelled = false;
     setAuthSession({ accessToken, refreshToken })
-      .then(() => {
+      .then((user) => {
         if (cancelled) {
           return;
         }
-        navigate('/', { replace: true });
+        const next = user.needsTermsAgreement === true ? '/terms-agreement' : '/';
+        navigate(next, { replace: true });
       })
       .catch(() => {
         if (cancelled) {

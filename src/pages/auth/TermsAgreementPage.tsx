@@ -42,8 +42,9 @@ const TermsAgreementPage = memo(() => {
     setIsAgreeing(true);
     setError(null);
     try {
-      await agreeTerms({ agreedToMarketing: agreements.agreedToMarketing });
-      await mutate(MY_PROFILE_KEY);
+      const updatedUser = await agreeTerms({ agreedToMarketing: agreements.agreedToMarketing });
+      useAuthStore.getState().setUser(updatedUser);
+      await mutate(MY_PROFILE_KEY, updatedUser, { revalidate: false });
       navigate('/', { replace: true });
     } catch (err) {
       const code = axios.isAxiosError(err) ? mapUserError(err) : 'NETWORK';

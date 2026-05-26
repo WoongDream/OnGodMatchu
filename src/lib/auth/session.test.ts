@@ -54,6 +54,11 @@ describe('setAuthSession', () => {
     expect(mockSetUser).toHaveBeenCalledWith(TEST_USER);
   });
 
+  it('getMe 결과를 그대로 반환한다', async () => {
+    const result = await setAuthSession({ accessToken: 'a', refreshToken: 'r' });
+    expect(result).toEqual(TEST_USER);
+  });
+
   it('getMe 실패 시 예외를 그대로 전파한다', async () => {
     mockGetMe.mockRejectedValueOnce(new Error('boom'));
     await expect(setAuthSession({ accessToken: 'a', refreshToken: 'r' })).rejects.toThrow('boom');
