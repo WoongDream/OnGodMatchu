@@ -42,6 +42,13 @@ vi.mock('@/store/authStore', () => ({
   default: (selector: (s: { user: User | null }) => unknown) => mockUseAuthStore(selector),
 }));
 
+// ── swr mock ──────────────────────────────────────────────────────────────────
+const mockMutate = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+
+vi.mock('swr', () => ({
+  useSWRConfig: () => ({ mutate: mockMutate }),
+}));
+
 // ── child components mock ─────────────────────────────────────────────────────
 vi.mock('@/features/quiz/create/QuizInfoForm', () => ({
   default: ({
@@ -319,11 +326,17 @@ describe('QuizEditPage', () => {
       );
     });
 
-    it('submit 성공 시 navigate("/quiz/99") 가 호출된다', async () => {
+    it('submit 성공 시 navigate("/profile/quizzes-made") + my-quizzes 캐시 invalidate', async () => {
       mockSubmit.mockResolvedValue(MOCK_QUIZ);
       renderPage();
       fireEvent.click(screen.getByRole('button', { name: '변경 사항 저장' }));
-      await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/quiz/99'));
+      await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/profile/quizzes-made'));
+      expect(mockMutate).toHaveBeenCalledTimes(1);
+      const predicate = mockMutate.mock.calls[0][0] as (key: unknown) => boolean;
+      expect(predicate(['my-quizzes', { page: 0 }])).toBe(true);
+      expect(predicate(['my-quizzes-aggregate'])).toBe(true);
+      expect(predicate(['other-key'])).toBe(false);
+      expect(predicate('my-quizzes')).toBe(false);
     });
 
     it('submit 이 null 을 반환하면(실패) navigate 가 호출되지 않는다', async () => {
@@ -332,6 +345,7 @@ describe('QuizEditPage', () => {
       fireEvent.click(screen.getByRole('button', { name: '변경 사항 저장' }));
       await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
       expect(mockNavigate).not.toHaveBeenCalled();
+      expect(mockMutate).not.toHaveBeenCalled();
     });
   });
 

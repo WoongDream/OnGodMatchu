@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useSWRConfig } from 'swr';
 import Button from '@/components/button';
 import Toggle from '@/components/toggle';
 import { pageWrapperStyle } from '@/styles/layout';
@@ -35,6 +36,7 @@ type QuizEditFormProps = {
 
 const QuizEditForm = ({ quizId, quiz }: QuizEditFormProps) => {
   const navigate = useNavigate();
+  const { mutate } = useSWRConfig();
   const { submit, isSubmitting, error: submitError } = useUpdateQuiz();
   const [form, setForm] = useState<EditForm>(() => ({
     title: quiz.title,
@@ -56,9 +58,13 @@ const QuizEditForm = ({ quizId, quiz }: QuizEditFormProps) => {
       thumbnailFile: form.thumbnailFile,
     });
     if (result) {
-      navigate(`/quiz/${quizId}`);
+      await mutate(
+        (key) =>
+          Array.isArray(key) && (key[0] === 'my-quizzes' || key[0] === 'my-quizzes-aggregate'),
+      );
+      navigate('/profile/quizzes-made');
     }
-  }, [form, submit, quizId, navigate]);
+  }, [form, submit, quizId, mutate, navigate]);
 
   const visibilityCard = (
     <section css={visibilityCardStyle} aria-label="공개 설정">

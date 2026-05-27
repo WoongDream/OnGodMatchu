@@ -7,10 +7,19 @@ import QuizCreatePage from './QuizCreatePage';
 const mockNavigate = vi.hoisted(() => vi.fn());
 const mockSubmit = vi.hoisted(() => vi.fn());
 const mockUseCreateQuiz = vi.hoisted(() => vi.fn());
+const mockMutate = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>();
   return { ...actual, useNavigate: () => mockNavigate };
+});
+
+vi.mock('swr', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('swr')>();
+  return {
+    ...actual,
+    useSWRConfig: () => ({ mutate: mockMutate }),
+  };
 });
 
 vi.mock('@/hooks/useCreateQuiz', () => ({
@@ -102,14 +111,20 @@ describe('QuizCreatePage', () => {
     expect(mockSubmit.mock.calls[0][0]).toMatchObject({ isPublic: true });
   });
 
-  it('성공 시 /quiz/{id} 로 navigate', async () => {
+  it('성공 시 /profile/quizzes-made 로 navigate + my-quizzes 캐시 invalidate', async () => {
     mockSubmit.mockResolvedValue({ id: 7 });
     const user = userEvent.setup();
     renderPage();
     await fillForm(user);
     await user.click(screen.getByRole('button', { name: '퀴즈 저장' }));
 
-    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/quiz/7'));
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/profile/quizzes-made'));
+    expect(mockMutate).toHaveBeenCalledOnce();
+    const predicate = mockMutate.mock.calls[0][0] as (key: unknown) => boolean;
+    expect(predicate(['my-quizzes', { page: 0 }])).toBe(true);
+    expect(predicate(['my-quizzes-aggregate'])).toBe(true);
+    expect(predicate(['other-key'])).toBe(false);
+    expect(predicate('my-quizzes')).toBe(false);
   });
 
   it('실패 시 navigate 안 함', async () => {
@@ -121,6 +136,7 @@ describe('QuizCreatePage', () => {
 
     await waitFor(() => expect(mockSubmit).toHaveBeenCalledOnce());
     expect(mockNavigate).not.toHaveBeenCalled();
+    expect(mockMutate).not.toHaveBeenCalled();
   });
 
   it('isSubmitting=true 면 저장 버튼이 "저장 중..." 라벨 + 비활성', () => {

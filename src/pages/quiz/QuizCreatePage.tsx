@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSWRConfig } from 'swr';
 import { css, type Theme } from '@emotion/react';
 import Button from '@/components/button';
 import Toggle from '@/components/toggle';
@@ -68,6 +69,7 @@ const errorBannerStyle = (theme: Theme) => css`
 
 const QuizCreatePage = () => {
   const navigate = useNavigate();
+  const { mutate } = useSWRConfig();
   const { submit, isSubmitting, error } = useCreateQuiz();
   const [form, setForm] = useState<QuizForm>({
     title: '',
@@ -104,9 +106,13 @@ const QuizCreatePage = () => {
       })),
     });
     if (result) {
-      navigate(`/quiz/${result.id}`);
+      await mutate(
+        (key) =>
+          Array.isArray(key) && (key[0] === 'my-quizzes' || key[0] === 'my-quizzes-aggregate'),
+      );
+      navigate('/profile/quizzes-made');
     }
-  }, [form, submit, navigate]);
+  }, [form, submit, mutate, navigate]);
 
   const visibilityCard = (
     <section css={visibilityCardStyle} aria-label="공개 설정">
