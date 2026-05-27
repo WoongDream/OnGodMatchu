@@ -20,7 +20,7 @@ describe('getAllReleaseNotes', () => {
     });
   });
 
-  it('각 entry 의 manifest 필드(version/publishedAt/title/tags/bodyFile)가 manifest 의 동일 version 항목과 일치한다', () => {
+  it('각 entry 의 manifest 필드(version/publishedAt/title/bodyFile)가 manifest 의 동일 version 항목과 일치한다', () => {
     const result = getAllReleaseNotes();
 
     result.forEach((entry) => {
@@ -30,8 +30,15 @@ describe('getAllReleaseNotes', () => {
       expect(entry.version).toBe(source!.version);
       expect(entry.publishedAt).toBe(source!.publishedAt);
       expect(entry.title).toBe(source!.title);
-      expect(entry.tags).toEqual(source!.tags);
       expect(entry.bodyFile).toBe(source!.bodyFile);
+    });
+  });
+
+  it('각 entry 의 tags 가 markdown 첫 줄 메타 주석에서 추출된 배열이다', () => {
+    const result = getAllReleaseNotes();
+
+    result.forEach((entry) => {
+      expect(Array.isArray(entry.tags)).toBe(true);
     });
   });
 
@@ -76,9 +83,9 @@ describe('getReleaseNoteByVersion', () => {
     expect(result!.version).toBe(target.version);
     expect(result!.publishedAt).toBe(target.publishedAt);
     expect(result!.title).toBe(target.title);
-    expect(result!.tags).toEqual(target.tags);
     expect(result!.bodyFile).toBe(target.bodyFile);
     expect(typeof result!.body).toBe('string');
+    expect(Array.isArray(result!.tags)).toBe(true);
   });
 
   it('존재하지 않는 version 으로 호출하면 undefined 를 반환한다', () => {

@@ -39,6 +39,16 @@ describe('Badge', () => {
       renderWithTheme(<Badge variant="warning">경고</Badge>);
       expect(screen.getByText('경고')).toBeInTheDocument();
     });
+
+    it('renders with variant "neutral"', () => {
+      renderWithTheme(<Badge variant="neutral">공지</Badge>);
+      expect(screen.getByText('공지')).toBeInTheDocument();
+    });
+
+    it('renders with variant "danger"', () => {
+      renderWithTheme(<Badge variant="danger">보안</Badge>);
+      expect(screen.getByText('보안')).toBeInTheDocument();
+    });
   });
 
   describe('displayName', () => {

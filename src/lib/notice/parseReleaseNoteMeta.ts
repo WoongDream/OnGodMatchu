@@ -1,7 +1,7 @@
 import type { ParsedReleaseNoteMeta, ReleaseNoteTag } from '@/types';
 
 const META_PATTERN = /^<!--\s*v([^\s]+)(?:\s+\[([^\]]*)\])?\s*-->\s*$/;
-const VALID_TAGS: ReleaseNoteTag[] = ['NEW', 'IMPROVED', 'FIXED'];
+const VALID_TAGS: ReleaseNoteTag[] = ['NEW', 'IMPROVED', 'FIXED', 'NOTICE', 'SECURITY'];
 
 const parseTags = (raw: string): ReleaseNoteTag[] => {
   if (!raw) {

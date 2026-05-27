@@ -105,6 +105,22 @@ describe('parseReleaseNoteMeta', () => {
     });
   });
 
+  it('5종 태그 (NEW/IMPROVED/FIXED/NOTICE/SECURITY) 를 모두 파싱한다', () => {
+    const content = '<!-- v2.0.0 [NEW,IMPROVED,FIXED,NOTICE,SECURITY] -->';
+
+    const result = parseReleaseNoteMeta(content);
+
+    expect(result.tags).toEqual(['NEW', 'IMPROVED', 'FIXED', 'NOTICE', 'SECURITY']);
+  });
+
+  it('소문자 신규 태그(notice/security)도 대문자로 정규화한다', () => {
+    const content = '<!-- v2.0.0 [notice,security] -->';
+
+    const result = parseReleaseNoteMeta(content);
+
+    expect(result.tags).toEqual(['NOTICE', 'SECURITY']);
+  });
+
   it('version 에 build suffix (pre-release) 가 포함되어도 허용한다', () => {
     const content = '<!-- v1.7.0-beta.1 -->';
 

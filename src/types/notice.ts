@@ -11,7 +11,7 @@ export type NoticeDetail = {
   publishedAt: string;
 };
 
-export type ReleaseNoteTag = 'NEW' | 'IMPROVED' | 'FIXED';
+export type ReleaseNoteTag = 'NEW' | 'IMPROVED' | 'FIXED' | 'NOTICE' | 'SECURITY';
 
 export type ParsedReleaseNoteMeta = {
   version: string | null;

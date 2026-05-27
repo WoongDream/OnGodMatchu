@@ -24,12 +24,16 @@ const TAG_LABEL: Record<ReleaseNoteTag, string> = {
   NEW: '신규',
   IMPROVED: '개선',
   FIXED: '수정',
+  NOTICE: '공지',
+  SECURITY: '보안',
 };
 
 const TAG_VARIANT: Record<ReleaseNoteTag, BadgeVariant> = {
   NEW: 'success',
   IMPROVED: 'info',
   FIXED: 'warning',
+  NOTICE: 'neutral',
+  SECURITY: 'danger',
 };
 
 const formatDate = (iso: string): string => iso.slice(0, 10);
