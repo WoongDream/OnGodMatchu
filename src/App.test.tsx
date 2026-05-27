@@ -117,9 +117,10 @@ vi.mock('react-router-dom', async () => {
     ...actual,
     BrowserRouter: ({ children }: any) => <div data-testid="browser-router">{children}</div>,
     Routes: ({ children }: any) => <div data-testid="routes">{children}</div>,
-    Route: ({ path, element }: any) => (
-      <div data-testid={`route-${path}`} data-path={path}>
+    Route: ({ path, element, children }: any) => (
+      <div data-testid={`route-${path ?? 'layout'}`} data-path={path}>
         {element}
+        {children}
       </div>
     ),
   };
@@ -127,6 +128,10 @@ vi.mock('react-router-dom', async () => {
 
 vi.mock('@/components/protected-route/ProtectedRoute', () => ({
   default: mockProtectedRouteImpl,
+}));
+
+vi.mock('@/components/terms-agreement-gate', () => ({
+  default: () => null,
 }));
 
 // AppShell/PageContent are no longer styled wrappers — they're <div>/<main> with css prop.
@@ -245,11 +250,13 @@ describe('App', () => {
       expect(screen.getByTestId('route-/terms')).toBeInTheDocument();
     });
 
-    it('has thirteen top-level routes total', () => {
+    it('has 21 routes total (1 layout + 13 top-level + 7 nested profile children)', () => {
       renderWithTheme(<App />);
       const routeElements = screen.getAllByTestId(/^route-/);
-      // 9 기존 + /quiz/:id/edit + /terms-agreement + /profile + /profile/:userId
-      expect(routeElements).toHaveLength(13);
+      // 1 (TermsAgreementGate 레이아웃 Route) + 13 top-level + 4 /profile 자식
+      // (index/quizzes-made/quizzes-played/account) + 3 /profile/:userId 자식
+      // (index/quizzes-made/quizzes-played) = 21
+      expect(routeElements).toHaveLength(21);
     });
 
     it('renders /profile route protected by ProtectedRoute', () => {

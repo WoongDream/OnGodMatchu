@@ -22,6 +22,7 @@ import ProfileQuizzesMade from './pages/profile/ProfileQuizzesMade';
 import ProfileQuizzesPlayed from './pages/profile/ProfileQuizzesPlayed';
 import ProfileAccount from './pages/profile/ProfileAccount';
 import ProtectedRoute from '@/components/protected-route/ProtectedRoute';
+import TermsAgreementGate from '@/components/terms-agreement-gate';
 
 const App = () => {
   useBootstrapAuth();
@@ -32,55 +33,57 @@ const App = () => {
           <Header />
           <main css={pageContentStyle}>
             <Routes>
-              <Route path="/" element={<MainPage />} />
-              <Route
-                path="/quiz/create"
-                element={
-                  <ProtectedRoute>
-                    <QuizCreatePage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/quiz/:id" element={<QuizPlayPage />} />
-              <Route path="/quiz/:id/result" element={<QuizResultPage />} />
-              <Route
-                path="/quiz/:id/edit"
-                element={
-                  <ProtectedRoute>
-                    <QuizEditPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignupPage />} />
-              <Route path="/oauth2/callback" element={<OAuthCallbackPage />} />
-              <Route
-                path="/terms-agreement"
-                element={
-                  <ProtectedRoute>
-                    <TermsAgreementPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/privacy" element={<PrivacyPage />} />
-              <Route path="/terms" element={<TermsPage />} />
-              <Route
-                path="/profile"
-                element={
-                  <ProtectedRoute>
-                    <ProfileLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<ProfileInfo />} />
-                <Route path="quizzes-made" element={<ProfileQuizzesMade />} />
-                <Route path="quizzes-played" element={<ProfileQuizzesPlayed />} />
-                <Route path="account" element={<ProfileAccount />} />
-              </Route>
-              <Route path="/profile/:userId" element={<ProfileLayout />}>
-                <Route index element={<ProfileInfo />} />
-                <Route path="quizzes-made" element={<ProfileQuizzesMade />} />
-                <Route path="quizzes-played" element={<ProfileQuizzesPlayed />} />
+              <Route element={<TermsAgreementGate />}>
+                <Route path="/" element={<MainPage />} />
+                <Route
+                  path="/quiz/create"
+                  element={
+                    <ProtectedRoute>
+                      <QuizCreatePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/quiz/:id" element={<QuizPlayPage />} />
+                <Route path="/quiz/:id/result" element={<QuizResultPage />} />
+                <Route
+                  path="/quiz/:id/edit"
+                  element={
+                    <ProtectedRoute>
+                      <QuizEditPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
+                <Route path="/oauth2/callback" element={<OAuthCallbackPage />} />
+                <Route
+                  path="/terms-agreement"
+                  element={
+                    <ProtectedRoute>
+                      <TermsAgreementPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/terms" element={<TermsPage />} />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <ProfileLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<ProfileInfo />} />
+                  <Route path="quizzes-made" element={<ProfileQuizzesMade />} />
+                  <Route path="quizzes-played" element={<ProfileQuizzesPlayed />} />
+                  <Route path="account" element={<ProfileAccount />} />
+                </Route>
+                <Route path="/profile/:userId" element={<ProfileLayout />}>
+                  <Route index element={<ProfileInfo />} />
+                  <Route path="quizzes-made" element={<ProfileQuizzesMade />} />
+                  <Route path="quizzes-played" element={<ProfileQuizzesPlayed />} />
+                </Route>
               </Route>
             </Routes>
           </main>
