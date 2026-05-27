@@ -8,5 +8,7 @@ export {
   TrendingUpIcon,
   ArrowUpIcon,
   ArrowDownIcon,
+  AnnouncementIcon,
+  ReleaseNoteIcon,
 } from './Icon';
 export type { IconProps, IconName } from './Icon.type';

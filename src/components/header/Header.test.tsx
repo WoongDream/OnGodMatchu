@@ -1,10 +1,18 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderWithTheme, screen } from '@/test/renderWithTheme';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import Header from './Header';
 import useAuthStore from '@/store/authStore';
 import * as router from 'react-router-dom';
 import type { User } from '@/types';
+
+const renderHeader = (path = '/') =>
+  renderWithTheme(
+    <MemoryRouter initialEntries={[path]}>
+      <Header />
+    </MemoryRouter>,
+  );
 
 // Mock react-router-dom
 vi.mock('react-router-dom', async () => {
@@ -54,7 +62,7 @@ describe('Header', () => {
         user: null,
       });
 
-      renderWithTheme(<Header />);
+      renderHeader();
       const logo = screen.getByRole('img', { name: 'OnGodMatchu' });
 
       expect(logo).toBeInTheDocument();
@@ -68,7 +76,7 @@ describe('Header', () => {
       });
 
       const user = userEvent.setup();
-      renderWithTheme(<Header />);
+      renderHeader();
       const logo = screen.getByRole('img', { name: 'OnGodMatchu' });
 
       await user.click(logo);
@@ -87,23 +95,23 @@ describe('Header', () => {
     });
 
     it('shows the "로그인" button', () => {
-      renderWithTheme(<Header />);
+      renderHeader();
       expect(screen.getByRole('button', { name: '로그인' })).toBeInTheDocument();
     });
 
     it('does not show the "퀴즈 만들기" button', () => {
-      renderWithTheme(<Header />);
+      renderHeader();
       expect(screen.queryByRole('button', { name: '퀴즈 만들기' })).not.toBeInTheDocument();
     });
 
     it('does not show the "프로필" button', () => {
-      renderWithTheme(<Header />);
+      renderHeader();
       expect(screen.queryByRole('button', { name: '프로필' })).not.toBeInTheDocument();
     });
 
     it('navigates to "/login" when login button is clicked', async () => {
       const user = userEvent.setup();
-      renderWithTheme(<Header />);
+      renderHeader();
       await user.click(screen.getByRole('button', { name: '로그인' }));
 
       expect(mockNavigate).toHaveBeenCalledWith('/login');
@@ -120,28 +128,28 @@ describe('Header', () => {
     });
 
     it('does not show the "퀴즈 만들기" button (헤더에서 제거)', () => {
-      renderWithTheme(<Header />);
+      renderHeader();
       expect(screen.queryByRole('button', { name: '퀴즈 만들기' })).not.toBeInTheDocument();
     });
 
     it('shows the "프로필" button (aria-label)', () => {
-      renderWithTheme(<Header />);
+      renderHeader();
       expect(screen.getByRole('button', { name: '프로필' })).toBeInTheDocument();
     });
 
     it('does not show the "로그인" button', () => {
-      renderWithTheme(<Header />);
+      renderHeader();
       expect(screen.queryByRole('button', { name: '로그인' })).not.toBeInTheDocument();
     });
 
     it('does not show a "로그아웃" button', () => {
-      renderWithTheme(<Header />);
+      renderHeader();
       expect(screen.queryByRole('button', { name: '로그아웃' })).not.toBeInTheDocument();
     });
 
     it('navigates to "/profile" when profile button is clicked', async () => {
       const user = userEvent.setup();
-      renderWithTheme(<Header />);
+      renderHeader();
       await user.click(screen.getByRole('button', { name: '프로필' }));
 
       expect(mockNavigate).toHaveBeenCalledWith('/profile');
@@ -149,19 +157,19 @@ describe('Header', () => {
     });
 
     it('profile button contains the ProfileImage mock', () => {
-      renderWithTheme(<Header />);
+      renderHeader();
       const profileButton = screen.getByRole('button', { name: '프로필' });
       expect(profileButton.querySelector('[data-testid="profile-image"]')).toBeInTheDocument();
     });
 
     it('passes user.nickname to ProfileImage', () => {
-      renderWithTheme(<Header />);
+      renderHeader();
       const profileImage = screen.getByTestId('profile-image');
       expect(profileImage).toHaveAttribute('data-nickname', MOCK_USER.nickname);
     });
 
     it('passes user.profileImageUrl to ProfileImage', () => {
-      renderWithTheme(<Header />);
+      renderHeader();
       const profileImage = screen.getByTestId('profile-image');
       expect(profileImage).toHaveAttribute('data-image-url', MOCK_USER.profileImageUrl);
     });
@@ -174,7 +182,7 @@ describe('Header', () => {
         user: null,
       });
 
-      renderWithTheme(<Header />);
+      renderHeader();
       const profileImage = screen.getByTestId('profile-image');
       expect(profileImage).toHaveAttribute('data-nickname', '');
     });
@@ -186,7 +194,7 @@ describe('Header', () => {
         isLoggedIn: false,
         user: null,
       });
-      const { unmount } = renderWithTheme(<Header />);
+      const { unmount } = renderHeader();
       expect(screen.getByRole('button', { name: '로그인' })).toBeInTheDocument();
       unmount();
 
@@ -194,7 +202,7 @@ describe('Header', () => {
         isLoggedIn: true,
         user: MOCK_USER,
       });
-      renderWithTheme(<Header />);
+      renderHeader();
       expect(screen.getByRole('button', { name: '프로필' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: '로그인' })).not.toBeInTheDocument();
     });

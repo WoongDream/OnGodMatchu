@@ -84,6 +84,26 @@ vi.mock('./pages/auth/TermsAgreementPage', () => ({
   default: () => <div data-testid="terms-agreement-page">Terms Agreement</div>,
 }));
 
+vi.mock('./pages/announcements/AnnouncementsLayout', () => ({
+  default: () => <div data-testid="announcements-layout">Announcements Layout</div>,
+}));
+
+vi.mock('./pages/announcements/AnnouncementsList', () => ({
+  default: () => <div data-testid="announcements-list">Announcements List</div>,
+}));
+
+vi.mock('./pages/announcements/AnnouncementDetail', () => ({
+  default: () => <div data-testid="announcement-detail">Announcement Detail</div>,
+}));
+
+vi.mock('./pages/announcements/ReleaseNotesList', () => ({
+  default: () => <div data-testid="release-notes-list">Release Notes List</div>,
+}));
+
+vi.mock('./pages/announcements/ReleaseNoteDetail', () => ({
+  default: () => <div data-testid="release-note-detail">Release Note Detail</div>,
+}));
+
 vi.mock('@/hooks/useBootstrapAuth', () => ({
   default: () => undefined,
 }));
@@ -123,6 +143,7 @@ vi.mock('react-router-dom', async () => {
         {children}
       </div>
     ),
+    Navigate: ({ to }: any) => <div data-testid={`navigate-to-${to}`}>Navigating to {to}</div>,
   };
 });
 
@@ -250,13 +271,37 @@ describe('App', () => {
       expect(screen.getByTestId('route-/terms')).toBeInTheDocument();
     });
 
-    it('has 21 routes total (1 layout + 13 top-level + 7 nested profile children)', () => {
+    it('renders route for "/quiz" (MainPage)', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-/quiz')).toBeInTheDocument();
+    });
+
+    it('renders route for "/announcements" (layout)', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-/announcements')).toBeInTheDocument();
+    });
+
+    it('renders announcements child routes (notices / release-notes / details)', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-notices')).toBeInTheDocument();
+      expect(screen.getByTestId('route-notices/:noticeId')).toBeInTheDocument();
+      expect(screen.getByTestId('route-release-notes')).toBeInTheDocument();
+      expect(screen.getByTestId('route-release-notes/:version')).toBeInTheDocument();
+    });
+
+    it('renders / → /quiz redirect (Navigate)', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('navigate-to-/quiz')).toBeInTheDocument();
+    });
+
+    it('has 28 routes total (1 layout + 15 top-level + 7 nested profile + 5 announcements children)', () => {
       renderWithTheme(<App />);
       const routeElements = screen.getAllByTestId(/^route-/);
-      // 1 (TermsAgreementGate 레이아웃 Route) + 13 top-level + 4 /profile 자식
-      // (index/quizzes-made/quizzes-played/account) + 3 /profile/:userId 자식
-      // (index/quizzes-made/quizzes-played) = 21
-      expect(routeElements).toHaveLength(21);
+      // 1 (TermsAgreementGate 레이아웃) + 15 top-level (/, /quiz, /quiz/create, /quiz/:id,
+      // /quiz/:id/result, /quiz/:id/edit, /login, /signup, /oauth2/callback,
+      // /terms-agreement, /privacy, /terms, /profile, /profile/:userId, /announcements)
+      // + 4 /profile 자식 + 3 /profile/:userId 자식 + 5 /announcements 자식 = 28
+      expect(routeElements).toHaveLength(28);
     });
 
     it('renders /profile route protected by ProtectedRoute', () => {
