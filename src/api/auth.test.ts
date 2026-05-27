@@ -107,7 +107,7 @@ describe('signup', () => {
     agreedToPrivacy: true,
   };
 
-  it('POST /api/auth/signup 을 payload 그대로 호출한다 (마케팅 없음)', async () => {
+  it('POST /api/auth/signup 을 payload 그대로 호출한다', async () => {
     mockPost.mockResolvedValueOnce({
       data: { success: true, data: { accessToken: 'A', refreshToken: 'R' } },
     });
@@ -115,28 +115,6 @@ describe('signup', () => {
     await signup(BASE_PAYLOAD);
 
     expect(mockPost).toHaveBeenCalledWith('/api/auth/signup', BASE_PAYLOAD);
-  });
-
-  it('agreedToMarketing: true 포함 시 payload 그대로 전달한다', async () => {
-    const payloadWithMarketing: SignupPayload = { ...BASE_PAYLOAD, agreedToMarketing: true };
-    mockPost.mockResolvedValueOnce({
-      data: { success: true, data: { accessToken: 'A', refreshToken: 'R' } },
-    });
-
-    await signup(payloadWithMarketing);
-
-    expect(mockPost).toHaveBeenCalledWith('/api/auth/signup', payloadWithMarketing);
-  });
-
-  it('agreedToMarketing: false 포함 시 payload 그대로 전달한다', async () => {
-    const payloadWithMarketing: SignupPayload = { ...BASE_PAYLOAD, agreedToMarketing: false };
-    mockPost.mockResolvedValueOnce({
-      data: { success: true, data: { accessToken: 'A', refreshToken: 'R' } },
-    });
-
-    await signup(payloadWithMarketing);
-
-    expect(mockPost).toHaveBeenCalledWith('/api/auth/signup', payloadWithMarketing);
   });
 
   it('ApiResponse 에서 data.data (토큰) 를 반환한다', async () => {

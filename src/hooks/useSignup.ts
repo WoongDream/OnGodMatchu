@@ -98,7 +98,6 @@ type SignupParams = {
   code: string;
   agreedToTerms: boolean;
   agreedToPrivacy: boolean;
-  agreedToMarketing?: boolean;
 };
 
 type UseSignupReturn = {

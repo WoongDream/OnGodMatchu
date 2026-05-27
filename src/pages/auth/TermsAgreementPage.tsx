@@ -26,7 +26,6 @@ const TermsAgreementPage = memo(() => {
   const [agreements, setAgreements] = useState<TermsAgreementState>({
     agreedToTerms: false,
     agreedToPrivacy: false,
-    agreedToMarketing: false,
   });
   const [isAgreeing, setIsAgreeing] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -42,7 +41,7 @@ const TermsAgreementPage = memo(() => {
     setIsAgreeing(true);
     setError(null);
     try {
-      const updatedUser = await agreeTerms({ agreedToMarketing: agreements.agreedToMarketing });
+      const updatedUser = await agreeTerms();
       useAuthStore.getState().setUser(updatedUser);
       await mutate(MY_PROFILE_KEY, updatedUser, { revalidate: false });
       navigate('/', { replace: true });

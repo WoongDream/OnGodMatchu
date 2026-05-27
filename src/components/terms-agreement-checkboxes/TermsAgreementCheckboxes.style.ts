@@ -60,11 +60,6 @@ export const requiredTagStyle = (theme: Theme) => css`
   color: ${theme.colors.accent.primary};
 `;
 
-export const optionalTagStyle = (theme: Theme) => css`
-  ${text({ size: 'xs', weight: 'regular' })({ theme })}
-  color: ${theme.colors.fg.tertiary};
-`;
-
 export const linkStyle = (theme: Theme) => css`
   ${text({ size: 'xs', weight: 'regular' })({ theme })}
   color: ${theme.colors.fg.secondary};

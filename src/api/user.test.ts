@@ -336,45 +336,22 @@ describe('requestWithdrawalCode', () => {
 });
 
 describe('agreeTerms', () => {
-  it('인자 없이 호출하면 POST /api/users/me/terms-agreement 를 {} body 로 호출한다', async () => {
+  it('POST /api/users/me/terms-agreement 를 인자 없이 호출한다', async () => {
     const user = makeUser();
     mockPost.mockResolvedValueOnce({ data: { success: true, data: user } });
 
     await agreeTerms();
 
-    expect(mockPost).toHaveBeenCalledWith('/api/users/me/terms-agreement', {});
+    expect(mockPost).toHaveBeenCalledWith('/api/users/me/terms-agreement');
   });
 
-  it('인자 없이 호출하면 ApiResponse 에서 언랩된 User 를 반환한다', async () => {
+  it('ApiResponse 에서 언랩된 User 를 반환한다', async () => {
     const user = makeUser({ nickname: 'agreed-user' });
     mockPost.mockResolvedValueOnce({ data: { success: true, data: user } });
 
     const result = await agreeTerms();
 
     expect(result).toEqual(user);
-  });
-
-  it('{ agreedToMarketing: true } 를 payload 그대로 전달하고 User 를 반환한다', async () => {
-    const user = makeUser();
-    mockPost.mockResolvedValueOnce({ data: { success: true, data: user } });
-
-    const result = await agreeTerms({ agreedToMarketing: true });
-
-    expect(mockPost).toHaveBeenCalledWith('/api/users/me/terms-agreement', {
-      agreedToMarketing: true,
-    });
-    expect(result).toEqual(user);
-  });
-
-  it('{ agreedToMarketing: false } 를 payload 그대로 전달한다', async () => {
-    const user = makeUser();
-    mockPost.mockResolvedValueOnce({ data: { success: true, data: user } });
-
-    await agreeTerms({ agreedToMarketing: false });
-
-    expect(mockPost).toHaveBeenCalledWith('/api/users/me/terms-agreement', {
-      agreedToMarketing: false,
-    });
   });
 
   it('에러 코드 TERMS_AGREEMENT_OUTDATED 로 throw 된 axios 에러를 그대로 전파한다', async () => {

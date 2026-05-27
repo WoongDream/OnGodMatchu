@@ -93,13 +93,12 @@ vi.mock('@/components/terms-agreement-checkboxes', () => ({
       <input
         type="checkbox"
         aria-label="전체 동의"
-        checked={value.agreedToTerms && value.agreedToPrivacy && value.agreedToMarketing}
+        checked={value.agreedToTerms && value.agreedToPrivacy}
         disabled={disabled}
         onChange={(e) =>
           onChange({
             agreedToTerms: e.target.checked,
             agreedToPrivacy: e.target.checked,
-            agreedToMarketing: e.target.checked,
           })
         }
       />
@@ -116,13 +115,6 @@ vi.mock('@/components/terms-agreement-checkboxes', () => ({
         checked={value.agreedToPrivacy}
         disabled={disabled}
         onChange={(e) => onChange({ ...value, agreedToPrivacy: e.target.checked })}
-      />
-      <input
-        type="checkbox"
-        aria-label="마케팅 수신 동의 (선택)"
-        checked={value.agreedToMarketing}
-        disabled={disabled}
-        onChange={(e) => onChange({ ...value, agreedToMarketing: e.target.checked })}
       />
     </div>
   ),
@@ -420,7 +412,7 @@ describe('SignupForm', () => {
       await user.type(screen.getByLabelText('닉네임'), 'nick');
     };
 
-    it('showProfile 단계 진입 시 약관 체크박스 4개가 노출된다', async () => {
+    it('showProfile 단계 진입 시 약관 체크박스 3개 (전체 + 필수 2) 가 노출된다', async () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
       await enterCodeAndVerify(user);
@@ -429,7 +421,7 @@ describe('SignupForm', () => {
       expect(
         screen.getByRole('checkbox', { name: '개인정보처리방침 동의 (필수)' }),
       ).toBeInTheDocument();
-      expect(screen.getByRole('checkbox', { name: '마케팅 수신 동의 (선택)' })).toBeInTheDocument();
+      expect(screen.queryByRole('checkbox', { name: /마케팅 수신 동의/ })).not.toBeInTheDocument();
     });
 
     it('모든 입력 정상이지만 필수 약관 미체크 시 가입하기 버튼이 비활성', async () => {
@@ -450,38 +442,21 @@ describe('SignupForm', () => {
       expect(screen.getByRole('button', { name: '가입하기' })).toBeEnabled();
     });
 
-    it('필수 2개 체크 + 마케팅 미체크 상태로 submit 호출 시 agreedToMarketing: false 포함', async () => {
+    it('필수 2개 체크 상태로 submit 호출 시 agreedToTerms/agreedToPrivacy: true 포함하고 agreedToMarketing 키가 없다', async () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
       await enterCodeAndVerify(user);
       await fillProfileInputs(user);
       await fillRequiredTerms(user);
-      // 마케팅은 체크하지 않음
       await user.click(screen.getByRole('button', { name: '가입하기' }));
       expect(mockSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           agreedToTerms: true,
           agreedToPrivacy: true,
-          agreedToMarketing: false,
         }),
       );
-    });
-
-    it('필수 2개 + 마케팅까지 체크 후 submit 호출 시 agreedToMarketing: true 포함', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<SignupForm />);
-      await enterCodeAndVerify(user);
-      await fillProfileInputs(user);
-      await fillRequiredTerms(user);
-      await user.click(screen.getByRole('checkbox', { name: '마케팅 수신 동의 (선택)' }));
-      await user.click(screen.getByRole('button', { name: '가입하기' }));
-      expect(mockSubmit).toHaveBeenCalledWith(
-        expect.objectContaining({
-          agreedToTerms: true,
-          agreedToPrivacy: true,
-          agreedToMarketing: true,
-        }),
-      );
+      const submitArg = mockSubmit.mock.calls[0]?.[0] as Record<string, unknown>;
+      expect(submitArg).not.toHaveProperty('agreedToMarketing');
     });
 
     it('signup.errorCode === TERMS_AGREEMENT_REQUIRED 일 때 인라인 에러 메시지가 노출된다', async () => {

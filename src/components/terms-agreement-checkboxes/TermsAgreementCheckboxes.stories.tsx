@@ -26,28 +26,18 @@ const Demo = ({ initial }: { initial: TermsAgreementState }) => {
 };
 
 export const AllUnchecked: Story = {
-  render: () => (
-    <Demo initial={{ agreedToTerms: false, agreedToPrivacy: false, agreedToMarketing: false }} />
-  ),
-};
-
-export const RequiredOnly: Story = {
-  render: () => (
-    <Demo initial={{ agreedToTerms: true, agreedToPrivacy: true, agreedToMarketing: false }} />
-  ),
+  render: () => <Demo initial={{ agreedToTerms: false, agreedToPrivacy: false }} />,
 };
 
 export const AllChecked: Story = {
-  render: () => (
-    <Demo initial={{ agreedToTerms: true, agreedToPrivacy: true, agreedToMarketing: true }} />
-  ),
+  render: () => <Demo initial={{ agreedToTerms: true, agreedToPrivacy: true }} />,
 };
 
 export const Disabled: Story = {
   render: () => (
     <div>
       <TermsAgreementCheckboxes
-        value={{ agreedToTerms: true, agreedToPrivacy: true, agreedToMarketing: false }}
+        value={{ agreedToTerms: true, agreedToPrivacy: true }}
         onChange={() => {}}
         disabled
       />

@@ -53,7 +53,6 @@ const SignupForm = memo(() => {
   const [agreements, setAgreements] = useState<TermsAgreementState>({
     agreedToTerms: false,
     agreedToPrivacy: false,
-    agreedToMarketing: false,
   });
 
   const verification = useVerificationCode();
@@ -186,7 +185,6 @@ const SignupForm = memo(() => {
       code: code.trim(),
       agreedToTerms: agreements.agreedToTerms,
       agreedToPrivacy: agreements.agreedToPrivacy,
-      agreedToMarketing: agreements.agreedToMarketing,
     });
   };
 
