@@ -46,9 +46,9 @@ export const tabsStyle = (theme: Theme) => css`
 export const tabStyle = (theme: Theme) => css`
   position: relative;
   display: inline-flex;
-  align-items: center;
+  align-items: flex-end;
   height: 100%;
-  padding: 0 ${theme.spacing.xs};
+  padding: 0 ${theme.spacing.xs} 6px;
   color: ${theme.colors.fg.secondary};
   font-size: ${theme.fontSize.sm};
   font-weight: ${theme.fontWeight.medium};
@@ -62,7 +62,7 @@ export const tabStyle = (theme: Theme) => css`
   }
 
   &.active {
-    color: ${theme.colors.fg.primary};
+    color: ${theme.colors.accent.primary};
     font-weight: ${theme.fontWeight.bold};
   }
 
@@ -73,7 +73,7 @@ export const tabStyle = (theme: Theme) => css`
     right: 0;
     bottom: 0;
     height: 2px;
-    background-color: ${theme.colors.fg.primary};
+    background-color: ${theme.colors.accent.primary};
     border-radius: 1px;
   }
 
