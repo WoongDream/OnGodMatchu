@@ -5,6 +5,7 @@ import Button from '@/components/button';
 import Toggle from '@/components/toggle';
 import { pageWrapperStyle } from '@/styles/layout';
 import QuizInfoForm from '@/features/quiz/create/QuizInfoForm';
+import QuestionList, { type DraftQuestion } from '@/features/quiz/create/QuestionList';
 import useQuizDetail from '@/hooks/useQuizDetail';
 import useUpdateQuiz from '@/hooks/useUpdateQuiz';
 import useAuthStore from '@/store/authStore';
@@ -27,6 +28,25 @@ type EditForm = {
   thumbnailFile: File | null;
   thumbnailPreviewUrl: string | null;
   isPublic: boolean;
+  questions: DraftQuestion[];
+};
+
+const hydrateQuestion = (server: Question): DraftQuestion => {
+  const imageKey = server.imageKey ?? null;
+  const answerImageKey = server.answerImageKey ?? null;
+  return {
+    id: crypto.randomUUID(),
+    serverId: server.id,
+    questionText: server.questionText ?? '',
+    answer: server.answer,
+    imageKey,
+    imageFile: null,
+    imagePreviewUrl: server.imageUrl ?? null,
+    answerImageKey,
+    answerImageFile: null,
+    answerImagePreviewUrl: server.answerImageUrl ?? null,
+    answerImageSameAsQuestion: imageKey !== null && imageKey === answerImageKey,
+  };
 };
 
 type QuizEditFormProps = {
@@ -45,9 +65,13 @@ const QuizEditForm = ({ quizId, quiz }: QuizEditFormProps) => {
     thumbnailFile: null,
     thumbnailPreviewUrl: quiz.thumbnailUrl ?? null,
     isPublic: quiz.isPublic,
+    questions: quiz.questions.map(hydrateQuestion),
   }));
 
-  const isValid = form.title.trim() !== '';
+  const isValid =
+    form.title.trim() !== '' &&
+    form.questions.length > 0 &&
+    form.questions.every((q) => q.answer.trim() !== '');
 
   const handleSave = useCallback(async () => {
     const result = await submit(quizId, {
@@ -56,6 +80,7 @@ const QuizEditForm = ({ quizId, quiz }: QuizEditFormProps) => {
       category: form.category,
       isPublic: form.isPublic,
       thumbnailFile: form.thumbnailFile,
+      questions: form.questions,
     });
     if (result) {
       await mutate(
@@ -103,6 +128,10 @@ const QuizEditForm = ({ quizId, quiz }: QuizEditFormProps) => {
         belowTitleSlot={visibilityCard}
       />
       <hr css={dividerStyle} />
+      <QuestionList
+        questions={form.questions}
+        onChange={(questions) => setForm((prev) => ({ ...prev, questions }))}
+      />
       {submitError && (
         <div css={errorBannerStyle} role="alert">
           {submitError}

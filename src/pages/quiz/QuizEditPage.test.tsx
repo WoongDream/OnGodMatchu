@@ -118,6 +118,18 @@ const MOCK_USER: User = {
   createdAt: '2025-01-01T00:00:00Z',
 };
 
+const MOCK_QUESTION: Question = {
+  id: 11,
+  quizId: 99,
+  orderNum: 0,
+  imageKey: null,
+  imageUrl: null,
+  answerImageKey: null,
+  answerImageUrl: null,
+  questionText: '1번 질문',
+  answer: '정답1',
+};
+
 const MOCK_QUIZ: Quiz & { questions: Question[] } = {
   id: 99,
   authorNickname: 'authorNick',
@@ -128,7 +140,7 @@ const MOCK_QUIZ: Quiz & { questions: Question[] } = {
   playCount: 0,
   isPublic: true,
   createdAt: '2025-01-01T00:00:00Z',
-  questions: [],
+  questions: [MOCK_QUESTION],
 };
 
 const DEFAULT_UPDATE_RETURN = {
@@ -392,6 +404,157 @@ describe('QuizEditPage', () => {
       expect(toggle).toHaveAttribute('aria-checked', 'true');
       fireEvent.click(toggle);
       expect(toggle).toHaveAttribute('aria-checked', 'false');
+    });
+  });
+
+  describe('questions 편집', () => {
+    const TWO_QUESTIONS_QUIZ: Quiz & { questions: Question[] } = {
+      ...MOCK_QUIZ,
+      questions: [
+        {
+          id: 11,
+          quizId: 99,
+          orderNum: 0,
+          imageKey: 'qkey-1',
+          imageUrl: 'https://cdn/q1.png',
+          answerImageKey: 'qkey-1',
+          answerImageUrl: 'https://cdn/q1.png',
+          questionText: '첫 번째 문제 텍스트',
+          answer: '정답1',
+        },
+        {
+          id: 12,
+          quizId: 99,
+          orderNum: 1,
+          imageKey: null,
+          imageUrl: null,
+          answerImageKey: null,
+          answerImageUrl: null,
+          questionText: '두 번째 문제 텍스트',
+          answer: '정답2',
+        },
+      ],
+    };
+
+    it('quiz.questions 가 QuestionList 에 hydrate 되어 렌더된다', () => {
+      mockUseQuizDetail.mockReturnValue({
+        quiz: TWO_QUESTIONS_QUIZ,
+        isLoading: false,
+        error: null,
+      });
+      renderPage();
+
+      expect(screen.getByText('1번 문제')).toBeInTheDocument();
+      expect(screen.getByText('2번 문제')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('첫 번째 문제 텍스트')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('두 번째 문제 텍스트')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('정답1')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('정답2')).toBeInTheDocument();
+    });
+
+    it('answerImageSameAsQuestion 추정 — server imageKey === answerImageKey 일 때 체크박스 checked', () => {
+      mockUseQuizDetail.mockReturnValue({
+        quiz: TWO_QUESTIONS_QUIZ,
+        isLoading: false,
+        error: null,
+      });
+      renderPage();
+
+      const checkboxes = screen.getAllByRole('checkbox', {
+        name: /문제 이미지와 동일하게 사용/,
+      });
+      // 첫 번째 question: imageKey===answerImageKey(='qkey-1') → checked
+      expect(checkboxes[0]).toBeChecked();
+      // 두 번째 question: imageKey=null, answerImageKey=null → imageKey !== null 조건이 false → unchecked
+      expect(checkboxes[1]).not.toBeChecked();
+    });
+
+    it('"+ 문제 추가" 클릭 → 새 빈 question 추가 → 저장 시 submit 페이로드에 신규 draft 포함 (serverId undefined)', async () => {
+      mockUseQuizDetail.mockReturnValue({
+        quiz: TWO_QUESTIONS_QUIZ,
+        isLoading: false,
+        error: null,
+      });
+      mockSubmit.mockResolvedValue(TWO_QUESTIONS_QUIZ);
+      renderPage();
+
+      // 추가 전: 2개 문항
+      expect(screen.getAllByText(/번 문제$/)).toHaveLength(2);
+
+      // 추가 버튼 클릭
+      fireEvent.click(screen.getByRole('button', { name: /\+ 문제 추가/ }));
+      expect(screen.getAllByText(/번 문제$/)).toHaveLength(3);
+
+      // 새 문항 answer 입력 (정답이 비어 있으면 isValid=false → 저장 disabled)
+      const answerInputs = screen.getAllByPlaceholderText('정답을 입력하세요');
+      fireEvent.change(answerInputs[2], { target: { value: '새 정답' } });
+
+      fireEvent.click(screen.getByRole('button', { name: '변경 사항 저장' }));
+      await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
+
+      const submitArg = mockSubmit.mock.calls[0][1];
+      expect(submitArg.questions).toHaveLength(3);
+      expect(submitArg.questions[0].serverId).toBe(11);
+      expect(submitArg.questions[1].serverId).toBe(12);
+      expect(submitArg.questions[2].serverId).toBeUndefined();
+      expect(submitArg.questions[2].answer).toBe('새 정답');
+    });
+
+    it('삭제 버튼 → submit 페이로드에서 해당 question 빠짐', async () => {
+      mockUseQuizDetail.mockReturnValue({
+        quiz: TWO_QUESTIONS_QUIZ,
+        isLoading: false,
+        error: null,
+      });
+      mockSubmit.mockResolvedValue(TWO_QUESTIONS_QUIZ);
+      renderPage();
+
+      const deleteButtons = screen.getAllByLabelText('삭제');
+      fireEvent.click(deleteButtons[0]);
+
+      // 삭제 후 1개 남음
+      expect(screen.getAllByText(/번 문제$/)).toHaveLength(1);
+
+      fireEvent.click(screen.getByRole('button', { name: '변경 사항 저장' }));
+      await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
+
+      const submitArg = mockSubmit.mock.calls[0][1];
+      expect(submitArg.questions).toHaveLength(1);
+      expect(submitArg.questions[0].serverId).toBe(12);
+    });
+
+    it('텍스트 수정 → submit 페이로드의 questionText/answer 갱신, serverId 보존', async () => {
+      mockUseQuizDetail.mockReturnValue({
+        quiz: TWO_QUESTIONS_QUIZ,
+        isLoading: false,
+        error: null,
+      });
+      mockSubmit.mockResolvedValue(TWO_QUESTIONS_QUIZ);
+      renderPage();
+
+      const questionInput = screen.getByDisplayValue('첫 번째 문제 텍스트');
+      fireEvent.change(questionInput, { target: { value: '수정된 문제' } });
+
+      const answerInput = screen.getByDisplayValue('정답1');
+      fireEvent.change(answerInput, { target: { value: '수정된 정답' } });
+
+      fireEvent.click(screen.getByRole('button', { name: '변경 사항 저장' }));
+      await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
+
+      const submitArg = mockSubmit.mock.calls[0][1];
+      expect(submitArg.questions[0].questionText).toBe('수정된 문제');
+      expect(submitArg.questions[0].answer).toBe('수정된 정답');
+      expect(submitArg.questions[0].serverId).toBe(11);
+    });
+
+    it('questions 가 비면 변경 사항 저장 비활성', () => {
+      mockUseQuizDetail.mockReturnValue({
+        quiz: { ...MOCK_QUIZ, questions: [] },
+        isLoading: false,
+        error: null,
+      });
+      renderPage();
+      expect(screen.getByRole('button', { name: '변경 사항 저장' })).toBeDisabled();
     });
   });
 });

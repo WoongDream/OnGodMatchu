@@ -279,6 +279,27 @@ describe('updateQuiz', () => {
       visibility: 'PRIVATE',
     });
   });
+
+  it('payload.questions 가 PATCH 본문에 그대로 전달된다', async () => {
+    mockPatch.mockResolvedValueOnce({ data: { success: true, data: {} } });
+    const questions = [
+      {
+        id: 1,
+        imageKey: 'quiz-questions/a.png',
+        answerImageKey: 'quiz-questions/a.png',
+        questionText: '문제',
+        answer: '정답',
+      },
+      {
+        imageKey: null,
+        answerImageKey: null,
+        questionText: null,
+        answer: '다른정답',
+      },
+    ];
+    await updateQuiz(7, { questions });
+    expect(mockPatch).toHaveBeenCalledWith('/api/quizzes/7', { questions });
+  });
 });
 
 describe('updateQuizVisibility', () => {

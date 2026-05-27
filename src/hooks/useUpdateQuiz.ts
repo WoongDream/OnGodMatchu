@@ -1,12 +1,20 @@
 import { useCallback, useState } from 'react';
 import axios from 'axios';
-import { updateQuiz, mapQuizError, type UpdateQuizPayload, type QuizErrorCode } from '@/api/quiz';
+import {
+  updateQuiz,
+  mapQuizError,
+  type UpdateQuizPayload,
+  type QuestionUpdate,
+  type QuizErrorCode,
+} from '@/api/quiz';
 import { uploadImage } from '@/api/upload';
 import { ImageUploadError } from './useUploadImage';
+import type { DraftQuestion } from '@/features/quiz/create/QuestionList';
 import type { Quiz } from '@/types';
 
-export type UpdateQuizSubmitParams = UpdateQuizPayload & {
+export type UpdateQuizSubmitParams = Omit<UpdateQuizPayload, 'questions'> & {
   thumbnailFile?: File | null;
+  questions?: DraftQuestion[];
 };
 
 const ERROR_MESSAGES: Record<QuizErrorCode, string> = {
@@ -25,6 +33,47 @@ export type UseUpdateQuizReturn = {
   clearError: () => void;
 };
 
+const uploadIfPresent = (file: File | null | undefined): Promise<string | null> =>
+  file ? uploadImage(file) : Promise.resolve(null);
+
+const buildQuestionsPayload = async (drafts: DraftQuestion[]): Promise<QuestionUpdate[]> => {
+  const [newImageKeys, newAnswerImageKeys] = await Promise.all([
+    Promise.all(drafts.map((q) => uploadIfPresent(q.imageFile))),
+    Promise.all(
+      drafts.map((q) =>
+        q.answerImageSameAsQuestion ? Promise.resolve(null) : uploadIfPresent(q.answerImageFile),
+      ),
+    ),
+  ]);
+
+  return drafts.map((q, i) => {
+    const uploadedImage = newImageKeys[i];
+    const imageKey =
+      uploadedImage !== null ? uploadedImage : q.imagePreviewUrl !== null ? q.imageKey : null;
+
+    let answerImageKey: string | null;
+    if (q.answerImageSameAsQuestion) {
+      answerImageKey = imageKey;
+    } else {
+      const uploadedAnswer = newAnswerImageKeys[i];
+      answerImageKey =
+        uploadedAnswer !== null
+          ? uploadedAnswer
+          : q.answerImagePreviewUrl !== null
+            ? q.answerImageKey
+            : null;
+    }
+
+    return {
+      id: q.serverId,
+      imageKey,
+      answerImageKey,
+      questionText: q.questionText.trim() || null,
+      answer: q.answer.trim(),
+    };
+  });
+};
+
 const useUpdateQuiz = (): UseUpdateQuizReturn => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,10 +89,13 @@ const useUpdateQuiz = (): UseUpdateQuizReturn => {
       setIsSubmitting(true);
       clearError();
       try {
-        const { thumbnailFile, ...rest } = params;
+        const { thumbnailFile, questions, ...rest } = params;
         const payload: UpdateQuizPayload = { ...rest };
         if (thumbnailFile) {
           payload.thumbnailKey = await uploadImage(thumbnailFile);
+        }
+        if (questions !== undefined) {
+          payload.questions = await buildQuestionsPayload(questions);
         }
         const updated = await updateQuiz(quizId, payload);
         return updated;

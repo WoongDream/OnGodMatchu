@@ -61,12 +61,21 @@ export type MyQuizzesQuery = {
   size?: number;
 };
 
+export type QuestionUpdate = {
+  id?: number;
+  imageKey?: string | null;
+  answerImageKey?: string | null;
+  questionText?: string | null;
+  answer: string;
+};
+
 export type UpdateQuizPayload = {
   title?: string;
   description?: string;
   category?: Category;
   thumbnailKey?: string;
   isPublic?: boolean;
+  questions?: QuestionUpdate[];
 };
 
 export type QuizErrorCode =

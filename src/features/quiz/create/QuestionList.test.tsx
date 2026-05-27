@@ -46,8 +46,10 @@ describe('QuestionList', () => {
     id: 'test-id-1',
     questionText: 'Test Question 1',
     answer: 'Test Answer 1',
+    imageKey: null,
     imageFile: null,
     imagePreviewUrl: null,
+    answerImageKey: null,
     answerImageFile: null,
     answerImagePreviewUrl: null,
     answerImageSameAsQuestion: true,
@@ -92,6 +94,13 @@ describe('QuestionList', () => {
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
       expect(question.id).toMatch(uuidRegex);
+    });
+
+    it('imageKey/answerImageKey 는 null 로 초기화되고 serverId 는 없다', () => {
+      const question = createEmptyQuestion();
+      expect(question.imageKey).toBeNull();
+      expect(question.answerImageKey).toBeNull();
+      expect(question.serverId).toBeUndefined();
     });
   });
 
