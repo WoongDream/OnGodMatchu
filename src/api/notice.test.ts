@@ -11,18 +11,12 @@ vi.mock('./instance', () => ({
 }));
 
 import instance from './instance';
-import {
-  getAnnouncements,
-  getReleaseNotes,
-  getAnnouncementDetail,
-  getReleaseNoteDetail,
-  type NoticePage,
-} from './notice';
+import { getAnnouncements, getAnnouncementDetail, type NoticePage } from './notice';
 
 const mockGet = vi.mocked(instance.get);
 
 const makeListItem = (overrides: Partial<NoticeListItem> = {}): NoticeListItem => ({
-  id: 1,
+  slug: 'service-open',
   title: '공지 제목',
   publishedAt: '2026-05-01T00:00:00+09:00',
   ...overrides,
@@ -44,7 +38,7 @@ const makePage = (
 });
 
 const makeDetail = (overrides: Partial<NoticeDetail> = {}): NoticeDetail => ({
-  id: 1,
+  slug: 'service-open',
   title: '상세 제목',
   content: '본문',
   publishedAt: '2026-05-01T00:00:00+09:00',
@@ -98,8 +92,8 @@ describe('getAnnouncements', () => {
 
   it('ApiResponse 에서 data.data (NoticePage) 를 언랩해서 반환한다', async () => {
     const fixture = makePage([
-      makeListItem({ id: 10, title: '첫 공지' }),
-      makeListItem({ id: 11, title: '둘째 공지' }),
+      makeListItem({ slug: 'service-open', title: '첫 공지' }),
+      makeListItem({ slug: 'maintenance-notice', title: '둘째 공지' }),
     ]);
     mockGet.mockResolvedValueOnce({ data: { success: true, data: fixture } });
 
@@ -115,121 +109,53 @@ describe('getAnnouncements', () => {
   });
 });
 
-describe('getReleaseNotes', () => {
-  it('쿼리 없이 호출하면 GET /api/release-notes 를 호출한다', async () => {
-    mockGet.mockResolvedValueOnce({ data: { success: true, data: makePage() } });
-
-    await getReleaseNotes();
-
-    expect(mockGet).toHaveBeenCalledWith('/api/release-notes');
-  });
-
-  it('page/size 가 모두 주어지면 쿼리스트링으로 포함한다', async () => {
-    mockGet.mockResolvedValueOnce({ data: { success: true, data: makePage() } });
-
-    await getReleaseNotes({ page: 0, size: 20 });
-
-    expect(mockGet).toHaveBeenCalledWith('/api/release-notes?page=0&size=20');
-  });
-
-  it('page 만 주어지면 size 는 쿼리에 포함하지 않는다', async () => {
-    mockGet.mockResolvedValueOnce({ data: { success: true, data: makePage() } });
-
-    await getReleaseNotes({ page: 2 });
-
-    expect(mockGet).toHaveBeenCalledWith('/api/release-notes?page=2');
-  });
-
-  it('size 만 주어지면 page 는 쿼리에 포함하지 않는다', async () => {
-    mockGet.mockResolvedValueOnce({ data: { success: true, data: makePage() } });
-
-    await getReleaseNotes({ size: 5 });
-
-    expect(mockGet).toHaveBeenCalledWith('/api/release-notes?size=5');
-  });
-
-  it('ApiResponse 에서 data.data (NoticePage) 를 언랩해서 반환한다', async () => {
-    const fixture = makePage([makeListItem({ id: 100, title: 'v1.0.0' })]);
-    mockGet.mockResolvedValueOnce({ data: { success: true, data: fixture } });
-
-    const result = await getReleaseNotes();
-
-    expect(result).toEqual(fixture);
-  });
-
-  it('axios 에러를 그대로 throw 한다', async () => {
-    mockGet.mockRejectedValueOnce(new Error('network'));
-
-    await expect(getReleaseNotes()).rejects.toThrow('network');
-  });
-});
-
 describe('getAnnouncementDetail', () => {
-  it('GET /api/announcements/{id} 를 호출한다', async () => {
-    mockGet.mockResolvedValueOnce({ data: { success: true, data: makeDetail({ id: 123 }) } });
+  it('GET /api/announcements/{slug} 를 호출한다', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: { success: true, data: makeDetail({ slug: 'service-open' }) },
+    });
 
-    await getAnnouncementDetail(123);
+    await getAnnouncementDetail('service-open');
 
-    expect(mockGet).toHaveBeenCalledWith('/api/announcements/123');
+    expect(mockGet).toHaveBeenCalledWith('/api/announcements/service-open');
   });
 
   it('ApiResponse 에서 data.data (NoticeDetail) 를 언랩해서 반환한다', async () => {
-    const fixture = makeDetail({ id: 123, title: '공지 상세', content: '본문 내용' });
+    const fixture = makeDetail({
+      slug: 'service-open',
+      title: '공지 상세',
+      content: '본문 내용',
+    });
     mockGet.mockResolvedValueOnce({ data: { success: true, data: fixture } });
 
-    const result = await getAnnouncementDetail(123);
+    const result = await getAnnouncementDetail('service-open');
 
     expect(result).toEqual(fixture);
   });
 
-  it('id 가 다른 경우 각각 다른 URL 로 호출한다', async () => {
+  it('slug 가 다른 경우 각각 다른 URL 로 호출한다', async () => {
     mockGet.mockResolvedValue({ data: { success: true, data: makeDetail() } });
 
-    await getAnnouncementDetail(1);
-    await getAnnouncementDetail(2);
+    await getAnnouncementDetail('service-open');
+    await getAnnouncementDetail('maintenance-notice');
 
-    expect(mockGet).toHaveBeenNthCalledWith(1, '/api/announcements/1');
-    expect(mockGet).toHaveBeenNthCalledWith(2, '/api/announcements/2');
+    expect(mockGet).toHaveBeenNthCalledWith(1, '/api/announcements/service-open');
+    expect(mockGet).toHaveBeenNthCalledWith(2, '/api/announcements/maintenance-notice');
+  });
+
+  it('slug 에 특수문자가 있으면 encodeURIComponent 로 escape 한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makeDetail() } });
+
+    await getAnnouncementDetail('한글 슬러그/test');
+
+    expect(mockGet).toHaveBeenCalledWith(
+      '/api/announcements/%ED%95%9C%EA%B8%80%20%EC%8A%AC%EB%9F%AC%EA%B7%B8%2Ftest',
+    );
   });
 
   it('axios 에러를 그대로 throw 한다', async () => {
     mockGet.mockRejectedValueOnce(new Error('not found'));
 
-    await expect(getAnnouncementDetail(999)).rejects.toThrow('not found');
-  });
-});
-
-describe('getReleaseNoteDetail', () => {
-  it('GET /api/release-notes/{id} 를 호출한다', async () => {
-    mockGet.mockResolvedValueOnce({ data: { success: true, data: makeDetail({ id: 456 }) } });
-
-    await getReleaseNoteDetail(456);
-
-    expect(mockGet).toHaveBeenCalledWith('/api/release-notes/456');
-  });
-
-  it('ApiResponse 에서 data.data (NoticeDetail) 를 언랩해서 반환한다', async () => {
-    const fixture = makeDetail({ id: 456, title: 'v1.2.0 릴리스 노트', content: '변경 내역' });
-    mockGet.mockResolvedValueOnce({ data: { success: true, data: fixture } });
-
-    const result = await getReleaseNoteDetail(456);
-
-    expect(result).toEqual(fixture);
-  });
-
-  it('id 가 다른 경우 각각 다른 URL 로 호출한다', async () => {
-    mockGet.mockResolvedValue({ data: { success: true, data: makeDetail() } });
-
-    await getReleaseNoteDetail(10);
-    await getReleaseNoteDetail(20);
-
-    expect(mockGet).toHaveBeenNthCalledWith(1, '/api/release-notes/10');
-    expect(mockGet).toHaveBeenNthCalledWith(2, '/api/release-notes/20');
-  });
-
-  it('axios 에러를 그대로 throw 한다', async () => {
-    mockGet.mockRejectedValueOnce(new Error('not found'));
-
-    await expect(getReleaseNoteDetail(999)).rejects.toThrow('not found');
+    await expect(getAnnouncementDetail('missing')).rejects.toThrow('not found');
   });
 });

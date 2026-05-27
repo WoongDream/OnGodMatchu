@@ -93,7 +93,7 @@ const App = () => {
                 <Route path="/announcements" element={<AnnouncementsLayout />}>
                   <Route index element={<Navigate to="notices" replace />} />
                   <Route path="notices" element={<AnnouncementsList />} />
-                  <Route path="notices/:noticeId" element={<AnnouncementDetail />} />
+                  <Route path="notices/:slug" element={<AnnouncementDetail />} />
                   <Route path="release-notes" element={<ReleaseNotesList />} />
                   <Route path="release-notes/:version" element={<ReleaseNoteDetail />} />
                 </Route>

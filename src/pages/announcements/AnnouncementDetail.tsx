@@ -15,9 +15,8 @@ import {
 const formatDate = (iso: string): string => iso.slice(0, 10);
 
 const AnnouncementDetail = memo(() => {
-  const { noticeId } = useParams<{ noticeId: string }>();
-  const id = noticeId ? Number(noticeId) : undefined;
-  const { notice, isLoading, error } = useNoticeDetail('announcements', id);
+  const { slug } = useParams<{ slug: string }>();
+  const { notice, isLoading, error } = useNoticeDetail(slug);
 
   if (isLoading) {
     return <div css={notFoundStyle}>불러오는 중...</div>;

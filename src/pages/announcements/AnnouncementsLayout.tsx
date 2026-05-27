@@ -13,10 +13,7 @@ import {
 } from './AnnouncementsLayout.style';
 
 const AnnouncementsLayout = memo(() => {
-  const { totalElements: announcementCount } = useNoticesInfinite({
-    kind: 'announcements',
-    size: 1,
-  });
+  const { totalElements: announcementCount } = useNoticesInfinite({ size: 1 });
   const releaseNoteCount = getReleaseNotesCount();
 
   return (

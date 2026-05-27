@@ -41,17 +41,9 @@ export const getAnnouncements = async (q: NoticeListQuery = {}): Promise<NoticeP
   return res.data.data;
 };
 
-export const getReleaseNotes = async (q: NoticeListQuery = {}): Promise<NoticePage> => {
-  const res = await instance.get<ApiResponse<NoticePage>>(`/api/release-notes${buildQuery(q)}`);
-  return res.data.data;
-};
-
-export const getAnnouncementDetail = async (id: number): Promise<NoticeDetail> => {
-  const res = await instance.get<ApiResponse<NoticeDetail>>(`/api/announcements/${id}`);
-  return res.data.data;
-};
-
-export const getReleaseNoteDetail = async (id: number): Promise<NoticeDetail> => {
-  const res = await instance.get<ApiResponse<NoticeDetail>>(`/api/release-notes/${id}`);
+export const getAnnouncementDetail = async (slug: string): Promise<NoticeDetail> => {
+  const res = await instance.get<ApiResponse<NoticeDetail>>(
+    `/api/announcements/${encodeURIComponent(slug)}`,
+  );
   return res.data.data;
 };

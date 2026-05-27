@@ -1,17 +1,9 @@
 import { useCallback, useMemo } from 'react';
 import useSWRInfinite from 'swr/infinite';
-import {
-  getAnnouncements,
-  getReleaseNotes,
-  type NoticePage,
-  type NoticeListQuery,
-} from '@/api/notice';
+import { getAnnouncements, type NoticePage } from '@/api/notice';
 import type { NoticeListItem } from '@/types';
 
-export type NoticeKind = 'announcements' | 'release-notes';
-
 export type UseNoticesInfiniteParams = {
-  kind: NoticeKind;
   size?: number;
 };
 
@@ -27,20 +19,17 @@ export type UseNoticesInfiniteReturn = {
 
 const DEFAULT_SIZE = 20;
 
-const fetchByKind = (kind: NoticeKind, query: NoticeListQuery): Promise<NoticePage> =>
-  kind === 'announcements' ? getAnnouncements(query) : getReleaseNotes(query);
-
-const useNoticesInfinite = (params: UseNoticesInfiniteParams): UseNoticesInfiniteReturn => {
-  const { kind, size = DEFAULT_SIZE } = params;
+const useNoticesInfinite = (params: UseNoticesInfiniteParams = {}): UseNoticesInfiniteReturn => {
+  const { size = DEFAULT_SIZE } = params;
 
   const getKey = useCallback(
     (pageIndex: number, previousPageData: NoticePage | null) => {
       if (previousPageData && previousPageData.last) {
         return null;
       }
-      return ['notices', kind, pageIndex, size] as const;
+      return ['notices', 'announcements', pageIndex, size] as const;
     },
-    [kind, size],
+    [size],
   );
 
   const {
@@ -50,8 +39,8 @@ const useNoticesInfinite = (params: UseNoticesInfiniteParams): UseNoticesInfinit
     isValidating,
     size: pageCount,
     setSize,
-  } = useSWRInfinite(getKey, ([, k, page, s]) =>
-    fetchByKind(k as NoticeKind, { page: page as number, size: s as number }),
+  } = useSWRInfinite(getKey, ([, , page, s]) =>
+    getAnnouncements({ page: page as number, size: s as number }),
   );
 
   const items = useMemo<NoticeListItem[]>(

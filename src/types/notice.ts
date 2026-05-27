@@ -1,11 +1,11 @@
 export type NoticeListItem = {
-  id: number;
+  slug: string;
   title: string;
   publishedAt: string;
 };
 
 export type NoticeDetail = {
-  id: number;
+  slug: string;
   title: string;
   content: string;
   publishedAt: string;

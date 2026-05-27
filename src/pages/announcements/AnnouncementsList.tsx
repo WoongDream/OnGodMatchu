@@ -20,9 +20,7 @@ import {
 const formatDate = (iso: string): string => iso.slice(0, 10);
 
 const AnnouncementsList = memo(() => {
-  const { items, isLoading, isLoadingMore, hasNext, loadMore, error } = useNoticesInfinite({
-    kind: 'announcements',
-  });
+  const { items, isLoading, isLoadingMore, hasNext, loadMore, error } = useNoticesInfinite();
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -63,8 +61,8 @@ const AnnouncementsList = memo(() => {
       ) : (
         <ul css={listStyle}>
           {items.map((item) => (
-            <li key={item.id}>
-              <Link to={`/announcements/notices/${item.id}`} css={rowStyle}>
+            <li key={item.slug}>
+              <Link to={`/announcements/notices/${encodeURIComponent(item.slug)}`} css={rowStyle}>
                 <span css={rowTitleStyle}>{item.title}</span>
                 <span css={rowDateStyle}>{formatDate(item.publishedAt)}</span>
               </Link>

@@ -284,7 +284,7 @@ describe('App', () => {
     it('renders announcements child routes (notices / release-notes / details)', () => {
       renderWithTheme(<App />);
       expect(screen.getByTestId('route-notices')).toBeInTheDocument();
-      expect(screen.getByTestId('route-notices/:noticeId')).toBeInTheDocument();
+      expect(screen.getByTestId('route-notices/:slug')).toBeInTheDocument();
       expect(screen.getByTestId('route-release-notes')).toBeInTheDocument();
       expect(screen.getByTestId('route-release-notes/:version')).toBeInTheDocument();
     });
