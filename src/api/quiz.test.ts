@@ -13,6 +13,7 @@ import instance from './instance';
 import {
   getMyQuizzes,
   getUserQuizzes,
+  getQuizDetail,
   updateQuiz,
   updateQuizVisibility,
   deleteQuiz,
@@ -128,6 +129,123 @@ describe('getUserQuizzes', () => {
     });
     const res = await getUserQuizzes('uuid-123');
     expect(res.content[0].isPublic).toBe(true);
+  });
+});
+
+describe('getQuizDetail', () => {
+  const makeRawDetail = (overrides: Partial<Record<string, unknown>> = {}) => ({
+    id: 1,
+    publicId: 'uuid-1',
+    title: '상세 퀴즈',
+    description: '설명',
+    category: 'movie',
+    categoryLabel: '영화',
+    visibility: 'PUBLIC',
+    thumbnailKey: null,
+    thumbnailUrl: null,
+    playCount: 12,
+    shareCount: 3,
+    starCount: 4,
+    commentCount: 5,
+    correctRate: 0.8,
+    createdAt: '2026-05-01T00:00:00+09:00',
+    updatedAt: '2026-05-01T00:00:00+09:00',
+    questions: [
+      {
+        id: 11,
+        questionText: 'Q1',
+        imageKey: null,
+        imageUrl: null,
+        answerImageKey: null,
+        answerImageUrl: null,
+      },
+      {
+        id: 12,
+        questionText: 'Q2',
+        imageKey: null,
+        imageUrl: null,
+        answerImageKey: null,
+        answerImageUrl: null,
+      },
+    ],
+    ...overrides,
+  });
+
+  it('GET /api/quizzes/{quizId} 를 호출한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makeRawDetail() } });
+    await getQuizDetail(42);
+    expect(mockGet).toHaveBeenCalledWith('/api/quizzes/42');
+  });
+
+  it('visibility PUBLIC 응답은 isPublic true 로 변환하고 visibility 키는 제거한다', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: { success: true, data: makeRawDetail({ visibility: 'PUBLIC' }) },
+    });
+    const res = await getQuizDetail(1);
+    expect(res.isPublic).toBe(true);
+    expect(res).not.toHaveProperty('visibility');
+  });
+
+  it('visibility PRIVATE 응답은 isPublic false 로 변환한다', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: { success: true, data: makeRawDetail({ visibility: 'PRIVATE' }) },
+    });
+    const res = await getQuizDetail(1);
+    expect(res.isPublic).toBe(false);
+    expect(res).not.toHaveProperty('visibility');
+  });
+
+  it('questions 배열을 그대로 보존한다', async () => {
+    const questions = [
+      {
+        id: 101,
+        questionText: '문제1',
+        imageKey: null,
+        imageUrl: null,
+        answerImageKey: null,
+        answerImageUrl: null,
+      },
+      {
+        id: 102,
+        questionText: '문제2',
+        imageKey: null,
+        imageUrl: null,
+        answerImageKey: null,
+        answerImageUrl: null,
+      },
+      {
+        id: 103,
+        questionText: '문제3',
+        imageKey: null,
+        imageUrl: null,
+        answerImageKey: null,
+        answerImageUrl: null,
+      },
+    ];
+    mockGet.mockResolvedValueOnce({
+      data: { success: true, data: makeRawDetail({ questions }) },
+    });
+    const res = await getQuizDetail(1);
+    expect(res.questions).toEqual(questions);
+  });
+
+  it('title/category/playCount 등 다른 필드도 그대로 보존한다', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        success: true,
+        data: makeRawDetail({
+          id: 99,
+          title: '보존 테스트',
+          category: 'movie',
+          playCount: 777,
+        }),
+      },
+    });
+    const res = await getQuizDetail(99);
+    expect(res.id).toBe(99);
+    expect(res.title).toBe('보존 테스트');
+    expect(res.category).toBe('movie');
+    expect(res.playCount).toBe(777);
   });
 });
 

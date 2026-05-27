@@ -10,6 +10,10 @@ type QuizDetailResponse = Quiz & {
   questions: Question[];
 };
 
+type RawQuizDetailResponse = Omit<QuizDetailResponse, 'isPublic'> & {
+  visibility: QuizVisibility;
+};
+
 type Page<T> = {
   content: T[];
   totalElements: number;
@@ -86,6 +90,11 @@ const toMyQuizListItem = (raw: RawMyQuizListItem): MyQuizListItem => {
   return { ...rest, publicId: quizId, isPublic: visibilityToFlag(visibility) };
 };
 
+const toQuizDetail = (raw: RawQuizDetailResponse): QuizDetailResponse => {
+  const { visibility, ...rest } = raw;
+  return { ...rest, isPublic: visibilityToFlag(visibility) };
+};
+
 export const getCategories = async (): Promise<CategoryItem[]> => {
   const res = await instance.get<ApiResponse<CategoryItem[]>>('/api/quizzes/categories');
   return res.data.data;
@@ -103,8 +112,8 @@ export const getQuizzes = async (params?: {
 };
 
 export const getQuizDetail = async (quizId: number): Promise<QuizDetailResponse> => {
-  const res = await instance.get<ApiResponse<QuizDetailResponse>>(`/api/quizzes/${quizId}`);
-  return res.data.data;
+  const res = await instance.get<ApiResponse<RawQuizDetailResponse>>(`/api/quizzes/${quizId}`);
+  return toQuizDetail(res.data.data);
 };
 
 export const incrementPlayCount = async (quizId: number): Promise<void> => {
