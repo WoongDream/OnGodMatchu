@@ -39,6 +39,7 @@ const MOCK_RESPONSE: AttemptResponse = {
   score: 2,
   totalQuestions: 2,
   percent: 100,
+  topPercentile: null,
   completedAt: '2025-01-01T00:00:00Z',
   results: [
     {

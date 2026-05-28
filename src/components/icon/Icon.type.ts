@@ -13,4 +13,6 @@ export type IconName =
   | 'accuracy'
   | 'trending-up'
   | 'arrow-up'
-  | 'arrow-down';
+  | 'arrow-down'
+  | 'arrow-right'
+  | 'send';

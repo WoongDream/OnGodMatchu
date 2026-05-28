@@ -14,6 +14,7 @@ import {
   getMyQuizzes,
   getUserQuizzes,
   getQuizDetail,
+  getQuizScoreDistribution,
   updateQuiz,
   updateQuizVisibility,
   deleteQuiz,
@@ -348,6 +349,55 @@ describe('recordQuizShare', () => {
   it('instance.post 가 reject 하면 그대로 전파한다 (catch 안 함)', async () => {
     mockPost.mockRejectedValueOnce(new Error('boom'));
     await expect(recordQuizShare(1)).rejects.toThrow('boom');
+  });
+});
+
+describe('getQuizScoreDistribution', () => {
+  const makeDistribution = (overrides: Partial<Record<string, unknown>> = {}) => ({
+    totalAttempts: 42,
+    averageScore: 3.4,
+    distribution: [
+      { score: 0, count: 1 },
+      { score: 1, count: 3 },
+      { score: 2, count: 8 },
+      { score: 3, count: 15 },
+      { score: 4, count: 10 },
+      { score: 5, count: 5 },
+    ],
+    ...overrides,
+  });
+
+  it('GET /api/quizzes/{id}/score-distribution 을 호출한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makeDistribution() } });
+    await getQuizScoreDistribution(5);
+    expect(mockGet).toHaveBeenCalledWith('/api/quizzes/5/score-distribution');
+  });
+
+  it('ApiResponse 의 data 를 언랩해 { totalAttempts, averageScore, distribution } 를 반환한다', async () => {
+    const payload = makeDistribution({ totalAttempts: 10, averageScore: 2.5 });
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: payload } });
+    const res = await getQuizScoreDistribution(7);
+    expect(res).toEqual(payload);
+    expect(res.totalAttempts).toBe(10);
+    expect(res.averageScore).toBe(2.5);
+  });
+
+  it('distribution 배열을 그대로 보존한다 (순서·길이)', async () => {
+    const distribution = [
+      { score: 0, count: 0 },
+      { score: 1, count: 2 },
+      { score: 2, count: 0 },
+    ];
+    mockGet.mockResolvedValueOnce({
+      data: { success: true, data: makeDistribution({ distribution }) },
+    });
+    const res = await getQuizScoreDistribution(7);
+    expect(res.distribution).toEqual(distribution);
+  });
+
+  it('instance.get 이 reject 하면 그대로 전파한다', async () => {
+    mockGet.mockRejectedValueOnce(new Error('boom'));
+    await expect(getQuizScoreDistribution(7)).rejects.toThrow('boom');
   });
 });
 

@@ -7,9 +7,22 @@ export const wrapperStyle = (theme: Theme) => css`
   gap: ${theme.spacing.sm};
 `;
 
+export const topRowStyle = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+`;
+
 export const labelStyle = (theme: Theme) => css`
   ${text({ size: 'sm', weight: 'medium' })({ theme })}
   color: ${theme.colors.fg.secondary};
+`;
+
+export const currentStyle = (theme: Theme) => css`
+  ${text({ size: 'md', weight: 'bold' })({ theme })}
+  color: ${theme.colors.fg.primary};
+  margin-right: 2px;
 `;
 
 export const barStyle = (theme: Theme) => css`

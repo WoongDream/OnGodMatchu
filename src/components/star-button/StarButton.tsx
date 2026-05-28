@@ -27,7 +27,7 @@ const StarButton = memo(
       return (
         <button
           type="button"
-          css={chipStyle(active)}
+          css={chipStyle(active, size)}
           aria-label={label}
           aria-pressed={active}
           disabled={disabled}

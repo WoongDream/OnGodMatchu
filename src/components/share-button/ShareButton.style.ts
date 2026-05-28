@@ -51,35 +51,39 @@ export const chipLabelStyle = (theme: Theme) => css`
   }
 `;
 
-export const chipStyle = (theme: Theme) => css`
-  appearance: none;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: ${theme.spacing.sm};
-  padding: ${theme.spacing.xs} ${theme.spacing.sm};
-  border-radius: ${theme.borderRadius.full};
-  border: 1px solid ${theme.colors.border.primary};
-  background-color: ${theme.colors.bg.primary};
-  color: ${theme.colors.fg.primary};
-  font-size: ${theme.fontSize.sm};
-  font-weight: ${theme.fontWeight.medium};
-  line-height: 1;
-  transition: background-color 0.15s;
+export const chipStyle =
+  (size: ShareButtonSize = 'md') =>
+  (theme: Theme) => css`
+    appearance: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: ${theme.spacing.sm};
+    padding: ${size === 'lg'
+      ? `${theme.spacing.sm} ${theme.spacing.md}`
+      : `${theme.spacing.xs} ${theme.spacing.sm}`};
+    border-radius: ${theme.borderRadius.full};
+    border: 1px solid ${theme.colors.border.primary};
+    background-color: ${theme.colors.bg.primary};
+    color: ${theme.colors.fg.primary};
+    font-size: ${size === 'lg' ? theme.fontSize.md : theme.fontSize.sm};
+    font-weight: ${theme.fontWeight.medium};
+    line-height: 1;
+    transition: background-color 0.15s;
 
-  svg {
-    color: ${theme.colors.fg.secondary};
-  }
+    svg {
+      color: ${theme.colors.fg.secondary};
+    }
 
-  &:hover:not(:disabled) {
-    background-color: ${theme.colors.bg.secondary};
-  }
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-`;
+    &:hover:not(:disabled) {
+      background-color: ${theme.colors.bg.secondary};
+    }
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+  `;
 
 export const countLabelStyle = (theme: Theme) => css`
   font-size: ${theme.fontSize.sm};

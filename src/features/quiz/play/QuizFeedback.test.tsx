@@ -1,325 +1,164 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
 import { renderWithTheme, screen } from '@/test/renderWithTheme';
 import QuizFeedback from './QuizFeedback';
 
 describe('QuizFeedback', () => {
-  describe('rendering correct answer state', () => {
-    it('renders success message when answer is correct', () => {
-      renderWithTheme(<QuizFeedback correct={true} answer="example answer" />);
-      expect(screen.getByText('정답이에요!')).toBeInTheDocument();
-    });
-
-    it('renders correct message with proper styling applied', () => {
-      renderWithTheme(<QuizFeedback correct={true} answer="example answer" />);
-      const resultElement = screen.getByText('정답이에요!');
-      expect(resultElement).toBeInTheDocument();
-      // Verify the result element is present in the document
-      expect(resultElement.parentElement).toBeTruthy();
-    });
-
-    it('does not display answer when answer is correct', () => {
-      renderWithTheme(<QuizFeedback correct={true} answer="correct answer" />);
-      expect(screen.queryByText(/정답:/)).not.toBeInTheDocument();
-    });
-  });
-
-  describe('rendering incorrect answer state', () => {
-    it('renders error message when answer is incorrect', () => {
-      renderWithTheme(<QuizFeedback correct={false} answer="example answer" />);
-      expect(screen.getByText('오답이에요')).toBeInTheDocument();
-    });
-
-    it('displays the correct answer when answer is incorrect', () => {
-      renderWithTheme(<QuizFeedback correct={false} answer="correct answer" />);
-      expect(screen.getByText('정답: correct answer')).toBeInTheDocument();
-    });
-
-    it('shows correct answer label and value together', () => {
-      renderWithTheme(<QuizFeedback correct={false} answer="Seoul" />);
-      const answerText = screen.getByText('정답: Seoul');
-      expect(answerText).toBeInTheDocument();
-    });
-  });
-
-  describe('answer display with various content', () => {
-    it('displays answer with special characters', () => {
-      renderWithTheme(<QuizFeedback correct={false} answer="정답 (답안)" />);
-      expect(screen.getByText('정답: 정답 (답안)')).toBeInTheDocument();
-    });
-
-    it('displays long answer text', () => {
-      const longAnswer = 'This is a very long answer that spans multiple words';
-      renderWithTheme(<QuizFeedback correct={false} answer={longAnswer} />);
-      expect(screen.getByText(`정답: ${longAnswer}`)).toBeInTheDocument();
-    });
-
-    it('displays answer with numbers', () => {
-      renderWithTheme(<QuizFeedback correct={false} answer="1995" />);
-      expect(screen.getByText('정답: 1995')).toBeInTheDocument();
-    });
-
-    it('displays answer with punctuation', () => {
-      renderWithTheme(<QuizFeedback correct={false} answer="Yes, it is." />);
-      expect(screen.getByText('정답: Yes, it is.')).toBeInTheDocument();
-    });
-
-    it('displays empty string answer', () => {
-      const { container } = renderWithTheme(<QuizFeedback correct={false} answer="" />);
-      expect(container.textContent).toContain('정답: ');
-    });
-  });
-
-  describe('conditional rendering of answer section', () => {
-    it('only shows answer section when incorrect', () => {
-      const { container: correctContainer } = renderWithTheme(
-        <QuizFeedback correct={true} answer="answer" />,
-      );
-      expect(correctContainer.textContent).not.toContain('정답:');
-
-      const { container: incorrectContainer } = renderWithTheme(
-        <QuizFeedback correct={false} answer="answer" />,
-      );
-      expect(incorrectContainer.textContent).toContain('정답:');
-    });
-
-    it('does not render answer element when correct', () => {
-      const { container } = renderWithTheme(<QuizFeedback correct={true} answer="some answer" />);
-      // Count the number of text nodes/spans
-      const textContent = container.textContent;
-      // Should only contain the success message, not the answer
-      expect(textContent).toBe('정답이에요!');
-    });
-
-    it('renders answer element when incorrect', () => {
-      const { container } = renderWithTheme(<QuizFeedback correct={false} answer="some answer" />);
-      const textContent = container.textContent;
-      // Should contain both the error message and the answer
-      expect(textContent).toContain('오답이에요');
-      expect(textContent).toContain('정답: some answer');
-    });
-  });
-
-  describe('styling with correct prop', () => {
-    it('passes correct prop to wrapper component', () => {
-      const { container: correctContainer } = renderWithTheme(
-        <QuizFeedback correct={true} answer="answer" />,
-      );
-      // Wrapper should be rendered
-      expect(correctContainer.firstChild).toBeInTheDocument();
-
-      const { container: incorrectContainer } = renderWithTheme(
-        <QuizFeedback correct={false} answer="answer" />,
-      );
-      // Wrapper should be rendered
-      expect(incorrectContainer.firstChild).toBeInTheDocument();
-    });
-
-    it('passes correct prop to result component', () => {
-      renderWithTheme(<QuizFeedback correct={true} answer="answer" />);
-      const successElement = screen.getByText('정답이에요!');
-      expect(successElement).toBeInTheDocument();
-
-      renderWithTheme(<QuizFeedback correct={false} answer="answer" />);
-      const errorElement = screen.getByText('오답이에요');
-      expect(errorElement).toBeInTheDocument();
-    });
-  });
-
-  describe('message text accuracy', () => {
-    it('displays exact success message for correct answer', () => {
-      renderWithTheme(<QuizFeedback correct={true} answer="test" />);
-      expect(screen.getByText('정답이에요!')).toBeInTheDocument();
-    });
-
-    it('displays exact error message for incorrect answer', () => {
-      renderWithTheme(<QuizFeedback correct={false} answer="test" />);
-      expect(screen.getByText('오답이에요')).toBeInTheDocument();
-    });
-
-    it('does not display incorrect message when answer is correct', () => {
-      renderWithTheme(<QuizFeedback correct={true} answer="test" />);
-      expect(screen.queryByText('오답이에요')).not.toBeInTheDocument();
-    });
-
-    it('does not display success message when answer is incorrect', () => {
-      renderWithTheme(<QuizFeedback correct={false} answer="test" />);
-      expect(screen.queryByText('정답이에요!')).not.toBeInTheDocument();
-    });
-  });
-
-  describe('component structure', () => {
-    it('renders without crashing with basic props', () => {
-      renderWithTheme(<QuizFeedback correct={true} answer="answer" />);
-      expect(screen.getByText('정답이에요!')).toBeInTheDocument();
-    });
-
-    it('contains feedback result element', () => {
-      renderWithTheme(<QuizFeedback correct={true} answer="test" />);
-      const result = screen.getByText('정답이에요!');
-      expect(result).toBeInTheDocument();
-      expect(result.tagName).toBe('SPAN');
-    });
-
-    it('contains feedback answer element when incorrect', () => {
-      renderWithTheme(<QuizFeedback correct={false} answer="test answer" />);
-      const answer = screen.getByText('정답: test answer');
-      expect(answer).toBeInTheDocument();
-      expect(answer.tagName).toBe('SPAN');
-    });
-
-    it('has wrapper div containing feedback result', () => {
-      const { container } = renderWithTheme(<QuizFeedback correct={true} answer="test" />);
-      const wrapper = container.firstChild as HTMLElement;
-      expect(wrapper).toBeInTheDocument();
-      expect(wrapper.tagName).toBe('DIV');
-    });
-  });
-
-  describe('prop combination variations', () => {
-    it('handles correct true with various answer strings', () => {
-      const answers = ['answer1', '정답', 'multiple words answer', '123'];
-      answers.forEach((answer) => {
-        const { unmount } = renderWithTheme(<QuizFeedback correct={true} answer={answer} />);
-        expect(screen.getByText('정답이에요!')).toBeInTheDocument();
-        expect(screen.queryByText(/정답:/)).not.toBeInTheDocument();
-        unmount();
-      });
-    });
-
-    it('handles correct false with various answer strings', () => {
-      const testCases = [
-        { answer: 'simple', expected: '정답: simple' },
-        { answer: 'Seoul Korea', expected: '정답: Seoul Korea' },
-        { answer: '2024', expected: '정답: 2024' },
-        { answer: 'answer with (parentheses)', expected: '정답: answer with (parentheses)' },
-      ];
-
-      testCases.forEach(({ answer, expected }) => {
-        const { unmount } = renderWithTheme(<QuizFeedback correct={false} answer={answer} />);
-        expect(screen.getByText(expected)).toBeInTheDocument();
-        unmount();
-      });
-    });
-  });
-
-  describe('display name', () => {
-    it('has correct display name for debugging', () => {
-      renderWithTheme(<QuizFeedback correct={true} answer="test" />);
-      expect(QuizFeedback.displayName).toBe('QuizFeedback');
-    });
-  });
-
-  describe('memo optimization', () => {
-    it('does not re-render when props remain the same', () => {
-      const { rerender } = renderWithTheme(<QuizFeedback correct={true} answer="answer" />);
-      const initialElement = screen.getByText('정답이에요!');
-
-      rerender(<QuizFeedback correct={true} answer="answer" />);
-      const rerenderElement = screen.getByText('정답이에요!');
-
-      expect(initialElement).toBeInTheDocument();
-      expect(rerenderElement).toBeInTheDocument();
-    });
-
-    it('re-renders when correct prop changes', () => {
-      const { rerender } = renderWithTheme(<QuizFeedback correct={true} answer="answer" />);
-      expect(screen.getByText('정답이에요!')).toBeInTheDocument();
-
-      rerender(<QuizFeedback correct={false} answer="answer" />);
-      expect(screen.getByText('오답이에요')).toBeInTheDocument();
-      expect(screen.getByText('정답: answer')).toBeInTheDocument();
-    });
-
-    it('re-renders when answer prop changes on incorrect state', () => {
-      const { rerender } = renderWithTheme(<QuizFeedback correct={false} answer="first answer" />);
-      expect(screen.getByText('정답: first answer')).toBeInTheDocument();
-
-      rerender(<QuizFeedback correct={false} answer="second answer" />);
-      expect(screen.queryByText('정답: first answer')).not.toBeInTheDocument();
-      expect(screen.getByText('정답: second answer')).toBeInTheDocument();
-    });
-
-    it('handles transition from correct to incorrect state', () => {
-      const { rerender } = renderWithTheme(<QuizFeedback correct={true} answer="hidden answer" />);
-      expect(screen.getByText('정답이에요!')).toBeInTheDocument();
-      expect(screen.queryByText(/정답:/)).not.toBeInTheDocument();
-
-      rerender(<QuizFeedback correct={false} answer="hidden answer" />);
-      expect(screen.getByText('오답이에요')).toBeInTheDocument();
-      expect(screen.getByText('정답: hidden answer')).toBeInTheDocument();
-    });
-
-    it('handles transition from incorrect to correct state', () => {
-      const { rerender } = renderWithTheme(<QuizFeedback correct={false} answer="shown answer" />);
-      expect(screen.getByText('오답이에요')).toBeInTheDocument();
-      expect(screen.getByText('정답: shown answer')).toBeInTheDocument();
-
-      rerender(<QuizFeedback correct={true} answer="shown answer" />);
-      expect(screen.getByText('정답이에요!')).toBeInTheDocument();
-      expect(screen.queryByText(/정답:/)).not.toBeInTheDocument();
-    });
-  });
-
-  describe('edge cases', () => {
-    it('handles whitespace in answer', () => {
-      const { container } = renderWithTheme(
-        <QuizFeedback correct={false} answer="  answer with spaces  " />,
-      );
-      expect(container.textContent).toContain('정답:   answer with spaces  ');
-    });
-
-    it('handles answer with newlines (if applicable)', () => {
-      const { container } = renderWithTheme(<QuizFeedback correct={false} answer="line1\nline2" />);
-      expect(container.textContent).toContain('정답: line1');
-      expect(container.textContent).toContain('line2');
-    });
-
-    it('handles unicode characters in answer', () => {
-      renderWithTheme(<QuizFeedback correct={false} answer="서울 🎓" />);
-      expect(screen.getByText('정답: 서울 🎓')).toBeInTheDocument();
-    });
-  });
-
-  describe('answerImageUrl prop', () => {
-    it('오답 + answerImageUrl 있음 → 이미지를 노출하고 alt="정답 이미지" 를 갖는다', () => {
-      renderWithTheme(
-        <QuizFeedback
-          correct={false}
-          answer="정답"
-          answerImageUrl="https://example.com/answer.jpg"
-        />,
-      );
-      const img = screen.getByAltText('정답 이미지');
-      expect(img).toBeInTheDocument();
-      expect(img).toHaveAttribute('src', 'https://example.com/answer.jpg');
-    });
-
-    it('오답 + answerImageUrl=null → 이미지를 노출하지 않는다', () => {
-      renderWithTheme(<QuizFeedback correct={false} answer="정답" answerImageUrl={null} />);
-      expect(screen.queryByAltText('정답 이미지')).not.toBeInTheDocument();
-    });
-
-    it('오답 + answerImageUrl 미전달(undefined) → 이미지를 노출하지 않는다', () => {
-      renderWithTheme(<QuizFeedback correct={false} answer="정답" />);
-      expect(screen.queryByAltText('정답 이미지')).not.toBeInTheDocument();
-    });
-
-    it('정답 + answerImageUrl 있음 → 이미지를 노출한다 (정답·오답 모두 표시)', () => {
+  describe('정답 상태', () => {
+    it('정답일 때 "정답입니다" 와 정답 텍스트(라벨+값)가 노출되고, "내 답변" 은 노출되지 않는다', () => {
       renderWithTheme(
         <QuizFeedback
           correct={true}
-          answer="정답"
-          answerImageUrl="https://example.com/answer.jpg"
+          answer="짱구"
+          userAnswer="짱구"
+          onNext={vi.fn()}
+          nextAriaLabel="다음 문제"
         />,
       );
-      const img = screen.getByAltText('정답 이미지');
-      expect(img).toBeInTheDocument();
-      expect(img).toHaveAttribute('src', 'https://example.com/answer.jpg');
+
+      expect(screen.getByText('정답입니다')).toBeInTheDocument();
+      // 정답일 때도 "정답 {answer}" 노출 — 라벨과 값이 별도 span 으로 분리되어 있음
+      expect(screen.getByText('정답')).toBeInTheDocument();
+      expect(screen.getByText('짱구')).toBeInTheDocument();
+      // "내 답변" 라벨은 정답일 때 노출되지 않는다
+      expect(screen.queryByText('내 답변')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('오답 상태', () => {
+    it('오답일 때 "오답입니다" + "정답 짱구" + "내 답변 철수" 가 모두 노출된다', () => {
+      renderWithTheme(
+        <QuizFeedback
+          correct={false}
+          answer="짱구"
+          userAnswer="철수"
+          onNext={vi.fn()}
+          nextAriaLabel="다음 문제"
+        />,
+      );
+
+      expect(screen.getByText('오답입니다')).toBeInTheDocument();
+      expect(screen.getByText('정답')).toBeInTheDocument();
+      expect(screen.getByText('짱구')).toBeInTheDocument();
+      expect(screen.getByText('내 답변')).toBeInTheDocument();
+      expect(screen.getByText('철수')).toBeInTheDocument();
     });
 
-    it('오답 + answerImageUrl 빈 문자열 → 이미지를 노출하지 않는다', () => {
-      renderWithTheme(<QuizFeedback correct={false} answer="정답" answerImageUrl="" />);
-      expect(screen.queryByAltText('정답 이미지')).not.toBeInTheDocument();
+    it('시간 초과로 userAnswer 가 빈 문자열이면 "내 답변 (미입력)" 으로 노출된다', () => {
+      renderWithTheme(
+        <QuizFeedback
+          correct={false}
+          answer="짱구"
+          userAnswer=""
+          onNext={vi.fn()}
+          nextAriaLabel="다음 문제"
+        />,
+      );
+
+      expect(screen.getByText('내 답변')).toBeInTheDocument();
+      expect(screen.getByText('(미입력)')).toBeInTheDocument();
+    });
+
+    it('userAnswer 가 공백 문자열뿐이어도 "(미입력)" 으로 처리된다', () => {
+      renderWithTheme(
+        <QuizFeedback
+          correct={false}
+          answer="짱구"
+          userAnswer="   "
+          onNext={vi.fn()}
+          nextAriaLabel="다음 문제"
+        />,
+      );
+
+      expect(screen.getByText('(미입력)')).toBeInTheDocument();
+    });
+  });
+
+  describe('onNext 동작', () => {
+    it('다음 버튼을 클릭하면 onNext 가 호출된다', async () => {
+      const user = userEvent.setup();
+      const onNext = vi.fn();
+      renderWithTheme(
+        <QuizFeedback
+          correct={true}
+          answer="짱구"
+          userAnswer="짱구"
+          onNext={onNext}
+          nextAriaLabel="다음 문제"
+        />,
+      );
+
+      const nextButton = screen.getByLabelText('다음 문제');
+      await user.click(nextButton);
+
+      expect(onNext).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('nextAriaLabel', () => {
+    it('nextAriaLabel="다음 문제" 일 때 해당 라벨로 버튼이 노출된다', () => {
+      renderWithTheme(
+        <QuizFeedback
+          correct={true}
+          answer="짱구"
+          userAnswer="짱구"
+          onNext={vi.fn()}
+          nextAriaLabel="다음 문제"
+        />,
+      );
+
+      expect(screen.getByLabelText('다음 문제')).toBeInTheDocument();
+    });
+
+    it('nextAriaLabel="결과 보기" 일 때 해당 라벨로 버튼이 노출된다 (마지막 문항)', () => {
+      renderWithTheme(
+        <QuizFeedback
+          correct={true}
+          answer="짱구"
+          userAnswer="짱구"
+          onNext={vi.fn()}
+          nextAriaLabel="결과 보기"
+        />,
+      );
+
+      expect(screen.getByLabelText('결과 보기')).toBeInTheDocument();
+    });
+  });
+
+  describe('nextDisabled', () => {
+    it('nextDisabled=true 면 다음 버튼이 disabled 된다', () => {
+      renderWithTheme(
+        <QuizFeedback
+          correct={true}
+          answer="짱구"
+          userAnswer="짱구"
+          onNext={vi.fn()}
+          nextAriaLabel="다음 문제"
+          nextDisabled={true}
+        />,
+      );
+
+      expect(screen.getByLabelText('다음 문제')).toBeDisabled();
+    });
+
+    it('nextDisabled 미전달(기본값 false) 시 다음 버튼은 활성 상태이다', () => {
+      renderWithTheme(
+        <QuizFeedback
+          correct={true}
+          answer="짱구"
+          userAnswer="짱구"
+          onNext={vi.fn()}
+          nextAriaLabel="다음 문제"
+        />,
+      );
+
+      expect(screen.getByLabelText('다음 문제')).not.toBeDisabled();
+    });
+  });
+
+  describe('displayName', () => {
+    it('displayName 이 QuizFeedback 으로 설정되어 있다', () => {
+      expect(QuizFeedback.displayName).toBe('QuizFeedback');
     });
   });
 });

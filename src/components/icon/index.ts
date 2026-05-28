@@ -8,6 +8,8 @@ export {
   TrendingUpIcon,
   ArrowUpIcon,
   ArrowDownIcon,
+  ArrowRightIcon,
+  SendIcon,
   AnnouncementIcon,
   ReleaseNoteIcon,
 } from './Icon';

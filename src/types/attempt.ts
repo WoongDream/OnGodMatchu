@@ -19,6 +19,8 @@ export type AttemptResponse = {
   score: number;
   totalQuestions: number;
   percent: number | null;
+  /** 상위 백분위 0~100 (소수 1자리). 첫 응시자(totalAttempts=1)면 null */
+  topPercentile: number | null;
   completedAt: string;
   results: AttemptResultItem[];
 };

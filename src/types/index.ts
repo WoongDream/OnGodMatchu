@@ -6,6 +6,8 @@ export type {
   QuizVisibility,
   MyQuizListItem,
   MyQuizzesAggregate,
+  ScoreCount,
+  QuizScoreDistribution,
 } from './quiz';
 export type {
   AttemptAnswerInput,

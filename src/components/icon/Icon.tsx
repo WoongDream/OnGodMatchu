@@ -102,6 +102,22 @@ export const ArrowDownIcon = wrap(
   </>,
 );
 
+export const ArrowRightIcon = wrap(
+  'ArrowRightIcon',
+  <>
+    <path d="M5 12h14" />
+    <path d="M13 5l7 7-7 7" />
+  </>,
+);
+
+export const SendIcon = wrap(
+  'SendIcon',
+  <>
+    <path d="M22 2L11 13" />
+    <path d="M22 2L15 22 11 13 2 9z" />
+  </>,
+);
+
 export const AnnouncementIcon = wrap(
   'AnnouncementIcon',
   <>

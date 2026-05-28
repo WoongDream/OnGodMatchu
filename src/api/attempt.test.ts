@@ -20,6 +20,7 @@ const makeAttemptResponse = (overrides: Partial<AttemptResponse> = {}): AttemptR
   score: 3,
   totalQuestions: 5,
   percent: 60,
+  topPercentile: null,
   completedAt: '2026-05-07T10:00:00+09:00',
   results: [],
   ...overrides,

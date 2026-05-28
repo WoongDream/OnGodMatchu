@@ -25,7 +25,7 @@ const ShareButton = memo(
       return (
         <button
           type="button"
-          css={chipStyle}
+          css={chipStyle(size)}
           aria-label="공유하기"
           disabled={disabled}
           onClick={onClick}

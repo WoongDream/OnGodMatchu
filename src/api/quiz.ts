@@ -1,5 +1,12 @@
 import instance from './instance';
-import type { Quiz, Question, Category, QuizVisibility, MyQuizListItem } from '@/types';
+import type {
+  Quiz,
+  Question,
+  Category,
+  QuizVisibility,
+  MyQuizListItem,
+  QuizScoreDistribution,
+} from '@/types';
 
 type ApiResponse<T> = {
   success: boolean;
@@ -152,6 +159,13 @@ export const recordQuizShare = async (quizId: number): Promise<QuizShareResult> 
 export const getQuizDetail = async (quizId: number): Promise<QuizDetailResponse> => {
   const res = await instance.get<ApiResponse<RawQuizDetailResponse>>(`/api/quizzes/${quizId}`);
   return toQuizDetail(res.data.data);
+};
+
+export const getQuizScoreDistribution = async (quizId: number): Promise<QuizScoreDistribution> => {
+  const res = await instance.get<ApiResponse<QuizScoreDistribution>>(
+    `/api/quizzes/${quizId}/score-distribution`,
+  );
+  return res.data.data;
 };
 
 export const incrementPlayCount = async (quizId: number): Promise<void> => {

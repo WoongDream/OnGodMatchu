@@ -72,3 +72,15 @@ export type MyQuizzesAggregate = {
   weeklyPlayCount: number;
   avgCorrectRate?: number | null;
 };
+
+export type ScoreCount = {
+  score: number;
+  count: number;
+};
+
+export type QuizScoreDistribution = {
+  totalAttempts: number;
+  averageScore: number;
+  /** score 0~totalQuestions 모든 칸 (count=0 포함) */
+  distribution: ScoreCount[];
+};
