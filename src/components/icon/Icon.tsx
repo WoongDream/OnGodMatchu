@@ -140,3 +140,33 @@ export const ReleaseNoteIcon = wrap(
     <path d="M16.3 7.7l2.1-2.1" />
   </>,
 );
+
+export const CheckIcon = wrap('CheckIcon', <path d="M5 12.5l4.5 4.5L19 7" strokeWidth={2.4} />);
+
+export const PlusIcon = wrap(
+  'PlusIcon',
+  <>
+    <path d="M12 5v14" />
+    <path d="M5 12h14" />
+  </>,
+);
+
+export const TrashIcon = wrap(
+  'TrashIcon',
+  <>
+    <path d="M4 7h16" />
+    <path d="M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7" />
+    <path d="M6.5 7l1 12a2 2 0 0 0 2 2h5a2 2 0 0 0 2-2l1-12" />
+    <path d="M10 11v6" />
+    <path d="M14 11v6" />
+  </>,
+);
+
+export const AlertIcon = wrap(
+  'AlertIcon',
+  <>
+    <circle cx="12" cy="12" r="9" fill="currentColor" stroke="none" />
+    <path d="M12 7.5v5" stroke="#ffffff" strokeWidth={2} />
+    <circle cx="12" cy="16" r="1.1" fill="#ffffff" stroke="none" />
+  </>,
+);

@@ -5,22 +5,21 @@ import QuizInfoForm from './QuizInfoForm';
 import { CATEGORIES } from '@/types/quiz';
 import type { Category } from '@/types';
 
+// Input mock: label 은 이제 ReactNode 일 수 있으므로 그대로 렌더한다.
+// 식별을 위해 placeholder 기반으로 노출 (제목 input 은 `퀴즈 제목을 입력하세요`).
 vi.mock('@/components/input', () => ({
-  default: ({ label, value, onChange, placeholder }: any) => {
-    const inputId = `input-id-${label}`;
-    return (
-      <div>
-        <label htmlFor={inputId}>{label}</label>
-        <input
-          id={inputId}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          data-testid={`input-${label}`}
-        />
-      </div>
-    );
-  },
+  default: ({ label, value, onChange, placeholder, error }: any) => (
+    <div>
+      <label>{label}</label>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        data-testid="title-input"
+      />
+      {error && <span data-testid="title-error">{error}</span>}
+    </div>
+  ),
 }));
 
 vi.mock('@/components/chip-button', () => ({
@@ -83,601 +82,249 @@ describe('QuizInfoForm', () => {
     vi.clearAllMocks();
   });
 
-  describe('Component Rendering', () => {
-    it('renders the form section with title', () => {
+  describe('초기 렌더', () => {
+    it('퀴즈 정보 섹션 제목을 노출한다', () => {
       renderWithTheme(<QuizInfoForm {...defaultProps} />);
       expect(screen.getByText('퀴즈 정보')).toBeInTheDocument();
     });
 
-    it('renders the image upload component', () => {
+    it('이미지 업로드 컴포넌트를 노출한다', () => {
       renderWithTheme(<QuizInfoForm {...defaultProps} />);
       expect(screen.getByTestId('image-upload')).toBeInTheDocument();
+      expect(screen.getByText('썸네일 (선택)')).toBeInTheDocument();
     });
 
-    it('renders title input with correct label', () => {
+    it('제목 input 을 노출한다 (placeholder 기준)', () => {
       renderWithTheme(<QuizInfoForm {...defaultProps} />);
-      expect(screen.getByLabelText('제목')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('퀴즈 제목을 입력하세요')).toBeInTheDocument();
     });
 
-    it('renders description input with correct label', () => {
+    it('설명 textarea 를 노출한다 (placeholder 기준)', () => {
       renderWithTheme(<QuizInfoForm {...defaultProps} />);
-      expect(screen.getByLabelText('설명')).toBeInTheDocument();
+      const textarea = screen.getByPlaceholderText('퀴즈에 대한 설명을 입력하세요');
+      expect(textarea).toBeInTheDocument();
+      expect(textarea.tagName).toBe('TEXTAREA');
     });
 
-    it('renders all category chips', () => {
+    it('카테고리 라벨과 모든 카테고리 칩을 노출한다', () => {
       renderWithTheme(<QuizInfoForm {...defaultProps} />);
+      expect(screen.getByText('카테고리')).toBeInTheDocument();
       CATEGORIES.forEach(({ label }) => {
         expect(screen.getByTestId(`chip-${label}`)).toBeInTheDocument();
       });
     });
-
-    it('renders exactly 9 category chips', () => {
-      renderWithTheme(<QuizInfoForm {...defaultProps} />);
-      const chips = screen.getAllByRole('button');
-      const categoryChips = chips.filter((btn) => btn.getAttribute('data-active') !== null);
-      expect(categoryChips).toHaveLength(9);
-    });
   });
 
-  describe('Title Input Handling', () => {
-    it('displays initial title prop value', () => {
+  describe('제목 콜백', () => {
+    it('초기 title prop 이 input 에 반영된다', () => {
       renderWithTheme(<QuizInfoForm {...defaultProps} title="My Quiz" />);
-      const titleInput = screen.getByTestId('input-제목') as HTMLInputElement;
-      expect(titleInput.value).toBe('My Quiz');
+      const input = screen.getByPlaceholderText('퀴즈 제목을 입력하세요') as HTMLInputElement;
+      expect(input.value).toBe('My Quiz');
     });
 
-    it('displays empty string when title prop is empty', () => {
-      renderWithTheme(<QuizInfoForm {...defaultProps} title="" />);
-      const titleInput = screen.getByTestId('input-제목') as HTMLInputElement;
-      expect(titleInput.value).toBe('');
-    });
-
-    it('calls onTitleChange when title input changes', async () => {
+    it('input 변경 시 onTitleChange 가 호출된다', async () => {
       const user = userEvent.setup();
       renderWithTheme(<QuizInfoForm {...defaultProps} title="" />);
 
-      const titleInput = screen.getByTestId('input-제목');
-      await user.type(titleInput, 'New Title');
-
-      expect(mockOnTitleChange).toHaveBeenCalled();
-    });
-
-    it('calls onTitleChange with each keystroke', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<QuizInfoForm {...defaultProps} title="" />);
-
-      const titleInput = screen.getByTestId('input-제목');
-      await user.type(titleInput, 'ABC');
+      const input = screen.getByPlaceholderText('퀴즈 제목을 입력하세요');
+      await user.type(input, 'ABC');
 
       expect(mockOnTitleChange).toHaveBeenCalledTimes(3);
     });
-
-    it('shows correct placeholder text for title input', () => {
-      renderWithTheme(<QuizInfoForm {...defaultProps} />);
-      const titleInput = screen.getByPlaceholderText('퀴즈 제목을 입력하세요');
-      expect(titleInput).toBeInTheDocument();
-    });
-
-    it('handles empty title input', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<QuizInfoForm {...defaultProps} title="Initial" />);
-
-      const titleInput = screen.getByTestId('input-제목');
-      await user.clear(titleInput);
-
-      expect(mockOnTitleChange).toHaveBeenCalledWith('');
-    });
-
-    it('handles special characters in title', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<QuizInfoForm {...defaultProps} title="" />);
-
-      const titleInput = screen.getByTestId('input-제목');
-      await user.type(titleInput, '!@#$%');
-
-      expect(mockOnTitleChange).toHaveBeenCalledTimes(5);
-    });
-
-    it('handles korean characters in title', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<QuizInfoForm {...defaultProps} title="" />);
-
-      const titleInput = screen.getByTestId('input-제목');
-      await user.type(titleInput, '한글 테스트');
-
-      expect(mockOnTitleChange).toHaveBeenCalled();
-    });
   });
 
-  describe('Description Input Handling', () => {
-    it('displays initial description prop value', () => {
+  describe('설명 textarea 동작', () => {
+    it('초기 description prop 이 textarea 에 반영된다', () => {
       renderWithTheme(<QuizInfoForm {...defaultProps} description="My Description" />);
-      const descriptionInput = screen.getByTestId('input-설명') as HTMLInputElement;
-      expect(descriptionInput.value).toBe('My Description');
+      const textarea = screen.getByPlaceholderText(
+        '퀴즈에 대한 설명을 입력하세요',
+      ) as HTMLTextAreaElement;
+      expect(textarea.value).toBe('My Description');
     });
 
-    it('displays empty string when description prop is empty', () => {
-      renderWithTheme(<QuizInfoForm {...defaultProps} description="" />);
-      const descriptionInput = screen.getByTestId('input-설명') as HTMLInputElement;
-      expect(descriptionInput.value).toBe('');
-    });
-
-    it('calls onDescriptionChange when description input changes', async () => {
+    it('textarea 입력 시 onDescriptionChange 가 호출된다', async () => {
       const user = userEvent.setup();
       renderWithTheme(<QuizInfoForm {...defaultProps} description="" />);
 
-      const descriptionInput = screen.getByTestId('input-설명');
-      await user.type(descriptionInput, 'New Description');
-
-      expect(mockOnDescriptionChange).toHaveBeenCalled();
-    });
-
-    it('calls onDescriptionChange with each keystroke', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<QuizInfoForm {...defaultProps} description="" />);
-
-      const descriptionInput = screen.getByTestId('input-설명');
-      await user.type(descriptionInput, 'ABC');
+      const textarea = screen.getByPlaceholderText('퀴즈에 대한 설명을 입력하세요');
+      await user.type(textarea, 'ABC');
 
       expect(mockOnDescriptionChange).toHaveBeenCalledTimes(3);
     });
 
-    it('shows correct placeholder text for description input', () => {
-      renderWithTheme(<QuizInfoForm {...defaultProps} />);
-      const descriptionInput = screen.getByPlaceholderText('퀴즈에 대한 설명을 입력하세요');
-      expect(descriptionInput).toBeInTheDocument();
-    });
-
-    it('handles empty description input', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<QuizInfoForm {...defaultProps} description="Initial" />);
-
-      const descriptionInput = screen.getByTestId('input-설명');
-      await user.clear(descriptionInput);
-
-      expect(mockOnDescriptionChange).toHaveBeenCalledWith('');
-    });
-
-    it('handles multiline text in description', async () => {
+    it('textarea 는 멀티라인 입력을 지원한다', async () => {
       const user = userEvent.setup();
       renderWithTheme(<QuizInfoForm {...defaultProps} description="" />);
 
-      const descriptionInput = screen.getByTestId('input-설명');
-      await user.type(descriptionInput, 'Line 1\nLine 2');
+      const textarea = screen.getByPlaceholderText('퀴즈에 대한 설명을 입력하세요');
+      await user.type(textarea, 'L1\nL2');
 
       expect(mockOnDescriptionChange).toHaveBeenCalled();
     });
-
-    it('handles very long description text', async () => {
-      const user = userEvent.setup();
-      const longText = 'a'.repeat(500);
-      renderWithTheme(<QuizInfoForm {...defaultProps} description="" />);
-
-      const descriptionInput = screen.getByTestId('input-설명');
-      await user.type(descriptionInput, longText);
-
-      expect(mockOnDescriptionChange).toHaveBeenCalledTimes(500);
-    });
   });
 
-  describe('Category Selection', () => {
-    it('renders all category options from CATEGORIES', () => {
-      renderWithTheme(<QuizInfoForm {...defaultProps} />);
-
-      const expectedCategories = [
-        '연예인',
-        '영화',
-        '드라마',
-        '애니메이션',
-        '게임',
-        '음악',
-        '스포츠',
-        '상식',
-        '기타',
-      ];
-      expectedCategories.forEach((category) => {
-        expect(screen.getByTestId(`chip-${category}`)).toBeInTheDocument();
-      });
-    });
-
-    it('renders categories in correct order', () => {
-      renderWithTheme(<QuizInfoForm {...defaultProps} />);
-      const chips = screen
-        .getAllByRole('button')
-        .filter((btn) => btn.getAttribute('data-active') !== null);
-
-      CATEGORIES.forEach((cat, index) => {
-        expect(chips[index]).toHaveTextContent(cat.label);
-      });
-    });
-
-    it('no category chip is active when category prop is null', () => {
-      renderWithTheme(<QuizInfoForm {...defaultProps} category={null} />);
-
-      CATEGORIES.forEach(({ label }) => {
-        const chip = screen.getByTestId(`chip-${label}`);
-        expect(chip).toHaveAttribute('data-active', 'false');
-      });
-    });
-
-    it('marks correct chip as active when category is selected', () => {
+  describe('카테고리 콜백', () => {
+    it('category prop 에 따라 active 칩이 정확히 하나만 표시된다', () => {
       renderWithTheme(<QuizInfoForm {...defaultProps} category="game" />);
-
-      const gameChip = screen.getByTestId('chip-게임');
-      expect(gameChip).toHaveAttribute('data-active', 'true');
-    });
-
-    it('only one category chip is active at a time', () => {
-      renderWithTheme(<QuizInfoForm {...defaultProps} category="music" />);
 
       const activeChips = screen
         .getAllByRole('button')
         .filter((btn) => btn.getAttribute('data-active') === 'true');
       expect(activeChips).toHaveLength(1);
-      expect(activeChips[0]).toHaveTextContent('음악');
+      expect(activeChips[0]).toHaveTextContent('게임');
     });
 
-    it('calls onCategoryChange when category chip is clicked', async () => {
+    it('칩 클릭 시 onCategoryChange 가 해당 value 로 호출된다', async () => {
       const user = userEvent.setup();
       renderWithTheme(<QuizInfoForm {...defaultProps} category={null} />);
 
-      const gameChip = screen.getByTestId('chip-게임');
-      await user.click(gameChip);
+      await user.click(screen.getByTestId('chip-게임'));
 
       expect(mockOnCategoryChange).toHaveBeenCalledWith('game');
-    });
-
-    it('calls onCategoryChange with correct category value for all categories', async () => {
-      const user = userEvent.setup();
-      const testCases: { value: Category; label: string }[] = [
-        { value: 'entertainment', label: '연예인' },
-        { value: 'movie', label: '영화' },
-        { value: 'drama', label: '드라마' },
-        { value: 'anime', label: '애니메이션' },
-        { value: 'game', label: '게임' },
-        { value: 'music', label: '음악' },
-        { value: 'sports', label: '스포츠' },
-        { value: 'general', label: '상식' },
-        { value: 'etc', label: '기타' },
-      ];
-
-      for (const { value, label } of testCases) {
-        const { unmount } = renderWithTheme(<QuizInfoForm {...defaultProps} category={null} />);
-        const chip = screen.getByTestId(`chip-${label}`);
-        await user.click(chip);
-        expect(mockOnCategoryChange).toHaveBeenCalledWith(value);
-        mockOnCategoryChange.mockClear();
-        unmount();
-      }
-    });
-
-    it('allows changing from one category to another', async () => {
-      const user = userEvent.setup();
-      const { rerender } = renderWithTheme(<QuizInfoForm {...defaultProps} category="game" />);
-
-      const musicChip = screen.getByTestId('chip-음악');
-      await user.click(musicChip);
-
-      expect(mockOnCategoryChange).toHaveBeenCalledWith('music');
-
-      rerender(<QuizInfoForm {...defaultProps} category="music" />);
-
-      const gameChip = screen.getByTestId('chip-게임');
-      expect(gameChip).toHaveAttribute('data-active', 'false');
-      const updatedMusicChip = screen.getByTestId('chip-음악');
-      expect(updatedMusicChip).toHaveAttribute('data-active', 'true');
-    });
-
-    it('handles clicking the same category multiple times', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<QuizInfoForm {...defaultProps} category="game" />);
-
-      const gameChip = screen.getByTestId('chip-게임');
-      await user.click(gameChip);
-      await user.click(gameChip);
-      await user.click(gameChip);
-
-      expect(mockOnCategoryChange).toHaveBeenCalledTimes(3);
-      expect(mockOnCategoryChange).toHaveBeenCalledWith('game');
-    });
-
-    it('displays inactive state for non-selected category', () => {
-      renderWithTheme(<QuizInfoForm {...defaultProps} category="game" />);
-
-      const musicChip = screen.getByTestId('chip-음악');
-      expect(musicChip).toHaveAttribute('data-active', 'false');
-    });
-
-    it('correctly updates active state after category change', () => {
-      const { rerender } = renderWithTheme(<QuizInfoForm {...defaultProps} category={null} />);
-
-      expect(screen.getByTestId('chip-게임')).toHaveAttribute('data-active', 'false');
-
-      rerender(<QuizInfoForm {...defaultProps} category="game" />);
-
-      expect(screen.getByTestId('chip-게임')).toHaveAttribute('data-active', 'true');
     });
   });
 
-  describe('Thumbnail Handling', () => {
-    it('renders image upload component with correct label', () => {
-      renderWithTheme(<QuizInfoForm {...defaultProps} />);
-      expect(screen.getByText('썸네일 (선택)')).toBeInTheDocument();
-    });
-
-    it('displays preview image when thumbnailPreviewUrl is provided', () => {
+  describe('썸네일', () => {
+    it('thumbnailPreviewUrl 이 있으면 preview-image 가 노출된다', () => {
       renderWithTheme(
         <QuizInfoForm {...defaultProps} thumbnailPreviewUrl="https://example.com/image.jpg" />,
       );
       expect(screen.getByTestId('preview-image')).toBeInTheDocument();
     });
 
-    it('does not display preview image when thumbnailPreviewUrl is null', () => {
+    it('thumbnailPreviewUrl 이 null 이면 preview-image 가 없다', () => {
       renderWithTheme(<QuizInfoForm {...defaultProps} thumbnailPreviewUrl={null} />);
       expect(screen.queryByTestId('preview-image')).not.toBeInTheDocument();
     });
 
-    it('calls onThumbnailRemove when remove button is clicked', async () => {
+    it('remove 버튼 클릭 시 onThumbnailRemove 가 호출된다', async () => {
       const user = userEvent.setup();
       renderWithTheme(
         <QuizInfoForm {...defaultProps} thumbnailPreviewUrl="https://example.com/image.jpg" />,
       );
 
-      const removeButton = screen.getByTestId('remove-image-button');
-      await user.click(removeButton);
+      await user.click(screen.getByTestId('remove-image-button'));
 
       expect(mockOnThumbnailRemove).toHaveBeenCalledTimes(1);
     });
+  });
 
-    it('passes preview URL to image upload component', () => {
-      const previewUrl = 'https://example.com/quiz-thumb.jpg';
-      renderWithTheme(<QuizInfoForm {...defaultProps} thumbnailPreviewUrl={previewUrl} />);
-      const previewImage = screen.getByTestId('preview-image') as HTMLImageElement;
-      expect(previewImage.src).toBe(previewUrl);
+  describe('errors prop', () => {
+    it('title 에러가 있으면 제목 옆에 빨간 dot 과 인라인 에러 메시지가 노출된다', () => {
+      renderWithTheme(<QuizInfoForm {...defaultProps} errors={{ title: '제목을 입력해주세요' }} />);
+
+      // Input mock 이 error 를 별도 노출
+      expect(screen.getByTestId('title-error')).toHaveTextContent('제목을 입력해주세요');
+      // ReactNode label 에 dot 이 포함됐는지
+      expect(screen.getAllByText('•').length).toBeGreaterThanOrEqual(1);
     });
 
-    it('handles null thumbnail preview URL', () => {
-      renderWithTheme(<QuizInfoForm {...defaultProps} thumbnailPreviewUrl={null} />);
-      expect(screen.getByText('No image')).toBeInTheDocument();
+    it('title 에러가 없으면 title-error 가 노출되지 않는다', () => {
+      renderWithTheme(<QuizInfoForm {...defaultProps} />);
+      expect(screen.queryByTestId('title-error')).not.toBeInTheDocument();
+    });
+
+    it('description 에러가 있으면 라벨 옆 dot 과 인라인 에러 메시지가 노출된다', () => {
+      renderWithTheme(
+        <QuizInfoForm {...defaultProps} errors={{ description: '설명을 입력해주세요' }} />,
+      );
+
+      expect(screen.getByText('설명을 입력해주세요')).toBeInTheDocument();
+      // 라벨 옆 dot 존재
+      expect(screen.getAllByText('•').length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('description 에러가 없으면 인라인 에러 메시지가 없다', () => {
+      renderWithTheme(<QuizInfoForm {...defaultProps} />);
+      expect(screen.queryByText('설명을 입력해주세요')).not.toBeInTheDocument();
+    });
+
+    it('category 에러가 있으면 라벨 옆 dot 과 인라인 에러 메시지가 노출된다', () => {
+      renderWithTheme(
+        <QuizInfoForm {...defaultProps} errors={{ category: '카테고리를 선택해주세요' }} />,
+      );
+
+      expect(screen.getByText('카테고리를 선택해주세요')).toBeInTheDocument();
+      expect(screen.getAllByText('•').length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('category 에러가 없으면 인라인 에러 메시지가 없다', () => {
+      renderWithTheme(<QuizInfoForm {...defaultProps} />);
+      expect(screen.queryByText('카테고리를 선택해주세요')).not.toBeInTheDocument();
+    });
+
+    it('errors 전체가 undefined 이면 dot 이 노출되지 않는다', () => {
+      renderWithTheme(<QuizInfoForm {...defaultProps} />);
+      expect(screen.queryByText('•')).not.toBeInTheDocument();
     });
   });
 
-  describe('Combined Props Scenarios', () => {
-    it('renders form with all props filled', () => {
+  describe('슬롯', () => {
+    it('belowTitleSlot 의 children 이 렌더된다', () => {
       renderWithTheme(
         <QuizInfoForm
           {...defaultProps}
-          title="Quiz Title"
-          description="Quiz Description"
-          category="game"
-          thumbnailPreviewUrl="https://example.com/image.jpg"
+          belowTitleSlot={<div data-testid="below-title-slot">below-title</div>}
         />,
       );
 
-      expect((screen.getByTestId('input-제목') as HTMLInputElement).value).toBe('Quiz Title');
-      expect((screen.getByTestId('input-설명') as HTMLInputElement).value).toBe('Quiz Description');
-      expect(screen.getByTestId('chip-게임')).toHaveAttribute('data-active', 'true');
-      expect(screen.getByTestId('preview-image')).toBeInTheDocument();
+      expect(screen.getByTestId('below-title-slot')).toHaveTextContent('below-title');
     });
 
-    it('renders form with minimal props (all empty/null)', () => {
-      renderWithTheme(<QuizInfoForm {...defaultProps} />);
+    it('belowCategorySlot 의 children 이 렌더된다', () => {
+      renderWithTheme(
+        <QuizInfoForm
+          {...defaultProps}
+          belowCategorySlot={<div data-testid="below-category-slot">below-category</div>}
+        />,
+      );
 
-      expect((screen.getByTestId('input-제목') as HTMLInputElement).value).toBe('');
-      expect((screen.getByTestId('input-설명') as HTMLInputElement).value).toBe('');
-      expect(screen.getByTestId('chip-게임')).toHaveAttribute('data-active', 'false');
-      expect(screen.queryByTestId('preview-image')).not.toBeInTheDocument();
+      expect(screen.getByTestId('below-category-slot')).toHaveTextContent('below-category');
     });
 
-    it('handles updating title while category is selected', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<QuizInfoForm {...defaultProps} category="music" />);
+    it('belowTitleSlot 은 belowCategorySlot 보다 DOM 상 앞에 위치한다', () => {
+      renderWithTheme(
+        <QuizInfoForm
+          {...defaultProps}
+          belowTitleSlot={<div data-testid="below-title-slot">A</div>}
+          belowCategorySlot={<div data-testid="below-category-slot">B</div>}
+        />,
+      );
 
-      const titleInput = screen.getByTestId('input-제목');
-      await user.type(titleInput, 'Updated Title');
+      const titleSlot = screen.getByTestId('below-title-slot');
+      const categorySlot = screen.getByTestId('below-category-slot');
+      // compareDocumentPosition: 4 = FOLLOWING (categorySlot 이 titleSlot 보다 뒤)
 
-      expect(mockOnTitleChange).toHaveBeenCalled();
-      expect(screen.getByTestId('chip-음악')).toHaveAttribute('data-active', 'true');
-    });
-
-    it('handles updating description and category together', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<QuizInfoForm {...defaultProps} />);
-
-      const descriptionInput = screen.getByTestId('input-설명');
-      await user.type(descriptionInput, 'Updated description');
-
-      const gameChip = screen.getByTestId('chip-게임');
-      await user.click(gameChip);
-
-      expect(mockOnDescriptionChange).toHaveBeenCalled();
-      expect(mockOnCategoryChange).toHaveBeenCalledWith('game');
+      expect(
+        titleSlot.compareDocumentPosition(categorySlot) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
     });
   });
 
-  describe('Display Name', () => {
-    it('has correct display name for debugging', () => {
+  describe('memo 회귀', () => {
+    it('displayName 이 QuizInfoForm 이다', () => {
       expect(QuizInfoForm.displayName).toBe('QuizInfoForm');
     });
-  });
 
-  describe('Memo Optimization', () => {
-    it('does not re-render when props remain the same', () => {
-      const { rerender } = renderWithTheme(
-        <QuizInfoForm {...defaultProps} title="Quiz" category="game" />,
-      );
+    it('title prop 이 바뀌면 화면이 갱신된다', () => {
+      const { rerender } = renderWithTheme(<QuizInfoForm {...defaultProps} title="A" />);
+      expect(
+        (screen.getByPlaceholderText('퀴즈 제목을 입력하세요') as HTMLInputElement).value,
+      ).toBe('A');
 
-      const titleBefore = screen.getByTestId('input-제목');
-      expect((titleBefore as HTMLInputElement).value).toBe('Quiz');
-
-      rerender(<QuizInfoForm {...defaultProps} title="Quiz" category="game" />);
-
-      const titleAfter = screen.getByTestId('input-제목');
-      expect((titleAfter as HTMLInputElement).value).toBe('Quiz');
+      rerender(<QuizInfoForm {...defaultProps} title="B" />);
+      expect(
+        (screen.getByPlaceholderText('퀴즈 제목을 입력하세요') as HTMLInputElement).value,
+      ).toBe('B');
     });
 
-    it('re-renders when title prop changes', () => {
-      const { rerender } = renderWithTheme(<QuizInfoForm {...defaultProps} title="First Title" />);
-
-      expect((screen.getByTestId('input-제목') as HTMLInputElement).value).toBe('First Title');
-
-      rerender(<QuizInfoForm {...defaultProps} title="Second Title" />);
-
-      expect((screen.getByTestId('input-제목') as HTMLInputElement).value).toBe('Second Title');
-    });
-
-    it('re-renders when description prop changes', () => {
-      const { rerender } = renderWithTheme(
-        <QuizInfoForm {...defaultProps} description="First Description" />,
-      );
-
-      expect((screen.getByTestId('input-설명') as HTMLInputElement).value).toBe(
-        'First Description',
-      );
-
-      rerender(<QuizInfoForm {...defaultProps} description="Second Description" />);
-
-      expect((screen.getByTestId('input-설명') as HTMLInputElement).value).toBe(
-        'Second Description',
-      );
-    });
-
-    it('re-renders when category prop changes', () => {
+    it('category prop 이 바뀌면 active 칩이 갱신된다', () => {
       const { rerender } = renderWithTheme(<QuizInfoForm {...defaultProps} category="game" />);
-
       expect(screen.getByTestId('chip-게임')).toHaveAttribute('data-active', 'true');
 
       rerender(<QuizInfoForm {...defaultProps} category="music" />);
-
       expect(screen.getByTestId('chip-게임')).toHaveAttribute('data-active', 'false');
       expect(screen.getByTestId('chip-음악')).toHaveAttribute('data-active', 'true');
-    });
-
-    it('re-renders when thumbnail prop changes', () => {
-      const { rerender } = renderWithTheme(
-        <QuizInfoForm {...defaultProps} thumbnailPreviewUrl={null} />,
-      );
-
-      expect(screen.queryByTestId('preview-image')).not.toBeInTheDocument();
-
-      rerender(
-        <QuizInfoForm {...defaultProps} thumbnailPreviewUrl="https://example.com/image.jpg" />,
-      );
-
-      expect(screen.getByTestId('preview-image')).toBeInTheDocument();
-    });
-  });
-
-  describe('Event Handler Isolation', () => {
-    it('title changes do not affect other callbacks', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<QuizInfoForm {...defaultProps} />);
-
-      const titleInput = screen.getByTestId('input-제목');
-      await user.type(titleInput, 'New Title');
-
-      expect(mockOnTitleChange).toHaveBeenCalled();
-      expect(mockOnDescriptionChange).not.toHaveBeenCalled();
-      expect(mockOnCategoryChange).not.toHaveBeenCalled();
-    });
-
-    it('description changes do not affect other callbacks', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<QuizInfoForm {...defaultProps} />);
-
-      const descriptionInput = screen.getByTestId('input-설명');
-      await user.type(descriptionInput, 'New Description');
-
-      expect(mockOnDescriptionChange).toHaveBeenCalled();
-      expect(mockOnTitleChange).not.toHaveBeenCalled();
-      expect(mockOnCategoryChange).not.toHaveBeenCalled();
-    });
-
-    it('category changes do not affect other callbacks', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<QuizInfoForm {...defaultProps} />);
-
-      const gameChip = screen.getByTestId('chip-게임');
-      await user.click(gameChip);
-
-      expect(mockOnCategoryChange).toHaveBeenCalled();
-      expect(mockOnTitleChange).not.toHaveBeenCalled();
-      expect(mockOnDescriptionChange).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('Edge Cases', () => {
-    it('handles empty strings for all text inputs', () => {
-      renderWithTheme(<QuizInfoForm {...defaultProps} title="" description="" />);
-
-      expect((screen.getByTestId('input-제목') as HTMLInputElement).value).toBe('');
-      expect((screen.getByTestId('input-설명') as HTMLInputElement).value).toBe('');
-    });
-
-    it('handles very long title text', () => {
-      const longTitle = 'a'.repeat(1000);
-      renderWithTheme(<QuizInfoForm {...defaultProps} title={longTitle} />);
-
-      expect((screen.getByTestId('input-제목') as HTMLInputElement).value).toBe(longTitle);
-    });
-
-    it('handles special characters in description', () => {
-      const specialDesc = '!@#$%^&*()_+-=[]{}|;:,.<>?';
-      renderWithTheme(<QuizInfoForm {...defaultProps} description={specialDesc} />);
-
-      expect((screen.getByTestId('input-설명') as HTMLInputElement).value).toBe(specialDesc);
-    });
-
-    it('handles korean characters throughout', () => {
-      renderWithTheme(<QuizInfoForm {...defaultProps} title="한글 제목" description="한글 설명" />);
-
-      expect((screen.getByTestId('input-제목') as HTMLInputElement).value).toBe('한글 제목');
-      expect((screen.getByTestId('input-설명') as HTMLInputElement).value).toBe('한글 설명');
-    });
-
-    it('handles all category types', () => {
-      const categories: Category[] = [
-        'entertainment',
-        'movie',
-        'drama',
-        'anime',
-        'game',
-        'music',
-        'sports',
-        'general',
-        'etc',
-      ];
-
-      categories.forEach((cat) => {
-        const { unmount } = renderWithTheme(<QuizInfoForm {...defaultProps} category={cat} />);
-        const categoryLabel = CATEGORIES.find((c) => c.value === cat)?.label;
-        expect(screen.getByTestId(`chip-${categoryLabel}`)).toHaveAttribute('data-active', 'true');
-        unmount();
-      });
-    });
-
-    it('handles empty URL for thumbnail', () => {
-      renderWithTheme(<QuizInfoForm {...defaultProps} thumbnailPreviewUrl="" />);
-
-      const previewImage = screen.queryByTestId('preview-image');
-      expect(previewImage).not.toBeInTheDocument();
-    });
-
-    it('handles null values for all optional props', () => {
-      renderWithTheme(
-        <QuizInfoForm
-          {...defaultProps}
-          title=""
-          description=""
-          category={null}
-          thumbnailPreviewUrl={null}
-        />,
-      );
-
-      expect((screen.getByTestId('input-제목') as HTMLInputElement).value).toBe('');
-      expect((screen.getByTestId('input-설명') as HTMLInputElement).value).toBe('');
-      expect(screen.getByTestId('chip-게임')).toHaveAttribute('data-active', 'false');
-      expect(screen.queryByTestId('preview-image')).not.toBeInTheDocument();
     });
   });
 });

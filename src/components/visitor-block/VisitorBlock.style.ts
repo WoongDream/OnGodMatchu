@@ -21,8 +21,9 @@ export const wrapperStyle = (theme: Theme) => css`
 export const textStackStyle = (theme: Theme) => css`
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 2px;
+  align-self: stretch;
+  justify-content: space-between;
+  padding: 0.625rem 0 0.125rem;
   line-height: 1.1;
   color: ${theme.colors.fg.secondary};
 `;
@@ -30,25 +31,29 @@ export const textStackStyle = (theme: Theme) => css`
 export const rowStyle = (theme: Theme) => css`
   display: inline-flex;
   align-items: baseline;
-  gap: ${theme.spacing.xs};
+  gap: ${theme.spacing.sm};
 `;
 
 export const labelStyle = (theme: Theme) => css`
   color: ${theme.colors.fg.tertiary ?? theme.colors.fg.secondary};
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   font-weight: ${theme.fontWeight.medium};
   letter-spacing: 0.04em;
 `;
 
 export const todayValueStyle = (theme: Theme) => css`
+  position: relative;
+  top: 1px;
   color: ${theme.colors.accent.primary};
-  font-size: ${theme.fontSize.md};
+  font-size: ${theme.fontSize.sm};
   font-weight: ${theme.fontWeight.bold};
 `;
 
 export const totalValueStyle = (theme: Theme) => css`
+  position: relative;
+  top: 1px;
   color: ${theme.colors.fg.primary};
-  font-size: ${theme.fontSize.md};
+  font-size: ${theme.fontSize.sm};
   font-weight: ${theme.fontWeight.bold};
 `;
 

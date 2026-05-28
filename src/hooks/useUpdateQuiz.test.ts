@@ -3,7 +3,7 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { AxiosError } from 'axios';
 import useUpdateQuiz from './useUpdateQuiz';
 import { ImageUploadError } from './useUploadImage';
-import type { DraftQuestion } from '@/features/quiz/create/QuestionList';
+import type { DraftQuestion } from '@/features/quiz/create/questionTypes';
 import type { Quiz } from '@/types';
 
 // ── API mock ─────────────────────────────────────────────────────────────────

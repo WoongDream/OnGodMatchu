@@ -9,7 +9,7 @@ import {
 } from '@/api/quiz';
 import { uploadImage } from '@/api/upload';
 import { ImageUploadError } from './useUploadImage';
-import type { DraftQuestion } from '@/features/quiz/create/QuestionList';
+import type { DraftQuestion } from '@/features/quiz/create/questionTypes';
 import type { Quiz } from '@/types';
 
 export type UpdateQuizSubmitParams = Omit<UpdateQuizPayload, 'questions'> & {

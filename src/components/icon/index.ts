@@ -12,5 +12,9 @@ export {
   SendIcon,
   AnnouncementIcon,
   ReleaseNoteIcon,
+  CheckIcon,
+  PlusIcon,
+  TrashIcon,
+  AlertIcon,
 } from './Icon';
 export type { IconProps, IconName } from './Icon.type';

@@ -20,9 +20,9 @@ describe('QuizPlayOptions', () => {
       expect(screen.getByRole('radio', { name: '50 문제' })).toBeInTheDocument();
     });
 
-    it('기본 풀이 개수 20 선택', () => {
+    it('기본 풀이 개수 10 선택', () => {
       renderWithTheme(<QuizPlayOptions questionCount={218} onStart={onStart} />);
-      expect(screen.getByRole('radio', { name: '20 문제' })).toHaveAttribute(
+      expect(screen.getByRole('radio', { name: '10 문제' })).toHaveAttribute(
         'aria-checked',
         'true',
       );
@@ -48,7 +48,7 @@ describe('QuizPlayOptions', () => {
 
     it('CTA 라벨에 선택한 풀이 개수가 반영', () => {
       renderWithTheme(<QuizPlayOptions questionCount={218} onStart={onStart} />);
-      expect(screen.getByRole('button', { name: /20문제 풀기 시작/ })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /10문제 풀기 시작/ })).toBeInTheDocument();
     });
   });
 

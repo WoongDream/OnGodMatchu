@@ -15,4 +15,8 @@ export type IconName =
   | 'arrow-up'
   | 'arrow-down'
   | 'arrow-right'
-  | 'send';
+  | 'send'
+  | 'check'
+  | 'plus'
+  | 'trash'
+  | 'alert';

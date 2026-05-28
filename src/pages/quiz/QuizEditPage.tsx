@@ -1,35 +1,17 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useSWRConfig } from 'swr';
-import Button from '@/components/button';
-import Toggle from '@/components/toggle';
 import { pageWrapperStyle } from '@/styles/layout';
-import QuizInfoForm from '@/features/quiz/create/QuizInfoForm';
-import QuestionList, { type DraftQuestion } from '@/features/quiz/create/QuestionList';
+import QuizForm, {
+  type QuizFormInitialValues,
+  type QuizFormSubmitData,
+} from '@/features/quiz/create/QuizForm';
+import type { DraftQuestion } from '@/features/quiz/create/questionTypes';
 import useQuizDetail from '@/hooks/useQuizDetail';
 import useUpdateQuiz from '@/hooks/useUpdateQuiz';
 import useAuthStore from '@/store/authStore';
-import type { Category, Quiz, Question } from '@/types';
-import {
-  dividerStyle,
-  visibilityCardStyle,
-  visibilityTextStyle,
-  visibilityTitleStyle,
-  visibilityHintStyle,
-  errorBannerStyle,
-  noticeStyle,
-  buttonsRowStyle,
-} from './QuizEditPage.style';
-
-type EditForm = {
-  title: string;
-  description: string;
-  category: Category;
-  thumbnailFile: File | null;
-  thumbnailPreviewUrl: string | null;
-  isPublic: boolean;
-  questions: DraftQuestion[];
-};
+import type { Quiz, Question } from '@/types';
+import { noticeStyle } from './QuizEditPage.style';
 
 const hydrateQuestion = (server: Question): DraftQuestion => {
   const imageKey = server.imageKey ?? null;
@@ -58,93 +40,55 @@ const QuizEditForm = ({ quizId, quiz }: QuizEditFormProps) => {
   const navigate = useNavigate();
   const { mutate } = useSWRConfig();
   const { submit, isSubmitting, error: submitError } = useUpdateQuiz();
-  const [form, setForm] = useState<EditForm>(() => ({
-    title: quiz.title,
-    description: quiz.description ?? '',
-    category: quiz.category,
-    thumbnailFile: null,
-    thumbnailPreviewUrl: quiz.thumbnailUrl ?? null,
-    isPublic: quiz.isPublic,
-    questions: quiz.questions.map(hydrateQuestion),
-  }));
 
-  const isValid =
-    form.title.trim() !== '' &&
-    form.questions.length > 0 &&
-    form.questions.every((q) => q.answer.trim() !== '');
-
-  const handleSave = useCallback(async () => {
-    const result = await submit(quizId, {
-      title: form.title.trim(),
-      description: form.description.trim() || undefined,
-      category: form.category,
-      isPublic: form.isPublic,
-      thumbnailFile: form.thumbnailFile,
-      questions: form.questions,
-    });
-    if (result) {
-      await mutate(
-        (key) =>
-          Array.isArray(key) && (key[0] === 'my-quizzes' || key[0] === 'my-quizzes-aggregate'),
-      );
-      navigate('/profile/quizzes-made');
-    }
-  }, [form, submit, quizId, mutate, navigate]);
-
-  const visibilityCard = (
-    <section css={visibilityCardStyle} aria-label="공개 설정">
-      <div css={visibilityTextStyle}>
-        <span css={visibilityTitleStyle}>공개 설정</span>
-        <span css={visibilityHintStyle}>
-          {form.isPublic
-            ? '공개 상태입니다. 공개 시 다른 사용자가 풀 수 있습니다.'
-            : '비공개 상태입니다. 본인만 볼 수 있어요.'}
-        </span>
-      </div>
-      <Toggle
-        checked={form.isPublic}
-        onChange={(next) => setForm((prev) => ({ ...prev, isPublic: next }))}
-        ariaLabel="공개 설정"
-      />
-    </section>
+  const initialValues = useMemo<QuizFormInitialValues>(
+    () => ({
+      title: quiz.title,
+      description: quiz.description ?? '',
+      category: quiz.category,
+      thumbnailPreviewUrl: quiz.thumbnailUrl ?? null,
+      isPublic: quiz.isPublic,
+      questions: quiz.questions.map(hydrateQuestion),
+    }),
+    [quiz],
   );
 
+  const handleSubmit = useCallback(
+    async (data: QuizFormSubmitData) => {
+      const result = await submit(quizId, {
+        title: data.title.trim(),
+        description: data.description.trim() || undefined,
+        category: data.category,
+        isPublic: data.isPublic,
+        thumbnailFile: data.thumbnailFile,
+        questions: data.questions,
+      });
+      if (result) {
+        await mutate(
+          (key) =>
+            Array.isArray(key) && (key[0] === 'my-quizzes' || key[0] === 'my-quizzes-aggregate'),
+        );
+        navigate('/profile/quizzes-made');
+      }
+    },
+    [submit, quizId, mutate, navigate],
+  );
+
+  const handleCancel = useCallback(() => {
+    navigate(-1);
+  }, [navigate]);
+
   return (
-    <div css={pageWrapperStyle('xl')}>
-      <QuizInfoForm
-        title={form.title}
-        description={form.description}
-        category={form.category}
-        thumbnailPreviewUrl={form.thumbnailPreviewUrl}
-        onTitleChange={(value) => setForm((prev) => ({ ...prev, title: value }))}
-        onDescriptionChange={(value) => setForm((prev) => ({ ...prev, description: value }))}
-        onCategoryChange={(value) => setForm((prev) => ({ ...prev, category: value }))}
-        onThumbnailChange={(file, url) =>
-          setForm((prev) => ({ ...prev, thumbnailFile: file, thumbnailPreviewUrl: url }))
-        }
-        onThumbnailRemove={() =>
-          setForm((prev) => ({ ...prev, thumbnailFile: null, thumbnailPreviewUrl: null }))
-        }
-        belowTitleSlot={visibilityCard}
+    <div css={pageWrapperStyle('lg')}>
+      <QuizForm
+        initialValues={initialValues}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        isSubmitting={isSubmitting}
+        submitError={submitError}
+        submitLabel="변경 사항 저장"
+        submittingLabel="저장 중..."
       />
-      <hr css={dividerStyle} />
-      <QuestionList
-        questions={form.questions}
-        onChange={(questions) => setForm((prev) => ({ ...prev, questions }))}
-      />
-      {submitError && (
-        <div css={errorBannerStyle} role="alert">
-          {submitError}
-        </div>
-      )}
-      <div css={buttonsRowStyle}>
-        <Button variant="ghost" onClick={() => navigate(-1)}>
-          취소
-        </Button>
-        <Button disabled={!isValid || isSubmitting} onClick={handleSave}>
-          {isSubmitting ? '저장 중...' : '변경 사항 저장'}
-        </Button>
-      </div>
     </div>
   );
 };
@@ -157,7 +101,7 @@ const QuizEditPage = () => {
 
   if (isLoading) {
     return (
-      <div css={pageWrapperStyle('xl')}>
+      <div css={pageWrapperStyle('lg')}>
         <p css={noticeStyle}>퀴즈를 불러오는 중...</p>
       </div>
     );
@@ -165,7 +109,7 @@ const QuizEditPage = () => {
 
   if (loadError || !quiz) {
     return (
-      <div css={pageWrapperStyle('xl')}>
+      <div css={pageWrapperStyle('lg')}>
         <div css={noticeStyle}>
           <span>퀴즈를 불러오지 못했습니다.</span>
           <Link to="/profile/quizzes-made">목록으로</Link>
@@ -177,7 +121,7 @@ const QuizEditPage = () => {
   const isOwner = !!me && quiz.authorNickname === me.nickname;
   if (!isOwner) {
     return (
-      <div css={pageWrapperStyle('xl')}>
+      <div css={pageWrapperStyle('lg')}>
         <div css={noticeStyle}>
           <span>이 퀴즈를 편집할 권한이 없습니다.</span>
           <Link to="/profile/quizzes-made">목록으로</Link>

@@ -29,7 +29,7 @@ const formatTimeLabel = (sec: TimeLimitOption): string => (sec === null ? 'íƒ€ì
 
 const QuizPlayOptions = memo(({ questionCount, onStart }: QuizPlayOptionsProps) => {
   const [time, setTime] = useState<TimeLimitOption>(null);
-  const [count, setCount] = useState<CountOption>(20);
+  const [count, setCount] = useState<CountOption>(10);
 
   const isFew = questionCount > 0 && questionCount < MIN_QUESTIONS_FOR_COUNT_OPTIONS;
   const effectiveCount = isFew ? questionCount : count;
