@@ -13,27 +13,30 @@ export const wrapperStyle = (theme: Theme) => css`
 `;
 
 export const innerStyle = (theme: Theme) => css`
+  position: relative;
   width: 100%;
   max-width: ${theme.breakpoints.desktop};
   height: 100%;
   margin: 0 auto;
   padding: 0 ${theme.spacing.md};
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: ${theme.spacing.md};
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
 
   @media (min-width: ${theme.breakpoints.tablet}) {
     padding: 0 ${theme.spacing.xl};
-    gap: ${theme.spacing.xl};
   }
 `;
 
 export const leftSlotStyle = (theme: Theme) => css`
   display: flex;
   align-items: center;
-  gap: ${theme.spacing.md};
+  gap: 2px;
   min-width: 0;
+
+  @media (min-width: ${theme.breakpoints.tablet}) {
+    gap: ${theme.spacing.md};
+  }
 `;
 
 export const logoStyle = css`
@@ -45,11 +48,15 @@ export const logoStyle = css`
 `;
 
 export const tabsStyle = (theme: Theme) => css`
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: ${theme.spacing.lg};
-  height: 100%;
 `;
 
 export const tabStyle = (theme: Theme) => css`
@@ -95,7 +102,6 @@ export const navActionsStyle = (theme: Theme) => css`
   display: flex;
   align-items: center;
   gap: ${theme.spacing.sm};
-  justify-self: end;
 `;
 
 export const loginPillStyle = (theme: Theme) => css`
