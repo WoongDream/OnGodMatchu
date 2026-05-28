@@ -13,7 +13,7 @@ export const pageContentStyle = (theme: Theme) => css`
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding-top: ${HEADER_HEIGHT};
+  padding-top: calc(${HEADER_HEIGHT} + ${theme.spacing.lg});
   width: 100%;
   max-width: ${theme.breakpoints.desktop};
   margin: 0 auto;

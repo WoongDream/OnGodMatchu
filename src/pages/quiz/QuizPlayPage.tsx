@@ -1,6 +1,7 @@
 import { memo, useCallback, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import Button from '@/components/button';
+import type { StartOption } from '@/components/quiz-play-options';
 import { pageWrapperStyle } from '@/styles/layout';
 import QuizProgress from '@/features/quiz/play/QuizProgress';
 import QuizQuestion from '@/features/quiz/play/QuizQuestion';
@@ -8,6 +9,7 @@ import QuizAnswer from '@/features/quiz/play/QuizAnswer';
 import QuizFeedback from '@/features/quiz/play/QuizFeedback';
 import useQuizDetail from '@/hooks/useQuizDetail';
 import useSubmitAttempt from '@/hooks/useSubmitAttempt';
+import { shuffle } from '@/lib/quiz/shuffle';
 import type { AttemptAnswerInput } from '@/types';
 
 type Phase = 'answering' | 'feedback';
@@ -17,10 +19,23 @@ const normalize = (value: string) => value.trim().normalize('NFC').toLowerCase()
 const QuizPlayPage = memo(() => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const quizId = Number(id);
+  const option = (location.state as StartOption | null) ?? null;
 
   const { quiz, isLoading, error } = useQuizDetail(quizId);
-  const questions = useMemo(() => quiz?.questions ?? [], [quiz]);
+  const questions = useMemo(() => {
+    const all = quiz?.questions ?? [];
+    if (all.length === 0) {
+      return all;
+    }
+    if (!option) {
+      return all;
+    }
+    const shuffled = option.shuffle ? shuffle(all) : all;
+    const take = Math.min(option.count, shuffled.length);
+    return shuffled.slice(0, take);
+  }, [quiz, option]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [inputValue, setInputValue] = useState('');

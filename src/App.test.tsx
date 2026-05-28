@@ -28,6 +28,10 @@ vi.mock('./pages/quiz/QuizPlayPage', () => ({
   default: () => <div data-testid="quiz-play-page">Quiz Play Page</div>,
 }));
 
+vi.mock('./pages/quiz/QuizDetailPage', () => ({
+  default: () => <div data-testid="quiz-detail-page">Quiz Detail Page</div>,
+}));
+
 vi.mock('./pages/quiz/QuizResultPage', () => ({
   default: () => <div data-testid="quiz-result-page">Quiz Result Page</div>,
 }));
@@ -241,6 +245,11 @@ describe('App', () => {
       expect(screen.getByTestId('route-/quiz/:id')).toBeInTheDocument();
     });
 
+    it('renders route for "/quiz/:id/play"', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-/quiz/:id/play')).toBeInTheDocument();
+    });
+
     it('renders route for "/quiz/:id/result"', () => {
       renderWithTheme(<App />);
       expect(screen.getByTestId('route-/quiz/:id/result')).toBeInTheDocument();
@@ -294,14 +303,14 @@ describe('App', () => {
       expect(screen.getByTestId('navigate-to-/quiz')).toBeInTheDocument();
     });
 
-    it('has 28 routes total (1 layout + 15 top-level + 7 nested profile + 5 announcements children)', () => {
+    it('has 29 routes total (1 layout + 16 top-level + 7 nested profile + 5 announcements children)', () => {
       renderWithTheme(<App />);
       const routeElements = screen.getAllByTestId(/^route-/);
-      // 1 (TermsAgreementGate 레이아웃) + 15 top-level (/, /quiz, /quiz/create, /quiz/:id,
-      // /quiz/:id/result, /quiz/:id/edit, /login, /signup, /oauth2/callback,
+      // 1 (TermsAgreementGate 레이아웃) + 16 top-level (/, /quiz, /quiz/create, /quiz/:id,
+      // /quiz/:id/play, /quiz/:id/result, /quiz/:id/edit, /login, /signup, /oauth2/callback,
       // /terms-agreement, /privacy, /terms, /profile, /profile/:userId, /announcements)
-      // + 4 /profile 자식 + 3 /profile/:userId 자식 + 5 /announcements 자식 = 28
-      expect(routeElements).toHaveLength(28);
+      // + 4 /profile 자식 + 3 /profile/:userId 자식 + 5 /announcements 자식 = 29
+      expect(routeElements).toHaveLength(29);
     });
 
     it('renders /profile route protected by ProtectedRoute', () => {
@@ -389,7 +398,12 @@ describe('App', () => {
       expect(screen.getByTestId('main-page')).toBeInTheDocument();
     });
 
-    it('renders QuizPlayPage component for "/quiz/:id" route', () => {
+    it('renders QuizDetailPage component for "/quiz/:id" route', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('quiz-detail-page')).toBeInTheDocument();
+    });
+
+    it('renders QuizPlayPage component for "/quiz/:id/play" route', () => {
       renderWithTheme(<App />);
       expect(screen.getByTestId('quiz-play-page')).toBeInTheDocument();
     });

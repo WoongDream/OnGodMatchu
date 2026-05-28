@@ -109,15 +109,38 @@ export const getCategories = async (): Promise<CategoryItem[]> => {
   return res.data.data;
 };
 
+export type QuizListSort = 'plays' | 'latest';
+
 export const getQuizzes = async (params?: {
   category?: string;
   page?: number;
   size?: number;
+  sort?: QuizListSort;
 }): Promise<Page<Quiz>> => {
-  const res = await instance.get<ApiResponse<Page<Quiz>>>('/api/quizzes', {
-    params: { ...params, page: params?.page ?? 0, size: params?.size ?? 20 },
-  });
+  const query: Record<string, string | number> = {
+    page: params?.page ?? 0,
+    size: params?.size ?? 20,
+  };
+  if (params?.category) {
+    query.category = params.category;
+  }
+  if (params?.sort === 'latest') {
+    query.sort = 'createdAt,desc';
+  }
+  const res = await instance.get<ApiResponse<Page<Quiz>>>('/api/quizzes', { params: query });
   return res.data.data;
+};
+
+export const starQuiz = async (quizId: number): Promise<void> => {
+  await instance.put(`/api/quizzes/${quizId}/star`);
+};
+
+export const unstarQuiz = async (quizId: number): Promise<void> => {
+  await instance.delete(`/api/quizzes/${quizId}/star`);
+};
+
+export const recordQuizShare = async (quizId: number): Promise<void> => {
+  await instance.post(`/api/quizzes/${quizId}/share`);
 };
 
 export const getQuizDetail = async (quizId: number): Promise<QuizDetailResponse> => {

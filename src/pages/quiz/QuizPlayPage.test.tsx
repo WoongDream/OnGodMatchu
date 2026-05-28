@@ -14,6 +14,7 @@ vi.mock('react-router-dom', async () => {
     ...actual,
     useNavigate: () => mockNavigate,
     useParams: () => ({ id: '42' }),
+    useLocation: () => ({ pathname: '/quiz/42/play', search: '', state: null }),
   };
 });
 
@@ -116,6 +117,10 @@ const baseQuiz: Quiz & { questions: Question[] } = {
   thumbnailKey: null,
   thumbnailUrl: null,
   playCount: 0,
+  starCount: 0,
+  commentCount: 0,
+  shareCount: 0,
+  isStarred: null,
   isPublic: true,
   createdAt: '2026-01-01T00:00:00Z',
   questions: [q1, q2],

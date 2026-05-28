@@ -16,13 +16,19 @@ export type QuizVisibility = 'PUBLIC' | 'PRIVATE';
 
 export type Quiz = {
   id: number;
+  publicId?: string;
   authorNickname: string;
+  authorProfileImageUrl?: string | null;
   title: string;
   description: string;
   category: Category;
   thumbnailKey?: string | null;
   thumbnailUrl: string | null;
   playCount: number;
+  starCount: number;
+  commentCount: number;
+  shareCount: number;
+  isStarred: boolean | null;
   isPublic: boolean;
   createdAt: string;
 };

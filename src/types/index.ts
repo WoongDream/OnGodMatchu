@@ -16,3 +16,4 @@ export type {
 export type { OAuthProvider } from './oauth';
 export { SUPPORTED_OAUTH_PROVIDERS } from './oauth';
 export type { NoticeListItem, NoticeDetail, ReleaseNoteTag, ParsedReleaseNoteMeta } from './notice';
+export type { Comment, CommentPage } from './comment';

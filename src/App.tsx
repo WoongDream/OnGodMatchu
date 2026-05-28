@@ -2,10 +2,12 @@ import { ThemeProvider } from '@emotion/react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
+import { ToastContainer } from '@/components/toast';
 import { theme } from '@/styles/theme';
 import { appShellStyle, pageContentStyle } from '@/styles/layout';
 import useBootstrapAuth from '@/hooks/useBootstrapAuth';
 import MainPage from './pages/MainPage';
+import QuizDetailPage from './pages/quiz/QuizDetailPage';
 import QuizPlayPage from './pages/quiz/QuizPlayPage';
 import QuizResultPage from './pages/quiz/QuizResultPage';
 import QuizCreatePage from './pages/quiz/QuizCreatePage';
@@ -49,7 +51,8 @@ const App = () => {
                     </ProtectedRoute>
                   }
                 />
-                <Route path="/quiz/:id" element={<QuizPlayPage />} />
+                <Route path="/quiz/:id" element={<QuizDetailPage />} />
+                <Route path="/quiz/:id/play" element={<QuizPlayPage />} />
                 <Route path="/quiz/:id/result" element={<QuizResultPage />} />
                 <Route
                   path="/quiz/:id/edit"
@@ -101,6 +104,7 @@ const App = () => {
             </Routes>
           </main>
           <Footer />
+          <ToastContainer />
         </div>
       </BrowserRouter>
     </ThemeProvider>

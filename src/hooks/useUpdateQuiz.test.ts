@@ -59,6 +59,10 @@ const MOCK_QUIZ: Quiz = {
   thumbnailKey: null,
   thumbnailUrl: null,
   playCount: 0,
+  starCount: 0,
+  commentCount: 0,
+  shareCount: 0,
+  isStarred: null,
   isPublic: true,
   createdAt: '2025-01-01T00:00:00Z',
 };
