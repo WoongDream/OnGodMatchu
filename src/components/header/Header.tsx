@@ -2,10 +2,13 @@ import { memo } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import useAuthStore from '@/store/authStore';
 import ProfileImage from '@/components/profile-image';
+import VisitorBlock from '@/components/visitor-block';
+import useVisitorSummary from '@/hooks/useVisitorSummary';
 import logoKo from '@/assets/logo/ongatmatchu-logo-horizontal-ko.svg';
 import {
   wrapperStyle,
   innerStyle,
+  leftSlotStyle,
   logoStyle,
   tabsStyle,
   tabStyle,
@@ -18,6 +21,7 @@ const Header = memo(() => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isLoggedIn, user } = useAuthStore();
+  const { data: visitors } = useVisitorSummary();
 
   const handleLogoClick = () => {
     navigate('/');
@@ -36,7 +40,16 @@ const Header = memo(() => {
   return (
     <header css={wrapperStyle}>
       <div css={innerStyle}>
-        <img src={logoKo} alt="OnGodMatchu" css={logoStyle} onClick={handleLogoClick} />
+        <div css={leftSlotStyle}>
+          <img src={logoKo} alt="OnGodMatchu" css={logoStyle} onClick={handleLogoClick} />
+          {visitors ? (
+            <VisitorBlock
+              today={visitors.today}
+              total={visitors.total}
+              daily={visitors.daily.map((d) => d.visitorCount)}
+            />
+          ) : null}
+        </div>
         <nav css={tabsStyle} aria-label="메인 메뉴">
           <NavLink to="/quiz" css={tabStyle} className={isQuizActive ? 'active' : undefined}>
             퀴즈

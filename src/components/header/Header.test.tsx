@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import Header from './Header';
 import useAuthStore from '@/store/authStore';
+import useVisitorSummary from '@/hooks/useVisitorSummary';
 import * as router from 'react-router-dom';
 import type { User } from '@/types';
 
@@ -26,6 +27,11 @@ vi.mock('react-router-dom', async () => {
 // Mock authStore
 vi.mock('@/store/authStore', () => ({
   default: vi.fn(),
+}));
+
+// Mock useVisitorSummary — 기본은 data undefined 라 VisitorBlock 미마운트 (기존 케이스 무영향)
+vi.mock('@/hooks/useVisitorSummary', () => ({
+  default: vi.fn(() => ({ data: undefined, isLoading: false, error: null })),
 }));
 
 // Mock ProfileImage to keep tests focused on Header behavior
@@ -211,6 +217,52 @@ describe('Header', () => {
   describe('memoization', () => {
     it('has displayName "Header"', () => {
       expect(Header.displayName).toBe('Header');
+    });
+  });
+
+  describe('VisitorBlock 마운트 회귀', () => {
+    beforeEach(() => {
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        isLoggedIn: false,
+        user: null,
+      });
+    });
+
+    it('useVisitorSummary 가 data 를 반환하면 VisitorBlock 이 마운트된다 (TODAY 노출)', () => {
+      (useVisitorSummary as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        data: {
+          today: 63,
+          total: 7_600_000,
+          daily: [
+            { date: '2026-05-22', visitorCount: 1 },
+            { date: '2026-05-23', visitorCount: 2 },
+            { date: '2026-05-24', visitorCount: 3 },
+            { date: '2026-05-25', visitorCount: 4 },
+            { date: '2026-05-26', visitorCount: 5 },
+            { date: '2026-05-27', visitorCount: 6 },
+            { date: '2026-05-28', visitorCount: 63 },
+          ],
+        },
+        isLoading: false,
+        error: null,
+      });
+
+      renderHeader();
+      expect(screen.getByLabelText('방문자 통계')).toBeInTheDocument();
+      expect(screen.getByText('TODAY')).toBeInTheDocument();
+      expect(screen.getByText('63')).toBeInTheDocument();
+    });
+
+    it('useVisitorSummary 가 data undefined 면 VisitorBlock 미마운트', () => {
+      (useVisitorSummary as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        error: null,
+      });
+
+      renderHeader();
+      expect(screen.queryByLabelText('방문자 통계')).not.toBeInTheDocument();
+      expect(screen.queryByText('TODAY')).not.toBeInTheDocument();
     });
   });
 });

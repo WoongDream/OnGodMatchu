@@ -112,6 +112,10 @@ vi.mock('@/hooks/useBootstrapAuth', () => ({
   default: () => undefined,
 }));
 
+vi.mock('@/hooks/usePageViewTracker', () => ({
+  default: () => undefined,
+}));
+
 vi.mock('@/components/header', () => ({
   default: () => <div data-testid="header">Header</div>,
 }));

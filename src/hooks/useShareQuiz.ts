@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { useSWRConfig } from 'swr';
-import { recordQuizShare } from '@/api/quiz';
+import { recordQuizShare, type QuizShareResult } from '@/api/quiz';
 import type { Quiz, Question } from '@/types';
 
 type Detail = Quiz & { questions: Question[] };
@@ -9,15 +9,13 @@ export type ShareResult = 'copied' | 'failed';
 
 type UseShareQuizReturn = {
   share: () => Promise<ShareResult>;
-  isPending: boolean;
 };
 
-const buildShareUrl = (_publicId: string | undefined, quizId: number): string => {
+const buildShareUrl = (quizId: number): string => {
   if (typeof window === 'undefined') {
     return '';
   }
   // 라우트가 `/quiz/:id` 의 `id` 를 `Number()` 로 파싱 → 내부 id 만 유효.
-  // publicId(UUID) 를 넣으면 `Number(uuid)=NaN` 으로 404 페이지 진입.
   return `${window.location.origin}/quiz/${quizId}`;
 };
 
@@ -30,7 +28,6 @@ const copyToClipboard = async (text: string): Promise<boolean> => {
       // 권한/보안 컨텍스트 외 — fallthrough
     }
   }
-  // execCommand fallback (HTTP 등 비보안 컨텍스트)
   if (typeof document === 'undefined') {
     return false;
   }
@@ -51,32 +48,21 @@ const copyToClipboard = async (text: string): Promise<boolean> => {
 };
 
 /**
- * 퀴즈 공유 훅. 1차 정책: URL 을 clipboard 로 복사하고 호출자가 토스트 표시.
- * 성공 시 detail+list 캐시의 shareCount 낙관적 증분 + 서버 카운트 비동기 기록.
+ * 퀴즈 공유 훅 — clipboard-only.
+ *
+ * - 환경(모바일/데스크톱) 무관 매 클릭마다 URL 을 clipboard 로 복사하고 호출자가 토스트 표시.
+ * - 사용자가 여러 번 눌러도 클립보드 복사·토스트는 동일하게 동작. 서버 카운트는 BE 가
+ *   사용자/익명 단위 1회만 증가 (`recordQuizShare` 가 멱등).
+ * - 응답 `shareCount` 로 SWR 캐시를 덮어쓰기 (서버가 권위).
  */
-const useShareQuiz = (quiz: {
-  id: number;
-  publicId?: string;
-  title: string;
-}): UseShareQuizReturn => {
+const useShareQuiz = (quizId: number): UseShareQuizReturn => {
   const { mutate } = useSWRConfig();
-  const [isPending, setIsPending] = useState(false);
 
-  const share = useCallback(async (): Promise<ShareResult> => {
-    setIsPending(true);
-    try {
-      const url = buildShareUrl(quiz.publicId, quiz.id);
-      if (!url) {
-        return 'failed';
-      }
-      const ok = await copyToClipboard(url);
-      if (!ok) {
-        return 'failed';
-      }
-
+  const syncShareCount = useCallback(
+    async (data: QuizShareResult) => {
       await mutate(
-        ['quiz', quiz.id],
-        (prev: Detail | undefined) => (prev ? { ...prev, shareCount: prev.shareCount + 1 } : prev),
+        ['quiz', quizId],
+        (prev: Detail | undefined) => (prev ? { ...prev, shareCount: data.shareCount } : prev),
         { revalidate: false },
       );
       await mutate(
@@ -88,24 +74,37 @@ const useShareQuiz = (quiz: {
           return {
             ...prev,
             content: prev.content.map((q) =>
-              q.id === quiz.id ? { ...q, shareCount: q.shareCount + 1 } : q,
+              q.id === quizId ? { ...q, shareCount: data.shareCount } : q,
             ),
           };
         },
         { revalidate: false },
       );
+    },
+    [mutate, quizId],
+  );
 
-      void recordQuizShare(quiz.id).catch(() => {
-        // 서버 실패해도 사용자 흐름은 진행 — 다음 revalidate 시 동기화
-      });
-
-      return 'copied';
-    } finally {
-      setIsPending(false);
+  const share = useCallback(async (): Promise<ShareResult> => {
+    const url = buildShareUrl(quizId);
+    if (!url) {
+      return 'failed';
     }
-  }, [quiz.id, quiz.publicId, mutate]);
+    const ok = await copyToClipboard(url);
+    if (!ok) {
+      return 'failed';
+    }
 
-  return { share, isPending };
+    try {
+      const data = await recordQuizShare(quizId);
+      await syncShareCount(data);
+    } catch {
+      // 서버 기록 실패는 사용자 흐름에 영향 X — 다음 revalidate 시 동기화
+    }
+
+    return 'copied';
+  }, [quizId, syncShareCount]);
+
+  return { share };
 };
 
 export default useShareQuiz;

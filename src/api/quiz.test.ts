@@ -18,10 +18,12 @@ import {
   updateQuizVisibility,
   deleteQuiz,
   mapQuizError,
+  recordQuizShare,
 } from './quiz';
 
 const mockGet = vi.mocked(instance.get);
 const mockPatch = vi.mocked(instance.patch);
+const mockPost = vi.mocked(instance.post);
 const mockDelete = vi.mocked(instance.delete);
 
 const makeRawItem = (overrides: Partial<Record<string, unknown>> = {}) => ({
@@ -315,6 +317,37 @@ describe('deleteQuiz', () => {
     mockDelete.mockResolvedValueOnce({ data: { success: true, data: null } });
     await deleteQuiz(7);
     expect(mockDelete).toHaveBeenCalledWith('/api/quizzes/7');
+  });
+});
+
+describe('recordQuizShare', () => {
+  it('POST /api/quizzes/{quizId}/share 를 본문 없이 호출한다', async () => {
+    mockPost.mockResolvedValueOnce({
+      data: { success: true, data: { shareCount: 1, alreadyShared: false } },
+    });
+    await recordQuizShare(1);
+    expect(mockPost).toHaveBeenCalledWith('/api/quizzes/1/share');
+  });
+
+  it('응답 data 를 언랩해 { shareCount, alreadyShared } 를 반환한다', async () => {
+    mockPost.mockResolvedValueOnce({
+      data: { success: true, data: { shareCount: 5, alreadyShared: false } },
+    });
+    const res = await recordQuizShare(1);
+    expect(res).toEqual({ shareCount: 5, alreadyShared: false });
+  });
+
+  it('alreadyShared=true 인 응답도 그대로 반환한다 (카운트 유지 시나리오)', async () => {
+    mockPost.mockResolvedValueOnce({
+      data: { success: true, data: { shareCount: 5, alreadyShared: true } },
+    });
+    const res = await recordQuizShare(1);
+    expect(res).toEqual({ shareCount: 5, alreadyShared: true });
+  });
+
+  it('instance.post 가 reject 하면 그대로 전파한다 (catch 안 함)', async () => {
+    mockPost.mockRejectedValueOnce(new Error('boom'));
+    await expect(recordQuizShare(1)).rejects.toThrow('boom');
   });
 });
 

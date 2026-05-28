@@ -29,16 +29,25 @@ export const innerStyle = (theme: Theme) => css`
   }
 `;
 
+export const leftSlotStyle = (theme: Theme) => css`
+  display: flex;
+  align-items: center;
+  gap: ${theme.spacing.md};
+  min-width: 0;
+`;
+
 export const logoStyle = css`
   display: block;
   height: 2rem;
   width: auto;
   cursor: pointer;
+  flex-shrink: 0;
 `;
 
 export const tabsStyle = (theme: Theme) => css`
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: ${theme.spacing.lg};
   height: 100%;
 `;

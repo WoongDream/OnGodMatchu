@@ -57,11 +57,7 @@ const QuizDetailPage = memo(() => {
   const { isLoggedIn, user } = useAuthStore();
   const { toggle: toggleStar, pendingQuizId } = useToggleStar();
   const isStarPending = pendingQuizId === quizId;
-  const { share, isPending: isSharePending } = useShareQuiz({
-    id: quizId,
-    publicId: quiz?.publicId,
-    title: quiz?.title ?? '',
-  });
+  const { share } = useShareQuiz(quizId);
   const { comments, totalElements, create, remove, isMutating, mutationError } =
     useComments(quizId);
 
@@ -157,12 +153,7 @@ const QuizDetailPage = memo(() => {
               disabled={isStarPending}
               onClick={handleStarClick}
             />
-            <ShareButton
-              variant="chip"
-              count={quiz.shareCount}
-              disabled={isSharePending}
-              onClick={handleShareClick}
-            />
+            <ShareButton variant="chip" count={quiz.shareCount} onClick={handleShareClick} />
           </div>
 
           <div css={authorBlockStyle}>

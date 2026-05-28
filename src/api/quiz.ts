@@ -139,8 +139,14 @@ export const unstarQuiz = async (quizId: number): Promise<void> => {
   await instance.delete(`/api/quizzes/${quizId}/star`);
 };
 
-export const recordQuizShare = async (quizId: number): Promise<void> => {
-  await instance.post(`/api/quizzes/${quizId}/share`);
+export type QuizShareResult = {
+  shareCount: number;
+  alreadyShared: boolean;
+};
+
+export const recordQuizShare = async (quizId: number): Promise<QuizShareResult> => {
+  const res = await instance.post<ApiResponse<QuizShareResult>>(`/api/quizzes/${quizId}/share`);
+  return res.data.data;
 };
 
 export const getQuizDetail = async (quizId: number): Promise<QuizDetailResponse> => {

@@ -6,6 +6,7 @@ import { ToastContainer } from '@/components/toast';
 import { theme } from '@/styles/theme';
 import { appShellStyle, pageContentStyle } from '@/styles/layout';
 import useBootstrapAuth from '@/hooks/useBootstrapAuth';
+import usePageViewTracker from '@/hooks/usePageViewTracker';
 import MainPage from './pages/MainPage';
 import QuizDetailPage from './pages/quiz/QuizDetailPage';
 import QuizPlayPage from './pages/quiz/QuizPlayPage';
@@ -31,11 +32,17 @@ import ReleaseNoteDetail from './pages/announcements/ReleaseNoteDetail';
 import ProtectedRoute from '@/components/protected-route/ProtectedRoute';
 import TermsAgreementGate from '@/components/terms-agreement-gate';
 
+const RouteTracker = (): null => {
+  usePageViewTracker();
+  return null;
+};
+
 const App = () => {
   useBootstrapAuth();
   return (
     <ThemeProvider theme={theme}>
       <BrowserRouter>
+        <RouteTracker />
         <div css={appShellStyle}>
           <Header />
           <main css={pageContentStyle}>
