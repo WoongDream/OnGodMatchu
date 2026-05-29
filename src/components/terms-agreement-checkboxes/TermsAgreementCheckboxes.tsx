@@ -18,12 +18,13 @@ import {
 
 const TermsAgreementCheckboxes = memo(
   ({ value, onChange, disabled = false }: TermsAgreementCheckboxesProps) => {
-    const allChecked = value.agreedToTerms && value.agreedToPrivacy;
+    const allChecked = value.agreedToTerms && value.agreedToPrivacy && value.agreedToAge14;
 
     const handleAllToggle = (next: boolean) => {
       const updated: TermsAgreementState = {
         agreedToTerms: next,
         agreedToPrivacy: next,
+        agreedToAge14: next,
       };
       onChange(updated);
     };
@@ -82,6 +83,22 @@ const TermsAgreementCheckboxes = memo(
           <Link to="/privacy" css={linkStyle} target="_blank" rel="noopener noreferrer">
             보기
           </Link>
+        </div>
+
+        <div css={itemRowStyle}>
+          <label css={itemLabelStyle}>
+            <input
+              css={checkboxInputStyle}
+              type="checkbox"
+              checked={value.agreedToAge14}
+              onChange={(e) => handleItemToggle('agreedToAge14', e.target.checked)}
+              disabled={disabled}
+              aria-label="만 14세 이상입니다 (필수)"
+            />
+            <span css={labelTextStyle}>
+              <span css={requiredTagStyle}>(필수)</span> 만 14세 이상입니다
+            </span>
+          </label>
         </div>
       </div>
     );

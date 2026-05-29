@@ -92,6 +92,7 @@ vi.mock('@/components/terms-agreement-checkboxes', () => {
   type TermsAgreementState = {
     agreedToTerms: boolean;
     agreedToPrivacy: boolean;
+    agreedToAge14: boolean;
   };
 
   type Props = {
@@ -106,13 +107,26 @@ vi.mock('@/components/terms-agreement-checkboxes', () => {
       { 'data-testid': 'terms-checkboxes', 'data-disabled': String(disabled ?? false) },
       React.createElement(
         'button',
-        { onClick: () => onChange({ agreedToTerms: true, agreedToPrivacy: true }) },
+        {
+          onClick: () =>
+            onChange({ agreedToTerms: true, agreedToPrivacy: true, agreedToAge14: true }),
+        },
         '필수 동의',
       ),
       React.createElement(
         'button',
-        { onClick: () => onChange({ agreedToTerms: false, agreedToPrivacy: false }) },
+        {
+          onClick: () =>
+            onChange({ agreedToTerms: false, agreedToPrivacy: false, agreedToAge14: false }),
+        },
         '동의 해제',
+      ),
+      React.createElement(
+        'button',
+        {
+          onClick: () => onChange({ ...value, agreedToAge14: !value.agreedToAge14 }),
+        },
+        '14세 토글',
       ),
       React.createElement('input', {
         type: 'checkbox',
@@ -205,10 +219,18 @@ describe('TermsAgreementPage', () => {
       expect(screen.getByRole('button', { name: '동의하고 계속하기' })).toBeDisabled();
     });
 
-    it('필수 2개 체크 후 enabled 다', () => {
+    it('필수 항목 전체 (약관·개인정보·14세) 체크 후 enabled 다', () => {
       render();
       fireEvent.click(screen.getByRole('button', { name: '필수 동의' }));
       expect(screen.getByRole('button', { name: '동의하고 계속하기' })).not.toBeDisabled();
+    });
+
+    it('14세 동의만 미체크면 disabled 다', () => {
+      render();
+      fireEvent.click(screen.getByRole('button', { name: '필수 동의' }));
+      // 14세만 다시 해제 → canAgree=false
+      fireEvent.click(screen.getByRole('button', { name: '14세 토글' }));
+      expect(screen.getByRole('button', { name: '동의하고 계속하기' })).toBeDisabled();
     });
 
     it('동의 해제하면 다시 disabled 다', () => {

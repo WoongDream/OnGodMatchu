@@ -44,6 +44,7 @@ const PARAMS = {
   code: '123456',
   agreedToTerms: true,
   agreedToPrivacy: true,
+  agreedToAge14: true,
 };
 
 describe('useSignup', () => {
@@ -95,6 +96,16 @@ describe('useSignup', () => {
       expect(mockSignup).toHaveBeenCalledTimes(1);
       const callArg = mockSignup.mock.calls[0][0];
       expect(callArg).not.toHaveProperty('agreedToMarketing');
+    });
+
+    it('signup 호출 인자에 agreedToAge14 를 그대로 전달한다', async () => {
+      const { result } = renderUseSignup();
+      await act(async () => {
+        await result.current.submit({ ...PARAMS, agreedToAge14: false });
+      });
+      expect(mockSignup).toHaveBeenCalledTimes(1);
+      const callArg = mockSignup.mock.calls[0][0];
+      expect(callArg).toHaveProperty('agreedToAge14', false);
     });
 
     it('signup 응답 토큰을 setAuthSession 으로 전달한다', async () => {

@@ -93,12 +93,13 @@ vi.mock('@/components/terms-agreement-checkboxes', () => ({
       <input
         type="checkbox"
         aria-label="전체 동의"
-        checked={value.agreedToTerms && value.agreedToPrivacy}
+        checked={value.agreedToTerms && value.agreedToPrivacy && value.agreedToAge14}
         disabled={disabled}
         onChange={(e) =>
           onChange({
             agreedToTerms: e.target.checked,
             agreedToPrivacy: e.target.checked,
+            agreedToAge14: e.target.checked,
           })
         }
       />
@@ -115,6 +116,13 @@ vi.mock('@/components/terms-agreement-checkboxes', () => ({
         checked={value.agreedToPrivacy}
         disabled={disabled}
         onChange={(e) => onChange({ ...value, agreedToPrivacy: e.target.checked })}
+      />
+      <input
+        type="checkbox"
+        aria-label="만 14세 이상입니다 (필수)"
+        checked={value.agreedToAge14}
+        disabled={disabled}
+        onChange={(e) => onChange({ ...value, agreedToAge14: e.target.checked })}
       />
     </div>
   ),
@@ -205,10 +213,11 @@ vi.mock('@/lib/password', () => ({
 
 const STRONG_PASSWORD = '내고양이는오늘도잠만잔다';
 
-/** showProfile 단계에서 필수 약관 2개를 체크하는 헬퍼 */
+/** showProfile 단계에서 필수 약관 3개를 체크하는 헬퍼 */
 const fillRequiredTerms = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(screen.getByRole('checkbox', { name: '이용약관 동의 (필수)' }));
   await user.click(screen.getByRole('checkbox', { name: '개인정보처리방침 동의 (필수)' }));
+  await user.click(screen.getByRole('checkbox', { name: '만 14세 이상입니다 (필수)' }));
 };
 
 const resetState = () => {
@@ -412,7 +421,7 @@ describe('SignupForm', () => {
       await user.type(screen.getByLabelText('닉네임'), 'nick');
     };
 
-    it('showProfile 단계 진입 시 약관 체크박스 3개 (전체 + 필수 2) 가 노출된다', async () => {
+    it('showProfile 단계 진입 시 약관 체크박스 4개 (전체 + 필수 3) 가 노출된다', async () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
       await enterCodeAndVerify(user);
@@ -420,6 +429,9 @@ describe('SignupForm', () => {
       expect(screen.getByRole('checkbox', { name: '이용약관 동의 (필수)' })).toBeInTheDocument();
       expect(
         screen.getByRole('checkbox', { name: '개인정보처리방침 동의 (필수)' }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('checkbox', { name: '만 14세 이상입니다 (필수)' }),
       ).toBeInTheDocument();
       expect(screen.queryByRole('checkbox', { name: /마케팅 수신 동의/ })).not.toBeInTheDocument();
     });
@@ -433,7 +445,17 @@ describe('SignupForm', () => {
       expect(screen.getByRole('button', { name: '가입하기' })).toBeDisabled();
     });
 
-    it('필수 약관 2개 체크 후 가입하기 버튼이 활성화된다', async () => {
+    it('약관·개인정보만 체크하고 14세 미체크면 가입하기 버튼이 비활성', async () => {
+      const user = userEvent.setup();
+      renderWithTheme(<SignupForm />);
+      await enterCodeAndVerify(user);
+      await fillProfileInputs(user);
+      await user.click(screen.getByRole('checkbox', { name: '이용약관 동의 (필수)' }));
+      await user.click(screen.getByRole('checkbox', { name: '개인정보처리방침 동의 (필수)' }));
+      expect(screen.getByRole('button', { name: '가입하기' })).toBeDisabled();
+    });
+
+    it('필수 약관 3개 체크 후 가입하기 버튼이 활성화된다', async () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
       await enterCodeAndVerify(user);
@@ -442,7 +464,7 @@ describe('SignupForm', () => {
       expect(screen.getByRole('button', { name: '가입하기' })).toBeEnabled();
     });
 
-    it('필수 2개 체크 상태로 submit 호출 시 agreedToTerms/agreedToPrivacy: true 포함하고 agreedToMarketing 키가 없다', async () => {
+    it('필수 3개 체크 상태로 submit 호출 시 agreedToTerms/agreedToPrivacy/agreedToAge14: true 포함하고 agreedToMarketing 키가 없다', async () => {
       const user = userEvent.setup();
       renderWithTheme(<SignupForm />);
       await enterCodeAndVerify(user);
@@ -453,6 +475,7 @@ describe('SignupForm', () => {
         expect.objectContaining({
           agreedToTerms: true,
           agreedToPrivacy: true,
+          agreedToAge14: true,
         }),
       );
       const submitArg = mockSubmit.mock.calls[0]?.[0] as Record<string, unknown>;

@@ -13,11 +13,13 @@ vi.mock('react-router-dom', () => ({
 const allFalse: TermsAgreementState = {
   agreedToTerms: false,
   agreedToPrivacy: false,
+  agreedToAge14: false,
 };
 
 const allTrue: TermsAgreementState = {
   agreedToTerms: true,
   agreedToPrivacy: true,
+  agreedToAge14: true,
 };
 
 const render = (value: TermsAgreementState, onChange = vi.fn(), disabled?: boolean) =>
@@ -37,9 +39,9 @@ describe('TermsAgreementCheckboxes', () => {
   });
 
   describe('초기 렌더 — 모두 false', () => {
-    it('체크박스 3개가 렌더된다 (전체 + 필수 2)', () => {
+    it('체크박스 4개가 렌더된다 (전체 + 필수 3)', () => {
       render(allFalse);
-      expect(screen.getAllByRole('checkbox')).toHaveLength(3);
+      expect(screen.getAllByRole('checkbox')).toHaveLength(4);
     });
 
     it('전체 동의 체크박스가 미체크 상태다', () => {
@@ -57,6 +59,16 @@ describe('TermsAgreementCheckboxes', () => {
       expect(
         screen.getByRole('checkbox', { name: '개인정보처리방침 동의 (필수)' }),
       ).not.toBeChecked();
+    });
+
+    it('만 14세 이상 동의 체크박스가 미체크 상태다', () => {
+      render(allFalse);
+      expect(screen.getByRole('checkbox', { name: '만 14세 이상입니다 (필수)' })).not.toBeChecked();
+    });
+
+    it('만 14세 이상 항목이 라벨 텍스트로 노출된다', () => {
+      render(allFalse);
+      expect(screen.getByText('만 14세 이상입니다')).toBeInTheDocument();
     });
 
     it('마케팅 수신 동의 체크박스가 렌더되지 않는다', () => {
@@ -80,6 +92,11 @@ describe('TermsAgreementCheckboxes', () => {
       render(allTrue);
       expect(screen.getByRole('checkbox', { name: '개인정보처리방침 동의 (필수)' })).toBeChecked();
     });
+
+    it('만 14세 이상 동의 체크박스가 체크 상태다', () => {
+      render(allTrue);
+      expect(screen.getByRole('checkbox', { name: '만 14세 이상입니다 (필수)' })).toBeChecked();
+    });
   });
 
   describe('개별 체크박스 토글', () => {
@@ -91,6 +108,7 @@ describe('TermsAgreementCheckboxes', () => {
       expect(onChange).toHaveBeenCalledWith({
         agreedToTerms: true,
         agreedToPrivacy: false,
+        agreedToAge14: false,
       });
     });
 
@@ -102,6 +120,19 @@ describe('TermsAgreementCheckboxes', () => {
       expect(onChange).toHaveBeenCalledWith({
         agreedToTerms: false,
         agreedToPrivacy: true,
+        agreedToAge14: false,
+      });
+    });
+
+    it('만 14세 이상 체크박스 클릭 시 agreedToAge14=true 로 onChange 호출된다', () => {
+      const onChange = vi.fn();
+      render(allFalse, onChange);
+      fireEvent.click(screen.getByRole('checkbox', { name: '만 14세 이상입니다 (필수)' }));
+      expect(onChange).toHaveBeenCalledOnce();
+      expect(onChange).toHaveBeenCalledWith({
+        agreedToTerms: false,
+        agreedToPrivacy: false,
+        agreedToAge14: true,
       });
     });
 
@@ -113,12 +144,25 @@ describe('TermsAgreementCheckboxes', () => {
       expect(onChange).toHaveBeenCalledWith({
         agreedToTerms: false,
         agreedToPrivacy: true,
+        agreedToAge14: true,
+      });
+    });
+
+    it('체크된 만 14세 이상 체크박스 클릭 시 agreedToAge14=false 로 onChange 호출된다', () => {
+      const onChange = vi.fn();
+      render(allTrue, onChange);
+      fireEvent.click(screen.getByRole('checkbox', { name: '만 14세 이상입니다 (필수)' }));
+      expect(onChange).toHaveBeenCalledOnce();
+      expect(onChange).toHaveBeenCalledWith({
+        agreedToTerms: true,
+        agreedToPrivacy: true,
+        agreedToAge14: false,
       });
     });
   });
 
   describe('전체 동의 체크박스', () => {
-    it('전체 동의 클릭 시 onChange({필수 2 true}) 가 호출된다', () => {
+    it('전체 동의 클릭 시 onChange({필수 3 true}) 가 호출된다', () => {
       const onChange = vi.fn();
       render(allFalse, onChange);
       fireEvent.click(screen.getByRole('checkbox', { name: '전체 동의' }));
@@ -126,10 +170,11 @@ describe('TermsAgreementCheckboxes', () => {
       expect(onChange).toHaveBeenCalledWith({
         agreedToTerms: true,
         agreedToPrivacy: true,
+        agreedToAge14: true,
       });
     });
 
-    it('모두 true 상태에서 전체 동의 클릭 시 onChange({필수 2 false}) 가 호출된다', () => {
+    it('모두 true 상태에서 전체 동의 클릭 시 onChange({필수 3 false}) 가 호출된다', () => {
       const onChange = vi.fn();
       render(allTrue, onChange);
       fireEvent.click(screen.getByRole('checkbox', { name: '전체 동의' }));
@@ -137,6 +182,24 @@ describe('TermsAgreementCheckboxes', () => {
       expect(onChange).toHaveBeenCalledWith({
         agreedToTerms: false,
         agreedToPrivacy: false,
+        agreedToAge14: false,
+      });
+    });
+
+    it('14세만 미체크면 전체 동의가 체크되지 않는다', () => {
+      render({ agreedToTerms: true, agreedToPrivacy: true, agreedToAge14: false });
+      expect(screen.getByRole('checkbox', { name: '전체 동의' })).not.toBeChecked();
+    });
+
+    it('약관·개인정보만 체크된 상태에서 전체 동의 클릭 시 14세 포함 전부 true 로 토글된다', () => {
+      const onChange = vi.fn();
+      render({ agreedToTerms: true, agreedToPrivacy: true, agreedToAge14: false }, onChange);
+      fireEvent.click(screen.getByRole('checkbox', { name: '전체 동의' }));
+      expect(onChange).toHaveBeenCalledOnce();
+      expect(onChange).toHaveBeenCalledWith({
+        agreedToTerms: true,
+        agreedToPrivacy: true,
+        agreedToAge14: true,
       });
     });
   });

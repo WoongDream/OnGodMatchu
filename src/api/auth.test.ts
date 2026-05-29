@@ -105,6 +105,7 @@ describe('signup', () => {
     code: '654321',
     agreedToTerms: true,
     agreedToPrivacy: true,
+    agreedToAge14: true,
   };
 
   it('POST /api/auth/signup 을 payload 그대로 호출한다', async () => {
@@ -115,6 +116,19 @@ describe('signup', () => {
     await signup(BASE_PAYLOAD);
 
     expect(mockPost).toHaveBeenCalledWith('/api/auth/signup', BASE_PAYLOAD);
+  });
+
+  it('POST body 에 agreedToAge14 를 포함해 전송한다', async () => {
+    mockPost.mockResolvedValueOnce({
+      data: { success: true, data: { accessToken: 'A', refreshToken: 'R' } },
+    });
+
+    await signup({ ...BASE_PAYLOAD, agreedToAge14: false });
+
+    expect(mockPost).toHaveBeenCalledWith(
+      '/api/auth/signup',
+      expect.objectContaining({ agreedToAge14: false }),
+    );
   });
 
   it('ApiResponse 에서 data.data (토큰) 를 반환한다', async () => {

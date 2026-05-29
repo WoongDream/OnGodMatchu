@@ -30,6 +30,7 @@ export type SignupPayload = {
   code: string;
   agreedToTerms: boolean;
   agreedToPrivacy: boolean;
+  agreedToAge14: boolean;
 };
 
 export const signup = async (payload: SignupPayload): Promise<TokenResponse> => {
