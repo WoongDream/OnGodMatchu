@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { Outlet, useParams, Link } from 'react-router-dom';
 import useProfile from '@/hooks/useProfile';
+import useMyQuizzesAggregate from '@/hooks/useMyQuizzesAggregate';
 import ProfileCard from '@/components/profile-card';
 import ProfileSidebar from '@/components/profile-sidebar';
 import ProfileTabBar from '@/components/profile-tab-bar';
@@ -19,6 +20,7 @@ const ProfileLayout = memo(() => {
   const { userId: userIdParam } = useParams<{ userId?: string }>();
   const userId = userIdParam ? Number(userIdParam) : undefined;
   const { profile, isLoading, error, isMe } = useProfile(userId);
+  const { stats: myAggregate } = useMyQuizzesAggregate();
 
   if (isLoading) {
     return <div css={skeletonStyle}>프로필을 불러오는 중...</div>;
@@ -54,7 +56,7 @@ const ProfileLayout = memo(() => {
           imageUrl={profile.profileImageUrl}
           bio={profile.bio}
           isProfilePublic={profile.isProfilePublic}
-          stats={profile.stats}
+          stats={isMe ? myAggregate : undefined}
         />
         <div css={desktopOnlyStyle}>
           <ProfileSidebar isMe={isMe} userId={userId} stats={profile.stats} />

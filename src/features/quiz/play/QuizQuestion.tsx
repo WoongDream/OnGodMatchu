@@ -17,10 +17,10 @@ const QuizQuestion = memo(
 
     return (
       <div css={wrapperStyle(hideImage)}>
-        {question.questionText && <p css={textStyle}>{question.questionText}</p>}
         {!hideImage && displayImageUrl && (
           <img css={imageStyle} src={displayImageUrl} alt={imageAlt} />
         )}
+        {question.questionText && <p css={textStyle}>{question.questionText}</p>}
       </div>
     );
   },

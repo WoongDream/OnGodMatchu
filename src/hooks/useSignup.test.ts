@@ -44,6 +44,7 @@ const PARAMS = {
   code: '123456',
   agreedToTerms: true,
   agreedToPrivacy: true,
+  agreedToAge14: true,
 };
 
 describe('useSignup', () => {
@@ -87,33 +88,24 @@ describe('useSignup', () => {
       expect(mockSignup).toHaveBeenCalledWith(PARAMS);
     });
 
-    it('agreedToMarketing: true 포함 시 객체 그대로 전달한다', async () => {
-      const paramsWithMarketing = { ...PARAMS, agreedToMarketing: true };
-      const { result } = renderUseSignup();
-      await act(async () => {
-        await result.current.submit(paramsWithMarketing);
-      });
-      expect(mockSignup).toHaveBeenCalledWith(paramsWithMarketing);
-    });
-
-    it('agreedToMarketing: false 포함 시 객체 그대로 전달한다', async () => {
-      const paramsWithMarketing = { ...PARAMS, agreedToMarketing: false };
-      const { result } = renderUseSignup();
-      await act(async () => {
-        await result.current.submit(paramsWithMarketing);
-      });
-      expect(mockSignup).toHaveBeenCalledWith(paramsWithMarketing);
-    });
-
-    it('agreedToMarketing 생략 시에도 signup 이 정상 호출된다', async () => {
+    it('signup 호출 인자에 agreedToMarketing 키가 없다', async () => {
       const { result } = renderUseSignup();
       await act(async () => {
         await result.current.submit(PARAMS);
       });
-      // PARAMS 에 agreedToMarketing 없음 — 선택 필드 생략 케이스
       expect(mockSignup).toHaveBeenCalledTimes(1);
       const callArg = mockSignup.mock.calls[0][0];
       expect(callArg).not.toHaveProperty('agreedToMarketing');
+    });
+
+    it('signup 호출 인자에 agreedToAge14 를 그대로 전달한다', async () => {
+      const { result } = renderUseSignup();
+      await act(async () => {
+        await result.current.submit({ ...PARAMS, agreedToAge14: false });
+      });
+      expect(mockSignup).toHaveBeenCalledTimes(1);
+      const callArg = mockSignup.mock.calls[0][0];
+      expect(callArg).toHaveProperty('agreedToAge14', false);
     });
 
     it('signup 응답 토큰을 setAuthSession 으로 전달한다', async () => {

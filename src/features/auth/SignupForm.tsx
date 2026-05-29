@@ -53,7 +53,7 @@ const SignupForm = memo(() => {
   const [agreements, setAgreements] = useState<TermsAgreementState>({
     agreedToTerms: false,
     agreedToPrivacy: false,
-    agreedToMarketing: false,
+    agreedToAge14: false,
   });
 
   const verification = useVerificationCode();
@@ -121,6 +121,7 @@ const SignupForm = memo(() => {
     canSubmitByStrength(strength?.score ?? 0) &&
     agreements.agreedToTerms &&
     agreements.agreedToPrivacy &&
+    agreements.agreedToAge14 &&
     signup.errorCode !== 'BREACH';
 
   const emailErrorCode =
@@ -186,7 +187,7 @@ const SignupForm = memo(() => {
       code: code.trim(),
       agreedToTerms: agreements.agreedToTerms,
       agreedToPrivacy: agreements.agreedToPrivacy,
-      agreedToMarketing: agreements.agreedToMarketing,
+      agreedToAge14: agreements.agreedToAge14,
     });
   };
 

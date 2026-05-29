@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithTheme } from '@/test/renderWithTheme';
 import MyQuizCard from './MyQuizCard';
@@ -183,20 +183,35 @@ describe('MyQuizCard', () => {
     });
   });
 
-  describe('삭제 버튼', () => {
-    it('confirm=true 이면 onDelete(quizId) 가 호출된다', async () => {
-      vi.spyOn(window, 'confirm').mockReturnValue(true);
+  describe('삭제 플로우 (ConfirmModal)', () => {
+    it('삭제 버튼 클릭 전에는 확인 모달이 열려있지 않다', () => {
+      setup();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('삭제 버튼 클릭 시 확인 모달이 열린다', async () => {
+      setup();
+      await userEvent.click(screen.getByRole('button', { name: '삭제' }));
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByText('이 퀴즈를 삭제할까요?')).toBeInTheDocument();
+    });
+
+    it('모달의 삭제(확인) 버튼 클릭 시 onDelete(quizId) 가 호출된다', async () => {
       const { onDelete } = setup();
       await userEvent.click(screen.getByRole('button', { name: '삭제' }));
+      const dialog = screen.getByRole('dialog');
+      await userEvent.click(within(dialog).getByRole('button', { name: '삭제' }));
       expect(onDelete).toHaveBeenCalledTimes(1);
       expect(onDelete).toHaveBeenCalledWith(1);
     });
 
-    it('confirm=false 이면 onDelete 가 호출되지 않는다', async () => {
-      vi.spyOn(window, 'confirm').mockReturnValue(false);
+    it('모달의 취소 버튼 클릭 시 onDelete 가 호출되지 않고 모달이 닫힌다', async () => {
       const { onDelete } = setup();
       await userEvent.click(screen.getByRole('button', { name: '삭제' }));
+      const dialog = screen.getByRole('dialog');
+      await userEvent.click(within(dialog).getByRole('button', { name: '취소' }));
       expect(onDelete).not.toHaveBeenCalled();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
   });
 

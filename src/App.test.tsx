@@ -28,6 +28,10 @@ vi.mock('./pages/quiz/QuizPlayPage', () => ({
   default: () => <div data-testid="quiz-play-page">Quiz Play Page</div>,
 }));
 
+vi.mock('./pages/quiz/QuizDetailPage', () => ({
+  default: () => <div data-testid="quiz-detail-page">Quiz Detail Page</div>,
+}));
+
 vi.mock('./pages/quiz/QuizResultPage', () => ({
   default: () => <div data-testid="quiz-result-page">Quiz Result Page</div>,
 }));
@@ -84,7 +88,31 @@ vi.mock('./pages/auth/TermsAgreementPage', () => ({
   default: () => <div data-testid="terms-agreement-page">Terms Agreement</div>,
 }));
 
+vi.mock('./pages/announcements/AnnouncementsLayout', () => ({
+  default: () => <div data-testid="announcements-layout">Announcements Layout</div>,
+}));
+
+vi.mock('./pages/announcements/AnnouncementsList', () => ({
+  default: () => <div data-testid="announcements-list">Announcements List</div>,
+}));
+
+vi.mock('./pages/announcements/AnnouncementDetail', () => ({
+  default: () => <div data-testid="announcement-detail">Announcement Detail</div>,
+}));
+
+vi.mock('./pages/announcements/ReleaseNotesList', () => ({
+  default: () => <div data-testid="release-notes-list">Release Notes List</div>,
+}));
+
+vi.mock('./pages/announcements/ReleaseNoteDetail', () => ({
+  default: () => <div data-testid="release-note-detail">Release Note Detail</div>,
+}));
+
 vi.mock('@/hooks/useBootstrapAuth', () => ({
+  default: () => undefined,
+}));
+
+vi.mock('@/hooks/usePageViewTracker', () => ({
   default: () => undefined,
 }));
 
@@ -117,16 +145,29 @@ vi.mock('react-router-dom', async () => {
     ...actual,
     BrowserRouter: ({ children }: any) => <div data-testid="browser-router">{children}</div>,
     Routes: ({ children }: any) => <div data-testid="routes">{children}</div>,
-    Route: ({ path, element }: any) => (
-      <div data-testid={`route-${path}`} data-path={path}>
+    Route: ({ path, element, children }: any) => (
+      <div data-testid={`route-${path ?? 'layout'}`} data-path={path}>
         {element}
+        {children}
       </div>
     ),
+    Navigate: ({ to }: any) => <div data-testid={`navigate-to-${to}`}>Navigating to {to}</div>,
   };
 });
 
 vi.mock('@/components/protected-route/ProtectedRoute', () => ({
   default: mockProtectedRouteImpl,
+}));
+
+// GuestOnlyRoute 도 ProtectedRoute 처럼 실제 구현은 useLocation 을 호출한다.
+// BrowserRouter 가 구조 검사용 div 로 mock 돼 Router 컨텍스트가 없으므로, passthrough 로 mock 해야
+// 라우트 트리 렌더 시 useLocation invariant 가 터지지 않는다.
+vi.mock('@/components/guest-only-route/GuestOnlyRoute', () => ({
+  default: ({ children }: any) => <>{children}</>,
+}));
+
+vi.mock('@/components/terms-agreement-gate', () => ({
+  default: () => null,
 }));
 
 // AppShell/PageContent are no longer styled wrappers — they're <div>/<main> with css prop.
@@ -215,6 +256,11 @@ describe('App', () => {
       expect(screen.getByTestId('route-/quiz/:id')).toBeInTheDocument();
     });
 
+    it('renders route for "/quiz/:id/play"', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-/quiz/:id/play')).toBeInTheDocument();
+    });
+
     it('renders route for "/quiz/:id/result"', () => {
       renderWithTheme(<App />);
       expect(screen.getByTestId('route-/quiz/:id/result')).toBeInTheDocument();
@@ -245,11 +291,37 @@ describe('App', () => {
       expect(screen.getByTestId('route-/terms')).toBeInTheDocument();
     });
 
-    it('has thirteen top-level routes total', () => {
+    it('renders route for "/quiz" (MainPage)', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-/quiz')).toBeInTheDocument();
+    });
+
+    it('renders route for "/announcements" (layout)', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-/announcements')).toBeInTheDocument();
+    });
+
+    it('renders announcements child routes (notices / release-notes / details)', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-notices')).toBeInTheDocument();
+      expect(screen.getByTestId('route-notices/:slug')).toBeInTheDocument();
+      expect(screen.getByTestId('route-release-notes')).toBeInTheDocument();
+      expect(screen.getByTestId('route-release-notes/:version')).toBeInTheDocument();
+    });
+
+    it('renders / → /quiz redirect (Navigate)', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('navigate-to-/quiz')).toBeInTheDocument();
+    });
+
+    it('has 29 routes total (1 layout + 16 top-level + 7 nested profile + 5 announcements children)', () => {
       renderWithTheme(<App />);
       const routeElements = screen.getAllByTestId(/^route-/);
-      // 9 기존 + /quiz/:id/edit + /terms-agreement + /profile + /profile/:userId
-      expect(routeElements).toHaveLength(13);
+      // 1 (TermsAgreementGate 레이아웃) + 16 top-level (/, /quiz, /quiz/create, /quiz/:id,
+      // /quiz/:id/play, /quiz/:id/result, /quiz/:id/edit, /login, /signup, /oauth2/callback,
+      // /terms-agreement, /privacy, /terms, /profile, /profile/:userId, /announcements)
+      // + 4 /profile 자식 + 3 /profile/:userId 자식 + 5 /announcements 자식 = 29
+      expect(routeElements).toHaveLength(29);
     });
 
     it('renders /profile route protected by ProtectedRoute', () => {
@@ -337,7 +409,12 @@ describe('App', () => {
       expect(screen.getByTestId('main-page')).toBeInTheDocument();
     });
 
-    it('renders QuizPlayPage component for "/quiz/:id" route', () => {
+    it('renders QuizDetailPage component for "/quiz/:id" route', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('quiz-detail-page')).toBeInTheDocument();
+    });
+
+    it('renders QuizPlayPage component for "/quiz/:id/play" route', () => {
       renderWithTheme(<App />);
       expect(screen.getByTestId('quiz-play-page')).toBeInTheDocument();
     });

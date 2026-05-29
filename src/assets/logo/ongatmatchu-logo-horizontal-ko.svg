@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="500" height="110" viewBox="0 0 500 110" shape-rendering="geometricPrecision">
-<rect width="500" height="110" rx="14" fill="#ffffff" stroke="#e4e4e7" stroke-width="0.5"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="290" height="110" viewBox="0 0 290 110" shape-rendering="geometricPrecision">
+<rect width="290" height="110" rx="14" fill="#ffffff" stroke="#e4e4e7" stroke-width="0.5"/>
 <g transform="translate(25, 25)">
 <rect width="60" height="60" rx="13" fill="#38bdf8"/>
 <line x1="0" y1="60" x2="60" y2="0" stroke="#ffffff" stroke-width="0.50" stroke-opacity="0.18"/><circle cx="15.00" cy="15.00" r="7.33" fill="none" stroke="#ffffff" stroke-width="4.50"/><path d="M 35.00 52.50 L 35.00 33.00 L 43.75 52.50 L 52.50 33.00 L 52.50 52.50" fill="none" stroke="#ffffff" stroke-width="4.50" stroke-linejoin="round" stroke-linecap="round"/>

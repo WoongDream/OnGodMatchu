@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import type { User } from '@/types';
+import type { User, ImageTransform } from '@/types';
 
 vi.mock('./instance', () => ({
   default: {
@@ -185,13 +185,37 @@ describe('requestProfileImageUpload', () => {
 });
 
 describe('applyProfileImage', () => {
-  it('PATCH /api/users/me/profile-image 를 { key } body 로 호출한다', async () => {
+  it('PATCH /api/users/me/profile-image 를 { key, originalKey:null, transform:null } body 로 호출한다 (인자 1개)', async () => {
     const user = makeUser({ profileImageUrl: 'https://cdn.example.com/img/abc.jpg' });
     mockPatch.mockResolvedValueOnce({ data: { success: true, data: user } });
 
     await applyProfileImage('img/abc.jpg');
 
-    expect(mockPatch).toHaveBeenCalledWith('/api/users/me/profile-image', { key: 'img/abc.jpg' });
+    expect(mockPatch).toHaveBeenCalledWith('/api/users/me/profile-image', {
+      key: 'img/abc.jpg',
+      originalKey: null,
+      transform: null,
+    });
+  });
+
+  it('originalKey/transform 을 주면 그대로 body 에 담아 호출한다', async () => {
+    const user = makeUser({ profileImageUrl: 'https://cdn.example.com/img/abc.jpg' });
+    mockPatch.mockResolvedValueOnce({ data: { success: true, data: user } });
+
+    const transform: ImageTransform = {
+      v: 1,
+      flipH: false,
+      rotate: 0,
+      crop: { x: 0, y: 0, width: 1, height: 1 },
+    };
+
+    await applyProfileImage('img/cropped.jpg', 'img/original.jpg', transform);
+
+    expect(mockPatch).toHaveBeenCalledWith('/api/users/me/profile-image', {
+      key: 'img/cropped.jpg',
+      originalKey: 'img/original.jpg',
+      transform,
+    });
   });
 
   it('업데이트된 User 를 반환한다', async () => {
@@ -336,45 +360,22 @@ describe('requestWithdrawalCode', () => {
 });
 
 describe('agreeTerms', () => {
-  it('인자 없이 호출하면 POST /api/users/me/terms-agreement 를 {} body 로 호출한다', async () => {
+  it('POST /api/users/me/terms-agreement 를 인자 없이 호출한다', async () => {
     const user = makeUser();
     mockPost.mockResolvedValueOnce({ data: { success: true, data: user } });
 
     await agreeTerms();
 
-    expect(mockPost).toHaveBeenCalledWith('/api/users/me/terms-agreement', {});
+    expect(mockPost).toHaveBeenCalledWith('/api/users/me/terms-agreement');
   });
 
-  it('인자 없이 호출하면 ApiResponse 에서 언랩된 User 를 반환한다', async () => {
+  it('ApiResponse 에서 언랩된 User 를 반환한다', async () => {
     const user = makeUser({ nickname: 'agreed-user' });
     mockPost.mockResolvedValueOnce({ data: { success: true, data: user } });
 
     const result = await agreeTerms();
 
     expect(result).toEqual(user);
-  });
-
-  it('{ agreedToMarketing: true } 를 payload 그대로 전달하고 User 를 반환한다', async () => {
-    const user = makeUser();
-    mockPost.mockResolvedValueOnce({ data: { success: true, data: user } });
-
-    const result = await agreeTerms({ agreedToMarketing: true });
-
-    expect(mockPost).toHaveBeenCalledWith('/api/users/me/terms-agreement', {
-      agreedToMarketing: true,
-    });
-    expect(result).toEqual(user);
-  });
-
-  it('{ agreedToMarketing: false } 를 payload 그대로 전달한다', async () => {
-    const user = makeUser();
-    mockPost.mockResolvedValueOnce({ data: { success: true, data: user } });
-
-    await agreeTerms({ agreedToMarketing: false });
-
-    expect(mockPost).toHaveBeenCalledWith('/api/users/me/terms-agreement', {
-      agreedToMarketing: false,
-    });
   });
 
   it('에러 코드 TERMS_AGREEMENT_OUTDATED 로 throw 된 axios 에러를 그대로 전파한다', async () => {

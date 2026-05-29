@@ -1,11 +1,12 @@
 import useSWR from 'swr';
-import { getQuizzes } from '@/api/quiz';
+import { getQuizzes, type QuizListSort } from '@/api/quiz';
 import type { Quiz } from '@/types';
 
 type UseQuizzesParams = {
   category?: string;
   page?: number;
   size?: number;
+  sort?: QuizListSort;
 };
 
 type UseQuizzesReturn = {
@@ -16,7 +17,13 @@ type UseQuizzesReturn = {
 };
 
 const useQuizzes = (params?: UseQuizzesParams): UseQuizzesReturn => {
-  const key = ['quizzes', params?.category, params?.page, params?.size];
+  const key = [
+    'quizzes',
+    params?.category ?? null,
+    params?.page ?? 0,
+    params?.size ?? 20,
+    params?.sort ?? 'plays',
+  ];
 
   const { data, isLoading, error } = useSWR(key, () => getQuizzes(params));
 

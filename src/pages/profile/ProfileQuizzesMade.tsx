@@ -5,6 +5,7 @@ import ChipButton from '@/components/chip-button';
 import Dropdown from '@/components/dropdown';
 import MyQuizStats from '@/components/my-quiz-stats';
 import MyQuizList from '@/components/my-quiz-list';
+import { useToast } from '@/components/toast';
 import useMyQuizzes from '@/hooks/useMyQuizzes';
 import useMyQuizzesAggregate from '@/hooks/useMyQuizzesAggregate';
 import type { MyQuizzesSort, MyQuizzesVisibilityFilter } from '@/api/quiz';
@@ -41,6 +42,7 @@ const PAGE_SIZE = 6;
 const ProfileQuizzesMade = memo(() => {
   const { isMe } = useOutletContext<OutletContext>();
   const navigate = useNavigate();
+  const toast = useToast();
   const [visibility, setVisibility] = useState<MyQuizzesVisibilityFilter>('all');
   const [sort, setSort] = useState<MyQuizzesSort>('latest');
   const [size, setSize] = useState(PAGE_SIZE);
@@ -54,6 +56,18 @@ const ProfileQuizzesMade = memo(() => {
   });
 
   const handleEdit = useCallback((quizId: number) => navigate(`/quiz/${quizId}/edit`), [navigate]);
+
+  const handleDelete = useCallback(
+    async (quizId: number) => {
+      const ok = await remove(quizId);
+      if (ok) {
+        toast.success('퀴즈를 삭제했어요.');
+      } else {
+        toast.error('퀴즈 삭제에 실패했어요. 잠시 후 다시 시도해주세요.');
+      }
+    },
+    [remove, toast],
+  );
 
   const handleCreate = useCallback(() => navigate('/quiz/create'), [navigate]);
 
@@ -121,7 +135,7 @@ const ProfileQuizzesMade = memo(() => {
             <MyQuizList
               items={items}
               onEdit={handleEdit}
-              onDelete={remove}
+              onDelete={handleDelete}
               isMutating={isMutating}
             />
           )}

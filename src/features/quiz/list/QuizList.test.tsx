@@ -8,6 +8,7 @@ const mockNavigate = vi.hoisted(() => vi.fn());
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
+  useLocation: () => ({ pathname: '/quiz', search: '' }),
 }));
 
 vi.mock('./QuizCard', () => ({
@@ -27,6 +28,10 @@ const createMockQuiz = (overrides?: Partial<Quiz>): Quiz => ({
   thumbnailKey: 'quiz-thumbnails/abc',
   thumbnailUrl: 'https://example.com/thumb.jpg',
   playCount: 42,
+  starCount: 0,
+  commentCount: 0,
+  shareCount: 0,
+  isStarred: null,
   isPublic: true,
   createdAt: '2024-01-01T00:00:00Z',
   ...overrides,
@@ -194,7 +199,7 @@ describe('QuizList', () => {
         createMockQuiz({ id: 1, playCount: 0, title: 'Zero Plays' }),
         createMockQuiz({ id: 2, playCount: 999999, title: 'Many Plays' }),
         createMockQuiz({ id: 3, category: 'music', title: 'Music Quiz' }),
-        createMockQuiz({ id: 4, category: 'movie', title: 'Movie Quiz' }),
+        createMockQuiz({ id: 4, category: 'culture', title: 'Culture Quiz' }),
       ];
       renderWithTheme(<QuizList quizzes={quizzes} />);
 

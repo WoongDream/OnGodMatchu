@@ -1,6 +1,7 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useState } from 'react';
 import Button from '@/components/button';
 import Badge from '@/components/badge';
+import ConfirmModal from '@/components/confirm-modal';
 import { PlayIcon, ShareIcon, StarIcon, CommentIcon, AccuracyIcon } from '@/components/icon';
 import { formatRelativeKo } from '@/lib/time/relative';
 import type { MyQuizCardProps } from './MyQuizCard.type';
@@ -25,11 +26,13 @@ const formatRate = (rate: number | null): string => (rate === null ? '—' : `${
 const STAT_ICON_SIZE = 14;
 
 const MyQuizCard = memo(({ item, onEdit, onDelete, isMutating = false }: MyQuizCardProps) => {
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const handleEdit = useCallback(() => onEdit(item.id), [onEdit, item.id]);
-  const handleDelete = useCallback(() => {
-    if (window.confirm('이 퀴즈를 삭제할까요? 되돌릴 수 없습니다.')) {
-      onDelete(item.id);
-    }
+  const openConfirm = useCallback(() => setIsConfirmOpen(true), []);
+  const closeConfirm = useCallback(() => setIsConfirmOpen(false), []);
+  const handleConfirmDelete = useCallback(() => {
+    onDelete(item.id);
+    setIsConfirmOpen(false);
   }, [onDelete, item.id]);
 
   return (
@@ -74,10 +77,21 @@ const MyQuizCard = memo(({ item, onEdit, onDelete, isMutating = false }: MyQuizC
         <Button variant="secondary" size="sm" onClick={handleEdit} disabled={isMutating}>
           편집
         </Button>
-        <Button variant="ghost" size="sm" onClick={handleDelete} disabled={isMutating}>
+        <Button variant="ghost" size="sm" onClick={openConfirm} disabled={isMutating}>
           삭제
         </Button>
       </div>
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={closeConfirm}
+        onConfirm={handleConfirmDelete}
+        title="이 퀴즈를 삭제할까요?"
+        message="삭제하면 되돌릴 수 없어요."
+        confirmLabel="삭제"
+        confirmVariant="danger"
+        isConfirming={isMutating}
+        confirmingLabel="삭제 중..."
+      />
     </article>
   );
 });

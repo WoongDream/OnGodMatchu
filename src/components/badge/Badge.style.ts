@@ -15,6 +15,14 @@ const VARIANT_TONES: Record<BadgeVariant, { bg: string; fg: (theme: Theme) => st
     bg: '#fef3c7',
     fg: (theme) => theme.colors.status.warning,
   },
+  neutral: {
+    bg: '#f3f4f6',
+    fg: () => '#4b5563',
+  },
+  danger: {
+    bg: '#fee2e2',
+    fg: () => '#b91c1c',
+  },
 };
 
 export const badgeStyle = (variant: BadgeVariant) => (theme: Theme) => {

@@ -6,22 +6,19 @@ type Props = {
   children: React.ReactNode;
 };
 
-const TERMS_GATE_WHITELIST = ['/terms-agreement', '/terms', '/privacy'];
-
 const ProtectedRoute = memo(({ children }: Props) => {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
-  const user = useAuthStore((state) => state.user);
-  const { pathname } = useLocation();
+  const status = useAuthStore((state) => state.status);
+  const location = useLocation();
 
-  if (!isLoggedIn) {
-    return <Navigate to="/login" replace />;
+  // 토큰으로 사용자 복원 중이면 판단을 보류한다. 여기서 redirect 하면
+  // 새로고침 시 인증 상태 복원 전에 /login 으로 튕긴다.
+  if (status === 'bootstrapping') {
+    return null;
   }
 
-  if (
-    user?.needsTermsAgreement === true &&
-    !TERMS_GATE_WHITELIST.some((p) => pathname.startsWith(p))
-  ) {
-    return <Navigate to="/terms-agreement" replace />;
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
   }
 
   return <>{children}</>;

@@ -1,5 +1,13 @@
 import instance from './instance';
-import type { Quiz, Question, Category, QuizVisibility, MyQuizListItem } from '@/types';
+import type {
+  Quiz,
+  Question,
+  Category,
+  QuizVisibility,
+  MyQuizListItem,
+  QuizScoreDistribution,
+  ImageTransform,
+} from '@/types';
 
 type ApiResponse<T> = {
   success: boolean;
@@ -8,6 +16,10 @@ type ApiResponse<T> = {
 
 type QuizDetailResponse = Quiz & {
   questions: Question[];
+};
+
+type RawQuizDetailResponse = Omit<QuizDetailResponse, 'isPublic'> & {
+  visibility: QuizVisibility;
 };
 
 type Page<T> = {
@@ -27,18 +39,26 @@ type GradeResponse = {
   correctAnswer: string;
 };
 
+type QuestionRequest = {
+  imageKey?: string;
+  originalImageKey?: string;
+  imageTransform?: ImageTransform | null;
+  answerImageKey?: string;
+  originalAnswerImageKey?: string;
+  answerImageTransform?: ImageTransform | null;
+  questionText?: string;
+  answer: string;
+};
+
 type QuizCreateRequest = {
   title: string;
   description?: string;
   category: Category;
   thumbnailKey?: string;
+  originalThumbnailKey?: string;
+  thumbnailTransform?: ImageTransform | null;
   isPublic: boolean;
-  questions: Array<{
-    imageKey?: string;
-    answerImageKey?: string;
-    questionText?: string;
-    answer: string;
-  }>;
+  questions: QuestionRequest[];
 };
 
 export type CategoryItem = {
@@ -57,12 +77,27 @@ export type MyQuizzesQuery = {
   size?: number;
 };
 
+export type QuestionUpdate = {
+  id?: number;
+  imageKey?: string | null;
+  originalImageKey?: string | null;
+  imageTransform?: ImageTransform | null;
+  answerImageKey?: string | null;
+  originalAnswerImageKey?: string | null;
+  answerImageTransform?: ImageTransform | null;
+  questionText?: string | null;
+  answer: string;
+};
+
 export type UpdateQuizPayload = {
   title?: string;
   description?: string;
   category?: Category;
   thumbnailKey?: string;
+  originalThumbnailKey?: string;
+  thumbnailTransform?: ImageTransform | null;
   isPublic?: boolean;
+  questions?: QuestionUpdate[];
 };
 
 export type QuizErrorCode =
@@ -86,24 +121,65 @@ const toMyQuizListItem = (raw: RawMyQuizListItem): MyQuizListItem => {
   return { ...rest, publicId: quizId, isPublic: visibilityToFlag(visibility) };
 };
 
+const toQuizDetail = (raw: RawQuizDetailResponse): QuizDetailResponse => {
+  const { visibility, ...rest } = raw;
+  return { ...rest, isPublic: visibilityToFlag(visibility) };
+};
+
 export const getCategories = async (): Promise<CategoryItem[]> => {
   const res = await instance.get<ApiResponse<CategoryItem[]>>('/api/quizzes/categories');
   return res.data.data;
 };
 
+export type QuizListSort = 'plays' | 'latest';
+
 export const getQuizzes = async (params?: {
   category?: string;
   page?: number;
   size?: number;
+  sort?: QuizListSort;
 }): Promise<Page<Quiz>> => {
-  const res = await instance.get<ApiResponse<Page<Quiz>>>('/api/quizzes', {
-    params: { ...params, page: params?.page ?? 0, size: params?.size ?? 20 },
-  });
+  const query: Record<string, string | number> = {
+    page: params?.page ?? 0,
+    size: params?.size ?? 20,
+  };
+  if (params?.category) {
+    query.category = params.category;
+  }
+  if (params?.sort === 'latest') {
+    query.sort = 'createdAt,desc';
+  }
+  const res = await instance.get<ApiResponse<Page<Quiz>>>('/api/quizzes', { params: query });
+  return res.data.data;
+};
+
+export const starQuiz = async (quizId: number): Promise<void> => {
+  await instance.put(`/api/quizzes/${quizId}/star`);
+};
+
+export const unstarQuiz = async (quizId: number): Promise<void> => {
+  await instance.delete(`/api/quizzes/${quizId}/star`);
+};
+
+export type QuizShareResult = {
+  shareCount: number;
+  alreadyShared: boolean;
+};
+
+export const recordQuizShare = async (quizId: number): Promise<QuizShareResult> => {
+  const res = await instance.post<ApiResponse<QuizShareResult>>(`/api/quizzes/${quizId}/share`);
   return res.data.data;
 };
 
 export const getQuizDetail = async (quizId: number): Promise<QuizDetailResponse> => {
-  const res = await instance.get<ApiResponse<QuizDetailResponse>>(`/api/quizzes/${quizId}`);
+  const res = await instance.get<ApiResponse<RawQuizDetailResponse>>(`/api/quizzes/${quizId}`);
+  return toQuizDetail(res.data.data);
+};
+
+export const getQuizScoreDistribution = async (quizId: number): Promise<QuizScoreDistribution> => {
+  const res = await instance.get<ApiResponse<QuizScoreDistribution>>(
+    `/api/quizzes/${quizId}/score-distribution`,
+  );
   return res.data.data;
 };
 

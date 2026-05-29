@@ -3,19 +3,6 @@ import { renderWithTheme, screen } from '@/test/renderWithTheme';
 import userEvent from '@testing-library/user-event';
 import QuizAnswer from './QuizAnswer';
 
-vi.mock('@/components/input', () => ({
-  default: ({ value, onChange, placeholder, disabled }: any) => (
-    <input
-      type="text"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      disabled={disabled}
-      data-testid="quiz-answer-input"
-    />
-  ),
-}));
-
 describe('QuizAnswer', () => {
   let mockOnChange: (value: string) => void;
   let mockOnSubmit: () => void;
@@ -26,171 +13,80 @@ describe('QuizAnswer', () => {
     vi.clearAllMocks();
   });
 
-  describe('렌더링', () => {
-    it('입력 필드를 렌더링한다', () => {
+  describe('렌더링 & 마운트 focus', () => {
+    it('placeholder "정답을 입력하고 enter" 텍스트가 노출된다', () => {
       renderWithTheme(<QuizAnswer value="" onChange={mockOnChange} onSubmit={mockOnSubmit} />);
-      expect(screen.getByTestId('quiz-answer-input')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('정답을 입력하고 enter')).toBeInTheDocument();
     });
 
-    it('placeholder 텍스트를 표시한다', () => {
+    it('마운트 시 input 에 자동 focus 가 적용된다 (disabled 아닐 때)', () => {
       renderWithTheme(<QuizAnswer value="" onChange={mockOnChange} onSubmit={mockOnSubmit} />);
-      expect(screen.getByPlaceholderText('정답을 입력하세요')).toBeInTheDocument();
+      const input = screen.getByPlaceholderText('정답을 입력하고 enter');
+      expect(document.activeElement).toBe(input);
     });
 
-    it('value prop 을 입력 필드에 표시한다', () => {
+    it('value prop 이 input 의 value 로 반영된다', () => {
       renderWithTheme(
         <QuizAnswer value="test answer" onChange={mockOnChange} onSubmit={mockOnSubmit} />,
       );
-      const input = screen.getByTestId('quiz-answer-input') as HTMLInputElement;
+      const input = screen.getByPlaceholderText('정답을 입력하고 enter') as HTMLInputElement;
       expect(input.value).toBe('test answer');
     });
 
     it('displayName 이 QuizAnswer 로 설정되어 있다', () => {
       expect(QuizAnswer.displayName).toBe('QuizAnswer');
     });
-
-    it('버튼을 렌더링하지 않는다', () => {
-      renderWithTheme(<QuizAnswer value="" onChange={mockOnChange} onSubmit={mockOnSubmit} />);
-      expect(screen.queryByRole('button')).not.toBeInTheDocument();
-    });
   });
 
   describe('onChange 콜백', () => {
-    it('입력 값이 변경될 때 onChange 를 호출한다', async () => {
+    it('input 에 타이핑하면 onChange 가 새 값으로 호출된다', async () => {
       const user = userEvent.setup();
       renderWithTheme(<QuizAnswer value="" onChange={mockOnChange} onSubmit={mockOnSubmit} />);
 
-      const input = screen.getByTestId('quiz-answer-input');
+      const input = screen.getByPlaceholderText('정답을 입력하고 enter');
       await user.type(input, 'abc');
 
       expect(mockOnChange).toHaveBeenCalledTimes(3);
-      expect(mockOnChange).toHaveBeenCalledWith('a');
-      expect(mockOnChange).toHaveBeenCalledWith('b');
-      expect(mockOnChange).toHaveBeenCalledWith('c');
+      expect(mockOnChange).toHaveBeenNthCalledWith(1, 'a');
+      expect(mockOnChange).toHaveBeenNthCalledWith(2, 'b');
+      expect(mockOnChange).toHaveBeenNthCalledWith(3, 'c');
     });
   });
 
-  describe('disabled prop', () => {
-    it('disabled=true 이면 입력 필드를 비활성화한다', () => {
-      renderWithTheme(
-        <QuizAnswer
-          value="answer"
-          onChange={mockOnChange}
-          onSubmit={mockOnSubmit}
-          disabled={true}
-        />,
-      );
-      expect(screen.getByTestId('quiz-answer-input')).toBeDisabled();
-    });
-
-    it('disabled=false 이면 입력 필드를 활성화한다', () => {
-      renderWithTheme(
-        <QuizAnswer
-          value="answer"
-          onChange={mockOnChange}
-          onSubmit={mockOnSubmit}
-          disabled={false}
-        />,
-      );
-      expect(screen.getByTestId('quiz-answer-input')).not.toBeDisabled();
-    });
-
-    it('disabled prop 기본값은 false 이다', () => {
-      renderWithTheme(
-        <QuizAnswer value="answer" onChange={mockOnChange} onSubmit={mockOnSubmit} />,
-      );
-      expect(screen.getByTestId('quiz-answer-input')).not.toBeDisabled();
-    });
-  });
-
-  describe('Enter 키 — onSubmit 호출', () => {
-    it('Enter 키를 누르면 onSubmit 을 호출한다', async () => {
+  describe('Enter 키 — form onSubmit', () => {
+    it('Enter 키를 누르면 form 이 submit 되어 onSubmit 이 호출된다', async () => {
       const user = userEvent.setup();
       renderWithTheme(
         <QuizAnswer value="answer" onChange={mockOnChange} onSubmit={mockOnSubmit} />,
       );
 
-      const input = screen.getByTestId('quiz-answer-input');
-      await user.click(input);
+      const input = screen.getByPlaceholderText('정답을 입력하고 enter');
+      input.focus();
       await user.keyboard('{Enter}');
 
       expect(mockOnSubmit).toHaveBeenCalledTimes(1);
     });
 
-    it('Enter 키를 여러 번 누르면 그 횟수만큼 onSubmit 이 호출된다', async () => {
+    it('Enter 외 다른 키를 눌러도 onSubmit 이 호출되지 않는다', async () => {
       const user = userEvent.setup();
       renderWithTheme(
         <QuizAnswer value="answer" onChange={mockOnChange} onSubmit={mockOnSubmit} />,
       );
 
-      const input = screen.getByTestId('quiz-answer-input');
-      await user.click(input);
-      await user.keyboard('{Enter}');
-      await user.keyboard('{Enter}');
-      await user.keyboard('{Enter}');
-
-      expect(mockOnSubmit).toHaveBeenCalledTimes(3);
-    });
-
-    it('disabled=true 이면 Enter 키를 눌러도 onSubmit 을 호출하지 않는다', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(
-        <QuizAnswer
-          value="answer"
-          onChange={mockOnChange}
-          onSubmit={mockOnSubmit}
-          disabled={true}
-        />,
-      );
-
-      const input = screen.getByTestId('quiz-answer-input');
-      // disabled 인풋은 click/focus 가 차단되므로 onKeyDown 핸들러가 실행되지 않음
-      await user.click(input);
-      await user.keyboard('{Enter}');
-
-      expect(mockOnSubmit).not.toHaveBeenCalled();
-    });
-
-    it('Enter 외 다른 키를 눌러도 onSubmit 을 호출하지 않는다', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(
-        <QuizAnswer value="answer" onChange={mockOnChange} onSubmit={mockOnSubmit} />,
-      );
-
-      const input = screen.getByTestId('quiz-answer-input');
-      await user.click(input);
+      const input = screen.getByPlaceholderText('정답을 입력하고 enter');
+      input.focus();
+      await user.keyboard('a');
       await user.keyboard('{Tab}');
       await user.keyboard('{Escape}');
 
       expect(mockOnSubmit).not.toHaveBeenCalled();
     });
-
-    it('value 가 빈 문자열이어도 Enter 키 핸들러는 disabled 여부만 확인한다', async () => {
-      const user = userEvent.setup();
-      renderWithTheme(<QuizAnswer value="" onChange={mockOnChange} onSubmit={mockOnSubmit} />);
-
-      const input = screen.getByTestId('quiz-answer-input');
-      await user.click(input);
-      await user.keyboard('{Enter}');
-
-      // 핸들러는 disabled prop 만 체크하므로 value 가 비어 있어도 호출됨
-      expect(mockOnSubmit).toHaveBeenCalledTimes(1);
-    });
   });
 
-  describe('런타임 disabled 전환', () => {
-    it('disabled 가 false → true 로 바뀌면 Enter 키 입력을 차단한다', async () => {
+  describe('disabled prop', () => {
+    it('disabled=true 이면 input 이 비활성화되고 Enter 시 onSubmit 이 호출되지 않는다', async () => {
       const user = userEvent.setup();
-      const { rerender } = renderWithTheme(
-        <QuizAnswer
-          value="answer"
-          onChange={mockOnChange}
-          onSubmit={mockOnSubmit}
-          disabled={false}
-        />,
-      );
-
-      rerender(
+      renderWithTheme(
         <QuizAnswer
           value="answer"
           onChange={mockOnChange}
@@ -199,32 +95,129 @@ describe('QuizAnswer', () => {
         />,
       );
 
-      const input = screen.getByTestId('quiz-answer-input');
-      await user.click(input);
-      await user.keyboard('{Enter}');
+      const input = screen.getByPlaceholderText('정답을 입력하고 enter');
+      expect(input).toBeDisabled();
 
+      // disabled input 은 user-event 의 click/focus 가 차단되지만,
+      // 만약 form onSubmit 이 호출되더라도 handleSubmit 내부의 disabled 분기로 차단됨.
+      await user.keyboard('{Enter}');
       expect(mockOnSubmit).not.toHaveBeenCalled();
+    });
+
+    it('disabled=true 로 마운트되면 focus 가 자동 적용되지 않는다', () => {
+      renderWithTheme(
+        <QuizAnswer value="" onChange={mockOnChange} onSubmit={mockOnSubmit} disabled={true} />,
+      );
+      const input = screen.getByPlaceholderText('정답을 입력하고 enter');
+      expect(document.activeElement).not.toBe(input);
+    });
+
+    it('disabled=true 이면 「제출」 버튼도 disabled 된다', () => {
+      renderWithTheme(
+        <QuizAnswer
+          value="answer"
+          onChange={mockOnChange}
+          onSubmit={mockOnSubmit}
+          disabled={true}
+        />,
+      );
+      expect(screen.getByLabelText('제출')).toBeDisabled();
     });
   });
 
-  describe('엣지 케이스', () => {
-    it('매우 긴 value 를 입력 필드에 표시한다', () => {
-      const longValue = 'a'.repeat(1000);
+  describe('제출 버튼', () => {
+    it('「제출」 버튼을 클릭하면 onSubmit 이 호출된다', async () => {
+      const user = userEvent.setup();
       renderWithTheme(
-        <QuizAnswer value={longValue} onChange={mockOnChange} onSubmit={mockOnSubmit} />,
+        <QuizAnswer value="answer" onChange={mockOnChange} onSubmit={mockOnSubmit} />,
       );
 
-      const input = screen.getByTestId('quiz-answer-input') as HTMLInputElement;
-      expect(input.value).toBe(longValue);
+      const submitButton = screen.getByLabelText('제출');
+      await user.click(submitButton);
+
+      expect(mockOnSubmit).toHaveBeenCalledTimes(1);
     });
 
-    it('유니코드와 특수문자를 포함한 value 를 표시한다', () => {
-      renderWithTheme(
-        <QuizAnswer value="한글 🚀 !@#$%" onChange={mockOnChange} onSubmit={mockOnSubmit} />,
+    it('빈 입력(value="") 일 때 「제출」 버튼은 disabled 된다', () => {
+      renderWithTheme(<QuizAnswer value="" onChange={mockOnChange} onSubmit={mockOnSubmit} />);
+      expect(screen.getByLabelText('제출')).toBeDisabled();
+    });
+
+    it('공백만 입력된 경우(value="   ") 「제출」 버튼은 disabled 된다', () => {
+      renderWithTheme(<QuizAnswer value="   " onChange={mockOnChange} onSubmit={mockOnSubmit} />);
+      expect(screen.getByLabelText('제출')).toBeDisabled();
+    });
+
+    it('의미 있는 값이 입력되면 「제출」 버튼이 활성화된다', () => {
+      renderWithTheme(<QuizAnswer value="짱구" onChange={mockOnChange} onSubmit={mockOnSubmit} />);
+      expect(screen.getByLabelText('제출')).not.toBeDisabled();
+    });
+  });
+
+  describe('focusKey & disabled 전환에 따른 focus 재이동', () => {
+    it('disabled=true → false 로 전환되면 input 이 다시 focus 를 받는다', () => {
+      const { rerender } = renderWithTheme(
+        <QuizAnswer value="" onChange={mockOnChange} onSubmit={mockOnSubmit} disabled={true} />,
       );
 
-      const input = screen.getByTestId('quiz-answer-input') as HTMLInputElement;
-      expect(input.value).toBe('한글 🚀 !@#$%');
+      const input = screen.getByPlaceholderText('정답을 입력하고 enter');
+      expect(document.activeElement).not.toBe(input);
+
+      rerender(
+        <QuizAnswer value="" onChange={mockOnChange} onSubmit={mockOnSubmit} disabled={false} />,
+      );
+      expect(document.activeElement).toBe(input);
+    });
+
+    it('focusKey 변경 시 input 으로 focus 가 재이동된다', () => {
+      const { rerender } = renderWithTheme(
+        <QuizAnswer
+          value=""
+          onChange={mockOnChange}
+          onSubmit={mockOnSubmit}
+          focusKey="0-answering"
+        />,
+      );
+      const input = screen.getByPlaceholderText('정답을 입력하고 enter');
+      // 마운트 후 다른 요소로 focus 이동
+      (document.activeElement as HTMLElement | null)?.blur();
+      expect(document.activeElement).not.toBe(input);
+
+      // focusKey 변경 → focus 재이동
+      rerender(
+        <QuizAnswer
+          value=""
+          onChange={mockOnChange}
+          onSubmit={mockOnSubmit}
+          focusKey="1-answering"
+        />,
+      );
+      expect(document.activeElement).toBe(input);
+    });
+
+    it('disabled=true 상태에서는 focusKey 가 변경되어도 focus 가 이동하지 않는다', () => {
+      const { rerender } = renderWithTheme(
+        <QuizAnswer
+          value=""
+          onChange={mockOnChange}
+          onSubmit={mockOnSubmit}
+          disabled={true}
+          focusKey="0-feedback"
+        />,
+      );
+      const input = screen.getByPlaceholderText('정답을 입력하고 enter');
+      expect(document.activeElement).not.toBe(input);
+
+      rerender(
+        <QuizAnswer
+          value=""
+          onChange={mockOnChange}
+          onSubmit={mockOnSubmit}
+          disabled={true}
+          focusKey="1-feedback"
+        />,
+      );
+      expect(document.activeElement).not.toBe(input);
     });
   });
 });

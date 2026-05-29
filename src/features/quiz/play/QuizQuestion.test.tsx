@@ -177,8 +177,8 @@ describe('QuizQuestion', () => {
       const image = screen.getByAltText('문제 이미지');
       const text = screen.getByText('Question below image');
 
-      // Text should appear before image in DOM
-      expect(text.compareDocumentPosition(image)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+      // Image should appear before text in DOM
+      expect(image.compareDocumentPosition(text)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     });
   });
 

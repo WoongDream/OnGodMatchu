@@ -13,22 +13,26 @@ import instance from './instance';
 import {
   getMyQuizzes,
   getUserQuizzes,
+  getQuizDetail,
+  getQuizScoreDistribution,
   updateQuiz,
   updateQuizVisibility,
   deleteQuiz,
   mapQuizError,
+  recordQuizShare,
 } from './quiz';
 
 const mockGet = vi.mocked(instance.get);
 const mockPatch = vi.mocked(instance.patch);
+const mockPost = vi.mocked(instance.post);
 const mockDelete = vi.mocked(instance.delete);
 
 const makeRawItem = (overrides: Partial<Record<string, unknown>> = {}) => ({
   id: 1,
   quizId: 'uuid-1',
   title: '테스트 퀴즈',
-  category: 'movie',
-  categoryLabel: '영화',
+  category: 'culture',
+  categoryLabel: '문화',
   visibility: 'PUBLIC',
   thumbnailKey: null,
   thumbnailUrl: null,
@@ -131,6 +135,123 @@ describe('getUserQuizzes', () => {
   });
 });
 
+describe('getQuizDetail', () => {
+  const makeRawDetail = (overrides: Partial<Record<string, unknown>> = {}) => ({
+    id: 1,
+    publicId: 'uuid-1',
+    title: '상세 퀴즈',
+    description: '설명',
+    category: 'culture',
+    categoryLabel: '문화',
+    visibility: 'PUBLIC',
+    thumbnailKey: null,
+    thumbnailUrl: null,
+    playCount: 12,
+    shareCount: 3,
+    starCount: 4,
+    commentCount: 5,
+    correctRate: 0.8,
+    createdAt: '2026-05-01T00:00:00+09:00',
+    updatedAt: '2026-05-01T00:00:00+09:00',
+    questions: [
+      {
+        id: 11,
+        questionText: 'Q1',
+        imageKey: null,
+        imageUrl: null,
+        answerImageKey: null,
+        answerImageUrl: null,
+      },
+      {
+        id: 12,
+        questionText: 'Q2',
+        imageKey: null,
+        imageUrl: null,
+        answerImageKey: null,
+        answerImageUrl: null,
+      },
+    ],
+    ...overrides,
+  });
+
+  it('GET /api/quizzes/{quizId} 를 호출한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makeRawDetail() } });
+    await getQuizDetail(42);
+    expect(mockGet).toHaveBeenCalledWith('/api/quizzes/42');
+  });
+
+  it('visibility PUBLIC 응답은 isPublic true 로 변환하고 visibility 키는 제거한다', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: { success: true, data: makeRawDetail({ visibility: 'PUBLIC' }) },
+    });
+    const res = await getQuizDetail(1);
+    expect(res.isPublic).toBe(true);
+    expect(res).not.toHaveProperty('visibility');
+  });
+
+  it('visibility PRIVATE 응답은 isPublic false 로 변환한다', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: { success: true, data: makeRawDetail({ visibility: 'PRIVATE' }) },
+    });
+    const res = await getQuizDetail(1);
+    expect(res.isPublic).toBe(false);
+    expect(res).not.toHaveProperty('visibility');
+  });
+
+  it('questions 배열을 그대로 보존한다', async () => {
+    const questions = [
+      {
+        id: 101,
+        questionText: '문제1',
+        imageKey: null,
+        imageUrl: null,
+        answerImageKey: null,
+        answerImageUrl: null,
+      },
+      {
+        id: 102,
+        questionText: '문제2',
+        imageKey: null,
+        imageUrl: null,
+        answerImageKey: null,
+        answerImageUrl: null,
+      },
+      {
+        id: 103,
+        questionText: '문제3',
+        imageKey: null,
+        imageUrl: null,
+        answerImageKey: null,
+        answerImageUrl: null,
+      },
+    ];
+    mockGet.mockResolvedValueOnce({
+      data: { success: true, data: makeRawDetail({ questions }) },
+    });
+    const res = await getQuizDetail(1);
+    expect(res.questions).toEqual(questions);
+  });
+
+  it('title/category/playCount 등 다른 필드도 그대로 보존한다', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        success: true,
+        data: makeRawDetail({
+          id: 99,
+          title: '보존 테스트',
+          category: 'culture',
+          playCount: 777,
+        }),
+      },
+    });
+    const res = await getQuizDetail(99);
+    expect(res.id).toBe(99);
+    expect(res.title).toBe('보존 테스트');
+    expect(res.category).toBe('culture');
+    expect(res.playCount).toBe(777);
+  });
+});
+
 describe('updateQuiz', () => {
   it('PATCH /api/quizzes/{id} 로 본문을 보낸다', async () => {
     mockPatch.mockResolvedValueOnce({ data: { success: true, data: {} } });
@@ -161,6 +282,27 @@ describe('updateQuiz', () => {
       visibility: 'PRIVATE',
     });
   });
+
+  it('payload.questions 가 PATCH 본문에 그대로 전달된다', async () => {
+    mockPatch.mockResolvedValueOnce({ data: { success: true, data: {} } });
+    const questions = [
+      {
+        id: 1,
+        imageKey: 'quiz-questions/a.png',
+        answerImageKey: 'quiz-questions/a.png',
+        questionText: '문제',
+        answer: '정답',
+      },
+      {
+        imageKey: null,
+        answerImageKey: null,
+        questionText: null,
+        answer: '다른정답',
+      },
+    ];
+    await updateQuiz(7, { questions });
+    expect(mockPatch).toHaveBeenCalledWith('/api/quizzes/7', { questions });
+  });
 });
 
 describe('updateQuizVisibility', () => {
@@ -176,6 +318,86 @@ describe('deleteQuiz', () => {
     mockDelete.mockResolvedValueOnce({ data: { success: true, data: null } });
     await deleteQuiz(7);
     expect(mockDelete).toHaveBeenCalledWith('/api/quizzes/7');
+  });
+});
+
+describe('recordQuizShare', () => {
+  it('POST /api/quizzes/{quizId}/share 를 본문 없이 호출한다', async () => {
+    mockPost.mockResolvedValueOnce({
+      data: { success: true, data: { shareCount: 1, alreadyShared: false } },
+    });
+    await recordQuizShare(1);
+    expect(mockPost).toHaveBeenCalledWith('/api/quizzes/1/share');
+  });
+
+  it('응답 data 를 언랩해 { shareCount, alreadyShared } 를 반환한다', async () => {
+    mockPost.mockResolvedValueOnce({
+      data: { success: true, data: { shareCount: 5, alreadyShared: false } },
+    });
+    const res = await recordQuizShare(1);
+    expect(res).toEqual({ shareCount: 5, alreadyShared: false });
+  });
+
+  it('alreadyShared=true 인 응답도 그대로 반환한다 (카운트 유지 시나리오)', async () => {
+    mockPost.mockResolvedValueOnce({
+      data: { success: true, data: { shareCount: 5, alreadyShared: true } },
+    });
+    const res = await recordQuizShare(1);
+    expect(res).toEqual({ shareCount: 5, alreadyShared: true });
+  });
+
+  it('instance.post 가 reject 하면 그대로 전파한다 (catch 안 함)', async () => {
+    mockPost.mockRejectedValueOnce(new Error('boom'));
+    await expect(recordQuizShare(1)).rejects.toThrow('boom');
+  });
+});
+
+describe('getQuizScoreDistribution', () => {
+  const makeDistribution = (overrides: Partial<Record<string, unknown>> = {}) => ({
+    totalAttempts: 42,
+    averageScore: 3.4,
+    distribution: [
+      { score: 0, count: 1 },
+      { score: 1, count: 3 },
+      { score: 2, count: 8 },
+      { score: 3, count: 15 },
+      { score: 4, count: 10 },
+      { score: 5, count: 5 },
+    ],
+    ...overrides,
+  });
+
+  it('GET /api/quizzes/{id}/score-distribution 을 호출한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makeDistribution() } });
+    await getQuizScoreDistribution(5);
+    expect(mockGet).toHaveBeenCalledWith('/api/quizzes/5/score-distribution');
+  });
+
+  it('ApiResponse 의 data 를 언랩해 { totalAttempts, averageScore, distribution } 를 반환한다', async () => {
+    const payload = makeDistribution({ totalAttempts: 10, averageScore: 2.5 });
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: payload } });
+    const res = await getQuizScoreDistribution(7);
+    expect(res).toEqual(payload);
+    expect(res.totalAttempts).toBe(10);
+    expect(res.averageScore).toBe(2.5);
+  });
+
+  it('distribution 배열을 그대로 보존한다 (순서·길이)', async () => {
+    const distribution = [
+      { score: 0, count: 0 },
+      { score: 1, count: 2 },
+      { score: 2, count: 0 },
+    ];
+    mockGet.mockResolvedValueOnce({
+      data: { success: true, data: makeDistribution({ distribution }) },
+    });
+    const res = await getQuizScoreDistribution(7);
+    expect(res.distribution).toEqual(distribution);
+  });
+
+  it('instance.get 이 reject 하면 그대로 전파한다', async () => {
+    mockGet.mockRejectedValueOnce(new Error('boom'));
+    await expect(getQuizScoreDistribution(7)).rejects.toThrow('boom');
   });
 });
 

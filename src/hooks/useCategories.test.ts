@@ -31,8 +31,8 @@ describe('useCategories', () => {
 
   it('성공 시 응답을 그대로 반환 (배열 순서 유지)', async () => {
     const items = [
-      { key: 'entertainment', label: '연예인' },
-      { key: 'movie', label: '영화' },
+      { key: 'sports', label: '스포츠' },
+      { key: 'culture', label: '문화' },
       { key: 'game', label: '게임' },
     ];
     mockGetCategories.mockResolvedValue(items);
