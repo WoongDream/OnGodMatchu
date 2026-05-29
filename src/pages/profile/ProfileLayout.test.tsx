@@ -5,13 +5,20 @@ import { render } from '@testing-library/react';
 import { ThemeProvider } from '@emotion/react';
 import { theme } from '@/styles/theme';
 import ProfileLayout from './ProfileLayout';
-import type { User } from '@/types';
+import type { User, MyQuizzesAggregate } from '@/types';
 
 // ── mock useProfile ──────────────────────────────────────────────────────────
 const mockUseProfile = vi.hoisted(() => vi.fn());
 
 vi.mock('@/hooks/useProfile', () => ({
   default: mockUseProfile,
+}));
+
+// ── mock useMyQuizzesAggregate ────────────────────────────────────────────────
+const mockUseMyQuizzesAggregate = vi.hoisted(() => vi.fn());
+
+vi.mock('@/hooks/useMyQuizzesAggregate', () => ({
+  default: mockUseMyQuizzesAggregate,
 }));
 
 // ── mock child components ────────────────────────────────────────────────────
@@ -68,6 +75,16 @@ const MOCK_PROFILE: User = {
   stats: { playCount: 10, correctRate: 80, createdQuizCount: 3 },
 };
 
+const MOCK_AGGREGATE: MyQuizzesAggregate = {
+  totalQuizCount: 3,
+  totalPlayCount: 10,
+  totalShareCount: 2,
+  totalStarCount: 5,
+  totalCommentCount: 4,
+  weeklyPlayCount: 1,
+  avgCorrectRate: 80,
+};
+
 const renderLayout = (path = '/profile') =>
   render(
     <ThemeProvider theme={theme}>
@@ -89,6 +106,8 @@ const renderLayout = (path = '/profile') =>
 describe('ProfileLayout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // 기본값: aggregate 통계 없음 — 개별 테스트에서 필요 시 덮어쓴다
+    mockUseMyQuizzesAggregate.mockReturnValue({ stats: undefined, isLoading: false, error: null });
   });
 
   describe('로딩 상태', () => {
@@ -235,13 +254,19 @@ describe('ProfileLayout', () => {
   });
 
   describe('ProfileCard props 전달', () => {
-    it('nickname, imageUrl, bio, isProfilePublic, stats 가 ProfileCard 에 전달된다', () => {
+    it('nickname, imageUrl, bio, isProfilePublic 가 ProfileCard 에 전달되고, 본인이고 aggregate 가 있으면 stats 가 전달된다', () => {
       mockUseProfile.mockReturnValue({
         profile: MOCK_PROFILE,
         isLoading: false,
         error: null,
         isMe: true,
         mutate: vi.fn(),
+      });
+      // 본인 프로필이고 aggregate 통계가 존재 → ProfileCard 에 stats 전달
+      mockUseMyQuizzesAggregate.mockReturnValue({
+        stats: MOCK_AGGREGATE,
+        isLoading: false,
+        error: null,
       });
 
       renderLayout();
@@ -252,6 +277,46 @@ describe('ProfileLayout', () => {
       expect(card).toHaveAttribute('data-bio', MOCK_PROFILE.bio);
       expect(card).toHaveAttribute('data-is-public', 'true');
       expect(card).toHaveAttribute('data-has-stats', 'true');
+    });
+
+    it('본인이지만 aggregate 통계가 아직 없으면 ProfileCard 의 stats 는 전달되지 않는다', () => {
+      mockUseProfile.mockReturnValue({
+        profile: MOCK_PROFILE,
+        isLoading: false,
+        error: null,
+        isMe: true,
+        mutate: vi.fn(),
+      });
+      // aggregate 미도착 (기본 beforeEach 값과 동일하지만 의도를 명시)
+      mockUseMyQuizzesAggregate.mockReturnValue({
+        stats: undefined,
+        isLoading: true,
+        error: null,
+      });
+
+      renderLayout();
+      const card = screen.getByTestId('profile-card');
+      expect(card).toHaveAttribute('data-has-stats', 'false');
+    });
+
+    it('타인 프로필(isMe=false)이면 aggregate 통계가 있어도 ProfileCard 에 stats 가 전달되지 않는다', () => {
+      mockUseProfile.mockReturnValue({
+        profile: MOCK_PROFILE,
+        isLoading: false,
+        error: null,
+        isMe: false,
+        mutate: vi.fn(),
+      });
+      // aggregate 가 채워져 있어도 타인 프로필이면 undefined 로 전달돼야 한다
+      mockUseMyQuizzesAggregate.mockReturnValue({
+        stats: MOCK_AGGREGATE,
+        isLoading: false,
+        error: null,
+      });
+
+      renderLayout('/profile/42');
+      const card = screen.getByTestId('profile-card');
+      expect(card).toHaveAttribute('data-has-stats', 'false');
     });
   });
 

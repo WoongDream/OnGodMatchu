@@ -91,6 +91,10 @@ export type MyQuizzesAggregate = {
   totalCommentCount: number;
   weeklyPlayCount: number;
   avgCorrectRate?: number | null;
+  /** 내가 푼 횟수 (본인 attempts 수) */
+  solvedCount?: number;
+  /** 내가 푼 평균 정답률 0~100, 시도 0이면 null */
+  avgSolveRate?: number | null;
 };
 
 export type ScoreCount = {
