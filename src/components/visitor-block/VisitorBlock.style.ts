@@ -52,7 +52,7 @@ export const todayValueStyle = (theme: Theme) => css`
 export const totalValueStyle = (theme: Theme) => css`
   position: relative;
   top: 1px;
-  color: ${theme.colors.fg.primary};
+  color: ${theme.colors.fg.secondary};
   font-size: ${theme.fontSize.sm};
   font-weight: ${theme.fontWeight.bold};
 `;

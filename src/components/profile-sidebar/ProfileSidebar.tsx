@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import type { ProfileSidebarProps } from './ProfileSidebar.type';
 import {
   navStyle,
@@ -37,6 +37,7 @@ const renderLink = (item: MenuItem, base: string, count: number | undefined, ind
 const ProfileSidebar = memo(({ isMe, userId, stats }: ProfileSidebarProps) => {
   const base = buildBaseTo(userId);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const items = useMemo(() => PROFILE_MENU_ITEMS.filter((item) => isMe || !item.myOnly), [isMe]);
 
@@ -59,7 +60,17 @@ const ProfileSidebar = memo(({ isMe, userId, stats }: ProfileSidebarProps) => {
   }, [isGroupActive]);
 
   const toggle = (id: MenuGroupId) => {
-    setOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+    // 열려 있고 현재 활성 경로가 이 그룹 안일 때만 접는다.
+    if (open[id] && isGroupActive(id)) {
+      setOpen((prev) => ({ ...prev, [id]: false }));
+      return;
+    }
+    // 그 외(닫혀 있거나, 열렸지만 활성 경로가 그룹 밖)에는 펼친 채 첫 탭으로 이동.
+    setOpen((prev) => ({ ...prev, [id]: true }));
+    const firstChild = items.find((i) => i.groupId === id);
+    if (firstChild) {
+      navigate(resolveTo(base, firstChild));
+    }
   };
 
   const rendered: React.ReactNode[] = [];
