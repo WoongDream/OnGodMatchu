@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { EMPTY_SLOT, applyEditResult, type ImageSlot } from '@/lib/image/imageSlot';
 import QuestionItem from './QuestionItem';
 
 const meta: Meta<typeof QuestionItem> = {
@@ -12,7 +13,9 @@ export default meta;
 
 type Story = StoryObj<typeof QuestionItem>;
 
-const noopFile = () => {};
+const noop = () => {};
+
+const slotWithPreview = (previewUrl: string): ImageSlot => ({ ...EMPTY_SLOT, previewUrl });
 
 const InteractiveItem = ({
   initialSameAsQuestion,
@@ -25,11 +28,11 @@ const InteractiveItem = ({
 }) => {
   const [questionText, setQuestionText] = useState('이 사람은 누구일까요?');
   const [answer, setAnswer] = useState('홍길동');
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(
-    initialImagePreview ?? null,
+  const [imageSlot, setImageSlot] = useState<ImageSlot>(
+    initialImagePreview ? slotWithPreview(initialImagePreview) : EMPTY_SLOT,
   );
-  const [answerImagePreviewUrl, setAnswerImagePreviewUrl] = useState<string | null>(
-    initialAnswerImagePreview ?? null,
+  const [answerImageSlot, setAnswerImageSlot] = useState<ImageSlot>(
+    initialAnswerImagePreview ? slotWithPreview(initialAnswerImagePreview) : EMPTY_SLOT,
   );
   const [sameAsQuestion, setSameAsQuestion] = useState(initialSameAsQuestion);
 
@@ -39,24 +42,24 @@ const InteractiveItem = ({
         index={0}
         questionText={questionText}
         answer={answer}
-        imagePreviewUrl={imagePreviewUrl}
-        answerImagePreviewUrl={answerImagePreviewUrl}
+        imageSlot={imageSlot}
+        answerImageSlot={answerImageSlot}
         answerImageSameAsQuestion={sameAsQuestion}
         onQuestionChange={setQuestionText}
         onAnswerChange={setAnswer}
-        onImageChange={(_, url) => setImagePreviewUrl(url)}
-        onImageRemove={() => setImagePreviewUrl(null)}
-        onAnswerImageChange={(_, url) => setAnswerImagePreviewUrl(url)}
-        onAnswerImageRemove={() => setAnswerImagePreviewUrl(null)}
+        onImageApply={(result) => setImageSlot((prev) => applyEditResult(prev, result))}
+        onImageRemove={() => setImageSlot(EMPTY_SLOT)}
+        onAnswerImageApply={(result) => setAnswerImageSlot((prev) => applyEditResult(prev, result))}
+        onAnswerImageRemove={() => setAnswerImageSlot(EMPTY_SLOT)}
         onAnswerImageSameAsQuestionChange={(next) => {
           setSameAsQuestion(next);
           if (next) {
-            setAnswerImagePreviewUrl(null);
+            setAnswerImageSlot(EMPTY_SLOT);
           }
         }}
-        onMoveUp={noopFile}
-        onMoveDown={noopFile}
-        onDelete={noopFile}
+        onMoveUp={noop}
+        onMoveDown={noop}
+        onDelete={noop}
         isFirst
         isLast
       />

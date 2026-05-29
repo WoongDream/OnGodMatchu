@@ -12,6 +12,11 @@ export const sectionTitleStyle = (theme: Theme) => css`
   color: ${theme.colors.fg.primary};
 `;
 
+export const thumbnailFieldStyle = css`
+  width: 100%;
+  max-width: 36rem;
+`;
+
 export const categoryRowStyle = (theme: Theme) => css`
   display: flex;
   gap: ${theme.spacing.sm};

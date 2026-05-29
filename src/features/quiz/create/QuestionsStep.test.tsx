@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import QuestionsStep from './QuestionsStep';
 import { validateQuestion, validateAllQuestions } from './questionValidation';
 import { createEmptyQuestion, type DraftQuestion } from './questionTypes';
+import { EMPTY_SLOT } from '@/lib/image/imageSlot';
 
 const makeQ = (overrides?: Partial<DraftQuestion>): DraftQuestion => ({
   ...createEmptyQuestion(),
@@ -238,8 +239,7 @@ describe('validateQuestion', () => {
   it('이미지 O + 텍스트 X + 정답 O → 에러 없음', () => {
     const file = new File(['a'], 'a.png', { type: 'image/png' });
     const q = makeQ({
-      imageFile: file,
-      imagePreviewUrl: 'blob:img',
+      image: { ...EMPTY_SLOT, croppedFile: file, previewUrl: 'blob:img' },
       answer: '정답',
     });
     expect(validateQuestion(q)).toEqual({});
@@ -252,17 +252,18 @@ describe('validateQuestion', () => {
 
   it('이미지 O + 정답 X → answer 에러만', () => {
     const file = new File(['a'], 'a.png', { type: 'image/png' });
-    const q = makeQ({ imageFile: file, imagePreviewUrl: 'blob:img', answer: '' });
+    const q = makeQ({
+      image: { ...EMPTY_SLOT, croppedFile: file, previewUrl: 'blob:img' },
+      answer: '',
+    });
     expect(validateQuestion(q)).toEqual({
       answer: '정답을 입력해주세요',
     });
   });
 
-  it('imageKey 만 있고 imageFile/imagePreviewUrl 없음 + 정답 O → 에러 없음 (서버 이미지)', () => {
+  it('imageKey 만 있고 file/previewUrl 없음 + 정답 O → 에러 없음 (서버 이미지)', () => {
     const q = makeQ({
-      imageKey: 'remote/abc.png',
-      imageFile: null,
-      imagePreviewUrl: null,
+      image: { ...EMPTY_SLOT, imageKey: 'remote/abc.png' },
       answer: '정답',
     });
     expect(validateQuestion(q)).toEqual({});

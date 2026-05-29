@@ -1,5 +1,5 @@
 import instance from './instance';
-import type { User, MyQuizzesAggregate } from '@/types';
+import type { User, MyQuizzesAggregate, ImageTransform } from '@/types';
 
 type ApiResponse<T> = {
   success: boolean;
@@ -94,8 +94,16 @@ export const requestProfileImageUpload = async (
   return res.data.data;
 };
 
-export const applyProfileImage = async (key: string): Promise<User> => {
-  const res = await instance.patch<ApiResponse<User>>('/api/users/me/profile-image', { key });
+export const applyProfileImage = async (
+  key: string,
+  originalKey?: string | null,
+  transform?: ImageTransform | null,
+): Promise<User> => {
+  const res = await instance.patch<ApiResponse<User>>('/api/users/me/profile-image', {
+    key,
+    originalKey: originalKey ?? null,
+    transform: transform ?? null,
+  });
   return res.data.data;
 };
 

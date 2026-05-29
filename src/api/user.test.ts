@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import type { User } from '@/types';
+import type { User, ImageTransform } from '@/types';
 
 vi.mock('./instance', () => ({
   default: {
@@ -185,13 +185,37 @@ describe('requestProfileImageUpload', () => {
 });
 
 describe('applyProfileImage', () => {
-  it('PATCH /api/users/me/profile-image 를 { key } body 로 호출한다', async () => {
+  it('PATCH /api/users/me/profile-image 를 { key, originalKey:null, transform:null } body 로 호출한다 (인자 1개)', async () => {
     const user = makeUser({ profileImageUrl: 'https://cdn.example.com/img/abc.jpg' });
     mockPatch.mockResolvedValueOnce({ data: { success: true, data: user } });
 
     await applyProfileImage('img/abc.jpg');
 
-    expect(mockPatch).toHaveBeenCalledWith('/api/users/me/profile-image', { key: 'img/abc.jpg' });
+    expect(mockPatch).toHaveBeenCalledWith('/api/users/me/profile-image', {
+      key: 'img/abc.jpg',
+      originalKey: null,
+      transform: null,
+    });
+  });
+
+  it('originalKey/transform 을 주면 그대로 body 에 담아 호출한다', async () => {
+    const user = makeUser({ profileImageUrl: 'https://cdn.example.com/img/abc.jpg' });
+    mockPatch.mockResolvedValueOnce({ data: { success: true, data: user } });
+
+    const transform: ImageTransform = {
+      v: 1,
+      flipH: false,
+      rotate: 0,
+      crop: { x: 0, y: 0, width: 1, height: 1 },
+    };
+
+    await applyProfileImage('img/cropped.jpg', 'img/original.jpg', transform);
+
+    expect(mockPatch).toHaveBeenCalledWith('/api/users/me/profile-image', {
+      key: 'img/cropped.jpg',
+      originalKey: 'img/original.jpg',
+      transform,
+    });
   });
 
   it('업데이트된 User 를 반환한다', async () => {

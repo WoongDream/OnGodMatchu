@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import QuizInfoForm from './QuizInfoForm';
 import { CATEGORIES } from '@/types/quiz';
 import type { Category } from '@/types';
+import { EMPTY_SLOT, type ImageSlot } from '@/lib/image/imageSlot';
 
 // Input mock: label 은 이제 ReactNode 일 수 있으므로 그대로 렌더한다.
 // 식별을 위해 placeholder 기반으로 노출 (제목 input 은 `퀴즈 제목을 입력하세요`).
@@ -31,12 +32,12 @@ vi.mock('@/components/chip-button', () => ({
 }));
 
 vi.mock('@/components/image-upload', () => ({
-  default: ({ label, previewUrl, onChange, onRemove }: any) => (
+  default: ({ label, slot, onRemove }: any) => (
     <div data-testid="image-upload">
       {label && <div>{label}</div>}
-      {previewUrl ? (
+      {slot?.previewUrl ? (
         <>
-          <img src={previewUrl} alt="preview" data-testid="preview-image" />
+          <img src={slot.previewUrl} alt="preview" data-testid="preview-image" />
           <button onClick={onRemove} data-testid="remove-image-button">
             Remove
           </button>
@@ -44,17 +45,6 @@ vi.mock('@/components/image-upload', () => ({
       ) : (
         <div>No image</div>
       )}
-      <input
-        type="file"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) {
-            const url = URL.createObjectURL(file);
-            onChange(file, url);
-          }
-        }}
-        data-testid="hidden-file-input"
-      />
     </div>
   ),
 }));
@@ -63,18 +53,20 @@ describe('QuizInfoForm', () => {
   const mockOnTitleChange = vi.fn();
   const mockOnDescriptionChange = vi.fn();
   const mockOnCategoryChange = vi.fn();
-  const mockOnThumbnailChange = vi.fn();
+  const mockOnThumbnailApply = vi.fn();
   const mockOnThumbnailRemove = vi.fn();
+
+  const withPreview = (previewUrl: string): ImageSlot => ({ ...EMPTY_SLOT, previewUrl });
 
   const defaultProps = {
     title: '',
     description: '',
     category: null as Category | null,
-    thumbnailPreviewUrl: null,
+    thumbnailSlot: EMPTY_SLOT,
     onTitleChange: mockOnTitleChange,
     onDescriptionChange: mockOnDescriptionChange,
     onCategoryChange: mockOnCategoryChange,
-    onThumbnailChange: mockOnThumbnailChange,
+    onThumbnailApply: mockOnThumbnailApply,
     onThumbnailRemove: mockOnThumbnailRemove,
   };
 
@@ -185,22 +177,28 @@ describe('QuizInfoForm', () => {
   });
 
   describe('썸네일', () => {
-    it('thumbnailPreviewUrl 이 있으면 preview-image 가 노출된다', () => {
+    it('thumbnailSlot.previewUrl 이 있으면 preview-image 가 노출된다', () => {
       renderWithTheme(
-        <QuizInfoForm {...defaultProps} thumbnailPreviewUrl="https://example.com/image.jpg" />,
+        <QuizInfoForm
+          {...defaultProps}
+          thumbnailSlot={withPreview('https://example.com/image.jpg')}
+        />,
       );
       expect(screen.getByTestId('preview-image')).toBeInTheDocument();
     });
 
-    it('thumbnailPreviewUrl 이 null 이면 preview-image 가 없다', () => {
-      renderWithTheme(<QuizInfoForm {...defaultProps} thumbnailPreviewUrl={null} />);
+    it('thumbnailSlot 이 비어 있으면 preview-image 가 없다', () => {
+      renderWithTheme(<QuizInfoForm {...defaultProps} thumbnailSlot={EMPTY_SLOT} />);
       expect(screen.queryByTestId('preview-image')).not.toBeInTheDocument();
     });
 
     it('remove 버튼 클릭 시 onThumbnailRemove 가 호출된다', async () => {
       const user = userEvent.setup();
       renderWithTheme(
-        <QuizInfoForm {...defaultProps} thumbnailPreviewUrl="https://example.com/image.jpg" />,
+        <QuizInfoForm
+          {...defaultProps}
+          thumbnailSlot={withPreview('https://example.com/image.jpg')}
+        />,
       );
 
       await user.click(screen.getByTestId('remove-image-button'));

@@ -13,7 +13,7 @@ export const itemCardStyle =
     display: flex;
     align-items: center;
     justify-content: center;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 16 / 9;
     width: 100%;
     border-radius: ${theme.borderRadius.lg};
     background-color: ${theme.colors.bg.secondary};
@@ -70,7 +70,7 @@ export const addCardStyle =
     align-items: center;
     justify-content: center;
     gap: ${theme.spacing.xs};
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 16 / 9;
     width: 100%;
     border-radius: ${theme.borderRadius.lg};
     background-color: ${theme.colors.bg.primary};

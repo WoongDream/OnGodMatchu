@@ -59,3 +59,10 @@ export const uploadImage = async (file: File): Promise<string> => {
   await notifyUploadComplete(key);
   return key;
 };
+
+/** Blob(예: 캔버스 크롭 결과 webp)을 File 로 감싸 업로드. */
+export const uploadImageBlob = async (blob: Blob, filename: string): Promise<string> => {
+  const file =
+    blob instanceof File ? blob : new File([blob], filename, { type: blob.type || 'image/webp' });
+  return uploadImage(file);
+};

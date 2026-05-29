@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import React from 'react';
 import { SWRConfig } from 'swr';
-import type { User } from '@/types';
+import { EMPTY_SLOT, type ImageSlot } from '@/lib/image/imageSlot';
+import type { ImageTransform, User } from '@/types';
 
 // ── API mock ─────────────────────────────────────────────────────────────────
 const mockRequestProfileImageUpload = vi.hoisted(() => vi.fn());
@@ -108,7 +109,40 @@ const MOCK_USER: User = {
   createdAt: '2025-01-01T00:00:00Z',
 };
 
-const PRESIGNED = { uploadUrl: 'https://s3.example.com/put-url', key: 'img/abc.jpg' };
+const ORIGINAL_PRESIGNED = {
+  uploadUrl: 'https://s3.example.com/put-original',
+  key: 'profile/original.png',
+};
+const CROPPED_PRESIGNED = {
+  uploadUrl: 'https://s3.example.com/put-cropped',
+  key: 'profile/cropped.webp',
+};
+
+const TRANSFORM: ImageTransform = {
+  v: 1,
+  flipH: false,
+  rotate: 0,
+  crop: { x: 0.1, y: 0.1, width: 0.8, height: 0.8 },
+};
+
+const makeOriginalFile = () => new File(['original-data'], 'o.png', { type: 'image/png' });
+const makeCroppedFile = () => new File(['cropped-data'], 'cropped.webp', { type: 'image/webp' });
+
+/** 새 원본 + 크롭 결과를 모두 가진 슬롯 (재편집 후 제출). */
+const makeEditedSlot = (): ImageSlot => ({
+  ...EMPTY_SLOT,
+  previewUrl: 'blob:preview',
+  originalFile: makeOriginalFile(),
+  croppedFile: makeCroppedFile(),
+  transform: TRANSFORM,
+});
+
+/** 크롭 없이 원본만 (identity) — croppedKey === originalKey. */
+const makeIdentitySlot = (): ImageSlot => ({
+  ...EMPTY_SLOT,
+  originalFile: makeOriginalFile(),
+  transform: null,
+});
 
 // ── SWR 격리 wrapper ──────────────────────────────────────────────────────────
 const wrapper = ({ children }: { children: React.ReactNode }) =>
@@ -125,13 +159,18 @@ describe('useProfileImage', () => {
     mockSetUser.mockReset();
   });
 
-  describe('upload(file)', () => {
-    it('requestProfileImageUpload → axios.put → applyProfileImage 순서로 호출된다', async () => {
+  describe('applyEdited(slot) — 새 원본 + 크롭', () => {
+    it('requestProfileImageUpload(원본·크롭) → axios.put(원본·크롭) → applyProfileImage 순서로 호출된다', async () => {
       const callOrder: string[] = [];
-      mockRequestProfileImageUpload.mockImplementation(async () => {
-        callOrder.push('requestProfileImageUpload');
-        return PRESIGNED;
-      });
+      mockRequestProfileImageUpload
+        .mockImplementationOnce(async () => {
+          callOrder.push('request:original');
+          return ORIGINAL_PRESIGNED;
+        })
+        .mockImplementationOnce(async () => {
+          callOrder.push('request:cropped');
+          return CROPPED_PRESIGNED;
+        });
       mockAxiosPut.mockImplementation(async () => {
         callOrder.push('axios.put');
         return { data: {} };
@@ -142,105 +181,163 @@ describe('useProfileImage', () => {
       });
 
       const { result } = renderHook(() => useProfileImage(), { wrapper });
-      const file = new File(['data'], 'photo.jpg', { type: 'image/jpeg' });
 
       await act(async () => {
-        await result.current.upload(file);
+        await result.current.applyEdited(makeEditedSlot());
       });
 
-      expect(callOrder).toEqual(['requestProfileImageUpload', 'axios.put', 'applyProfileImage']);
+      expect(callOrder).toEqual([
+        'request:original',
+        'axios.put',
+        'request:cropped',
+        'axios.put',
+        'applyProfileImage',
+      ]);
     });
 
-    it('requestProfileImageUpload 에 파일 메타({filename, contentType, sizeBytes}) 를 전달한다', async () => {
-      mockRequestProfileImageUpload.mockResolvedValue(PRESIGNED);
+    it('원본·크롭 각각 requestProfileImageUpload + axios.put 을 2회씩 호출한다', async () => {
+      mockRequestProfileImageUpload
+        .mockResolvedValueOnce(ORIGINAL_PRESIGNED)
+        .mockResolvedValueOnce(CROPPED_PRESIGNED);
       mockAxiosPut.mockResolvedValue({ data: {} });
       mockApplyProfileImage.mockResolvedValue(MOCK_USER);
 
       const { result } = renderHook(() => useProfileImage(), { wrapper });
-      const file = new File(['data'], 'photo.jpg', { type: 'image/jpeg' });
 
       await act(async () => {
-        await result.current.upload(file);
+        await result.current.applyEdited(makeEditedSlot());
       });
 
-      expect(mockRequestProfileImageUpload).toHaveBeenCalledWith({
-        filename: 'photo.jpg',
-        contentType: 'image/jpeg',
-        sizeBytes: file.size,
+      expect(mockRequestProfileImageUpload).toHaveBeenCalledTimes(2);
+      expect(mockAxiosPut).toHaveBeenCalledTimes(2);
+    });
+
+    it('requestProfileImageUpload 에 각 파일 메타({filename, contentType, sizeBytes}) 를 전달한다', async () => {
+      mockRequestProfileImageUpload
+        .mockResolvedValueOnce(ORIGINAL_PRESIGNED)
+        .mockResolvedValueOnce(CROPPED_PRESIGNED);
+      mockAxiosPut.mockResolvedValue({ data: {} });
+      mockApplyProfileImage.mockResolvedValue(MOCK_USER);
+
+      const original = makeOriginalFile();
+      const cropped = makeCroppedFile();
+      const slot: ImageSlot = {
+        ...EMPTY_SLOT,
+        originalFile: original,
+        croppedFile: cropped,
+        transform: TRANSFORM,
+      };
+
+      const { result } = renderHook(() => useProfileImage(), { wrapper });
+
+      await act(async () => {
+        await result.current.applyEdited(slot);
+      });
+
+      expect(mockRequestProfileImageUpload).toHaveBeenNthCalledWith(1, {
+        filename: 'o.png',
+        contentType: 'image/png',
+        sizeBytes: original.size,
+      });
+      expect(mockRequestProfileImageUpload).toHaveBeenNthCalledWith(2, {
+        filename: 'cropped.webp',
+        contentType: 'image/webp',
+        sizeBytes: cropped.size,
       });
     });
 
     it('응답에 requiredHeaders 가 없으면 기본 헤더(Content-Type + x-amz-tagging)로 PUT 한다', async () => {
-      mockRequestProfileImageUpload.mockResolvedValue(PRESIGNED);
+      mockRequestProfileImageUpload
+        .mockResolvedValueOnce(ORIGINAL_PRESIGNED)
+        .mockResolvedValueOnce(CROPPED_PRESIGNED);
       mockAxiosPut.mockResolvedValue({ data: {} });
       mockApplyProfileImage.mockResolvedValue(MOCK_USER);
 
+      const original = makeOriginalFile();
+      const cropped = makeCroppedFile();
+      const slot: ImageSlot = {
+        ...EMPTY_SLOT,
+        originalFile: original,
+        croppedFile: cropped,
+        transform: TRANSFORM,
+      };
+
       const { result } = renderHook(() => useProfileImage(), { wrapper });
-      const file = new File(['data'], 'photo.png', { type: 'image/png' });
 
       await act(async () => {
-        await result.current.upload(file);
+        await result.current.applyEdited(slot);
       });
 
-      expect(mockAxiosPut).toHaveBeenCalledWith(PRESIGNED.uploadUrl, file, {
-        headers: {
-          'Content-Type': 'image/png',
-          'x-amz-tagging': 'status=pending',
-        },
+      expect(mockAxiosPut).toHaveBeenNthCalledWith(1, ORIGINAL_PRESIGNED.uploadUrl, original, {
+        headers: { 'Content-Type': 'image/png', 'x-amz-tagging': 'status=pending' },
+      });
+      expect(mockAxiosPut).toHaveBeenNthCalledWith(2, CROPPED_PRESIGNED.uploadUrl, cropped, {
+        headers: { 'Content-Type': 'image/webp', 'x-amz-tagging': 'status=pending' },
       });
     });
 
     it('응답에 requiredHeaders 가 있으면 그대로 PUT 헤더로 사용한다', async () => {
       const customHeaders = {
-        'Content-Type': 'image/png',
+        'Content-Type': 'image/webp',
         'x-amz-tagging': 'status=pending',
         'x-extra-be-header': 'value',
       };
-      mockRequestProfileImageUpload.mockResolvedValue({
-        ...PRESIGNED,
-        requiredHeaders: customHeaders,
-      });
+      mockRequestProfileImageUpload
+        .mockResolvedValueOnce(ORIGINAL_PRESIGNED)
+        .mockResolvedValueOnce({ ...CROPPED_PRESIGNED, requiredHeaders: customHeaders });
       mockAxiosPut.mockResolvedValue({ data: {} });
       mockApplyProfileImage.mockResolvedValue(MOCK_USER);
 
+      const slot = makeEditedSlot();
+
       const { result } = renderHook(() => useProfileImage(), { wrapper });
-      const file = new File(['data'], 'photo.png', { type: 'image/png' });
 
       await act(async () => {
-        await result.current.upload(file);
+        await result.current.applyEdited(slot);
       });
 
-      expect(mockAxiosPut).toHaveBeenCalledWith(PRESIGNED.uploadUrl, file, {
-        headers: customHeaders,
-      });
+      expect(mockAxiosPut).toHaveBeenNthCalledWith(
+        2,
+        CROPPED_PRESIGNED.uploadUrl,
+        expect.any(File),
+        {
+          headers: customHeaders,
+        },
+      );
     });
 
-    it('applyProfileImage 에 presigned key 를 전달한다', async () => {
-      mockRequestProfileImageUpload.mockResolvedValue(PRESIGNED);
+    it('applyProfileImage 에 (croppedKey, originalKey, transform) 를 전달한다', async () => {
+      mockRequestProfileImageUpload
+        .mockResolvedValueOnce(ORIGINAL_PRESIGNED)
+        .mockResolvedValueOnce(CROPPED_PRESIGNED);
       mockAxiosPut.mockResolvedValue({ data: {} });
       mockApplyProfileImage.mockResolvedValue(MOCK_USER);
 
       const { result } = renderHook(() => useProfileImage(), { wrapper });
-      const file = new File(['data'], 'photo.jpg', { type: 'image/jpeg' });
 
       await act(async () => {
-        await result.current.upload(file);
+        await result.current.applyEdited(makeEditedSlot());
       });
 
-      expect(mockApplyProfileImage).toHaveBeenCalledWith(PRESIGNED.key);
+      expect(mockApplyProfileImage).toHaveBeenCalledWith(
+        CROPPED_PRESIGNED.key,
+        ORIGINAL_PRESIGNED.key,
+        TRANSFORM,
+      );
     });
 
     it('성공 시 User 를 반환한다', async () => {
-      mockRequestProfileImageUpload.mockResolvedValue(PRESIGNED);
+      mockRequestProfileImageUpload
+        .mockResolvedValueOnce(ORIGINAL_PRESIGNED)
+        .mockResolvedValueOnce(CROPPED_PRESIGNED);
       mockAxiosPut.mockResolvedValue({ data: {} });
       mockApplyProfileImage.mockResolvedValue(MOCK_USER);
 
       const { result } = renderHook(() => useProfileImage(), { wrapper });
-      const file = new File(['data'], 'photo.jpg', { type: 'image/jpeg' });
 
       let returned: User | null = null;
       await act(async () => {
-        returned = await result.current.upload(file);
+        returned = await result.current.applyEdited(makeEditedSlot());
       });
 
       expect(returned).toEqual(MOCK_USER);
@@ -250,11 +347,10 @@ describe('useProfileImage', () => {
       mockRequestProfileImageUpload.mockRejectedValue(makeAxiosError(401));
 
       const { result } = renderHook(() => useProfileImage(), { wrapper });
-      const file = new File(['data'], 'photo.jpg', { type: 'image/jpeg' });
 
       let returned: User | null = MOCK_USER;
       await act(async () => {
-        returned = await result.current.upload(file);
+        returned = await result.current.applyEdited(makeEditedSlot());
       });
 
       expect(returned).toBeNull();
@@ -263,15 +359,14 @@ describe('useProfileImage', () => {
     });
 
     it('axios.put 실패 → null 반환 + error 세팅, applyProfileImage 미호출', async () => {
-      mockRequestProfileImageUpload.mockResolvedValue(PRESIGNED);
+      mockRequestProfileImageUpload.mockResolvedValue(ORIGINAL_PRESIGNED);
       mockAxiosPut.mockRejectedValue(new Error('S3 error'));
 
       const { result } = renderHook(() => useProfileImage(), { wrapper });
-      const file = new File(['data'], 'photo.jpg', { type: 'image/jpeg' });
 
       let returned: User | null = MOCK_USER;
       await act(async () => {
-        returned = await result.current.upload(file);
+        returned = await result.current.applyEdited(makeEditedSlot());
       });
 
       expect(returned).toBeNull();
@@ -280,46 +375,47 @@ describe('useProfileImage', () => {
     });
 
     it('applyProfileImage 실패 → null 반환 + errorCode 세팅', async () => {
-      mockRequestProfileImageUpload.mockResolvedValue(PRESIGNED);
+      mockRequestProfileImageUpload
+        .mockResolvedValueOnce(ORIGINAL_PRESIGNED)
+        .mockResolvedValueOnce(CROPPED_PRESIGNED);
       mockAxiosPut.mockResolvedValue({ data: {} });
       mockApplyProfileImage.mockRejectedValue(makeAxiosError(404));
 
       const { result } = renderHook(() => useProfileImage(), { wrapper });
-      const file = new File(['data'], 'photo.jpg', { type: 'image/jpeg' });
 
       let returned: User | null = MOCK_USER;
       await act(async () => {
-        returned = await result.current.upload(file);
+        returned = await result.current.applyEdited(makeEditedSlot());
       });
 
       expect(returned).toBeNull();
       expect(result.current.errorCode).toBe('USER_NOT_FOUND');
     });
 
-    it('upload 성공 후 setUser 가 응답 user 로 호출된다', async () => {
-      mockRequestProfileImageUpload.mockResolvedValue(PRESIGNED);
+    it('applyEdited 성공 후 setUser 가 응답 user 로 호출된다', async () => {
+      mockRequestProfileImageUpload
+        .mockResolvedValueOnce(ORIGINAL_PRESIGNED)
+        .mockResolvedValueOnce(CROPPED_PRESIGNED);
       mockAxiosPut.mockResolvedValue({ data: {} });
       mockApplyProfileImage.mockResolvedValue(MOCK_USER);
 
       const { result } = renderHook(() => useProfileImage(), { wrapper });
-      const file = new File(['data'], 'photo.jpg', { type: 'image/jpeg' });
 
       await act(async () => {
-        await result.current.upload(file);
+        await result.current.applyEdited(makeEditedSlot());
       });
 
       expect(mockSetUser).toHaveBeenCalledTimes(1);
       expect(mockSetUser).toHaveBeenCalledWith(MOCK_USER);
     });
 
-    it('upload 실패 시 setUser 가 호출되지 않는다', async () => {
+    it('applyEdited 실패 시 setUser 가 호출되지 않는다', async () => {
       mockRequestProfileImageUpload.mockRejectedValue(makeAxiosError(401));
 
       const { result } = renderHook(() => useProfileImage(), { wrapper });
-      const file = new File(['data'], 'photo.jpg', { type: 'image/jpeg' });
 
       await act(async () => {
-        await result.current.upload(file);
+        await result.current.applyEdited(makeEditedSlot());
       });
 
       expect(mockSetUser).not.toHaveBeenCalled();
@@ -327,7 +423,9 @@ describe('useProfileImage', () => {
 
     it('isProcessing 이 호출 중 true → 완료 후 false', async () => {
       let resolveApply!: (v: User) => void;
-      mockRequestProfileImageUpload.mockResolvedValue(PRESIGNED);
+      mockRequestProfileImageUpload
+        .mockResolvedValueOnce(ORIGINAL_PRESIGNED)
+        .mockResolvedValueOnce(CROPPED_PRESIGNED);
       mockAxiosPut.mockResolvedValue({ data: {} });
       mockApplyProfileImage.mockReturnValue(
         new Promise<User>((res) => {
@@ -336,10 +434,9 @@ describe('useProfileImage', () => {
       );
 
       const { result } = renderHook(() => useProfileImage(), { wrapper });
-      const file = new File(['data'], 'photo.jpg', { type: 'image/jpeg' });
 
       act(() => {
-        result.current.upload(file);
+        result.current.applyEdited(makeEditedSlot());
       });
 
       // 비동기 진행 중 isProcessing=true 확인
@@ -357,7 +454,9 @@ describe('useProfileImage', () => {
 
     it('업로드 진행 중 isUploading 만 true (isRegenerating/isRemoving 는 false)', async () => {
       let resolveApply!: (v: User) => void;
-      mockRequestProfileImageUpload.mockResolvedValue(PRESIGNED);
+      mockRequestProfileImageUpload
+        .mockResolvedValueOnce(ORIGINAL_PRESIGNED)
+        .mockResolvedValueOnce(CROPPED_PRESIGNED);
       mockAxiosPut.mockResolvedValue({ data: {} });
       mockApplyProfileImage.mockReturnValue(
         new Promise<User>((res) => {
@@ -366,10 +465,9 @@ describe('useProfileImage', () => {
       );
 
       const { result } = renderHook(() => useProfileImage(), { wrapper });
-      const file = new File(['data'], 'photo.jpg', { type: 'image/jpeg' });
 
       act(() => {
-        result.current.upload(file);
+        result.current.applyEdited(makeEditedSlot());
       });
       await act(async () => {
         await new Promise((r) => setTimeout(r, 0));
@@ -386,6 +484,45 @@ describe('useProfileImage', () => {
 
       expect(result.current.isUploading).toBe(false);
       expect(result.current.isProcessing).toBe(false);
+    });
+  });
+
+  describe('applyEdited(slot) — 크롭 없음(identity) / 빈 슬롯', () => {
+    it('크롭 안 함(transform=null) → upload 1회, applyProfileImage(key, key, null)', async () => {
+      mockRequestProfileImageUpload.mockResolvedValue(ORIGINAL_PRESIGNED);
+      mockAxiosPut.mockResolvedValue({ data: {} });
+      mockApplyProfileImage.mockResolvedValue(MOCK_USER);
+
+      const { result } = renderHook(() => useProfileImage(), { wrapper });
+
+      let returned: User | null = null;
+      await act(async () => {
+        returned = await result.current.applyEdited(makeIdentitySlot());
+      });
+
+      expect(mockRequestProfileImageUpload).toHaveBeenCalledTimes(1);
+      expect(mockAxiosPut).toHaveBeenCalledTimes(1);
+      // resolveSlot 은 transform=null 을 undefined 로 정규화한다 (imageKey === originalKey).
+      expect(mockApplyProfileImage).toHaveBeenCalledWith(
+        ORIGINAL_PRESIGNED.key,
+        ORIGINAL_PRESIGNED.key,
+        undefined,
+      );
+      expect(returned).toEqual(MOCK_USER);
+    });
+
+    it('빈 슬롯 → null 반환, 업로드/applyProfileImage 미호출', async () => {
+      const { result } = renderHook(() => useProfileImage(), { wrapper });
+
+      let returned: User | null = MOCK_USER;
+      await act(async () => {
+        returned = await result.current.applyEdited(EMPTY_SLOT);
+      });
+
+      expect(returned).toBeNull();
+      expect(mockRequestProfileImageUpload).not.toHaveBeenCalled();
+      expect(mockAxiosPut).not.toHaveBeenCalled();
+      expect(mockApplyProfileImage).not.toHaveBeenCalled();
     });
   });
 

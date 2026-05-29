@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSWRConfig } from 'swr';
 import { pageWrapperStyle } from '@/styles/layout';
+import { EMPTY_SLOT } from '@/lib/image/imageSlot';
 import QuizForm, {
   type QuizFormInitialValues,
   type QuizFormSubmitData,
@@ -12,7 +13,7 @@ const INITIAL_VALUES: QuizFormInitialValues = {
   title: '',
   description: '',
   category: null,
-  thumbnailPreviewUrl: null,
+  thumbnail: { ...EMPTY_SLOT },
   isPublic: false,
   questions: [],
 };
@@ -28,15 +29,9 @@ const QuizCreatePage = () => {
         title: data.title,
         description: data.description,
         category: data.category,
-        thumbnailFile: data.thumbnailFile,
+        thumbnail: data.thumbnail,
         isPublic: data.isPublic,
-        questions: data.questions.map((q) => ({
-          imageFile: q.imageFile,
-          answerImageFile: q.answerImageFile,
-          answerImageSameAsQuestion: q.answerImageSameAsQuestion,
-          questionText: q.questionText,
-          answer: q.answer,
-        })),
+        questions: data.questions,
       });
       if (result) {
         await mutate(

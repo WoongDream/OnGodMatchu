@@ -75,9 +75,9 @@ export const cardsGridStyle = (theme: Theme) => css`
     overflow-x: hidden;
     overflow-y: auto;
     /* card cell width = (22rem - 2*padding - gap) / 2
-       card height = cell width * 3/4 (aspect 4:3)
+       card height = cell width * 9/16 (aspect 16:9)
        container height = 5.5 cards + 5 gaps + 2 paddings */
-    height: calc(((22rem - ${theme.spacing.sm} * 3) / 2 * 0.75) * 5.5 + ${theme.spacing.sm} * 7);
+    height: calc(((22rem - ${theme.spacing.sm} * 3) / 2 * 0.5625) * 5.5 + ${theme.spacing.sm} * 7);
     & > * {
       flex: initial;
     }

@@ -1,14 +1,12 @@
+import { EMPTY_SLOT, type ImageSlot } from '@/lib/image/imageSlot';
+
 export type DraftQuestion = {
   id: string;
   serverId?: number;
   questionText: string;
   answer: string;
-  imageKey: string | null;
-  imageFile: File | null;
-  imagePreviewUrl: string | null;
-  answerImageKey: string | null;
-  answerImageFile: File | null;
-  answerImagePreviewUrl: string | null;
+  image: ImageSlot;
+  answerImage: ImageSlot;
   answerImageSameAsQuestion: boolean;
 };
 
@@ -16,11 +14,7 @@ export const createEmptyQuestion = (): DraftQuestion => ({
   id: crypto.randomUUID(),
   questionText: '',
   answer: '',
-  imageKey: null,
-  imageFile: null,
-  imagePreviewUrl: null,
-  answerImageKey: null,
-  answerImageFile: null,
-  answerImagePreviewUrl: null,
+  image: { ...EMPTY_SLOT },
+  answerImage: { ...EMPTY_SLOT },
   answerImageSameAsQuestion: true,
 });

@@ -3,6 +3,7 @@ import { renderWithTheme, screen, waitFor } from '@/test/renderWithTheme';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import QuizCreatePage from './QuizCreatePage';
+import { EMPTY_SLOT } from '@/lib/image/imageSlot';
 
 const mockNavigate = vi.hoisted(() => vi.fn());
 const mockSubmit = vi.hoisted(() => vi.fn());
@@ -165,11 +166,11 @@ describe('QuizCreatePage', () => {
         title: '테스트 제목',
         description: '설명',
         category: 'game',
-        thumbnailFile: null,
+        thumbnail: EMPTY_SLOT,
         isPublic: false,
         questions: [
           expect.objectContaining({
-            imageFile: null,
+            image: EMPTY_SLOT,
             questionText: '문제1',
             answer: '정답1',
           }),

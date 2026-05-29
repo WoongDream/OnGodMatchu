@@ -6,6 +6,7 @@ import type {
   QuizVisibility,
   MyQuizListItem,
   QuizScoreDistribution,
+  ImageTransform,
 } from '@/types';
 
 type ApiResponse<T> = {
@@ -38,18 +39,26 @@ type GradeResponse = {
   correctAnswer: string;
 };
 
+type QuestionRequest = {
+  imageKey?: string;
+  originalImageKey?: string;
+  imageTransform?: ImageTransform | null;
+  answerImageKey?: string;
+  originalAnswerImageKey?: string;
+  answerImageTransform?: ImageTransform | null;
+  questionText?: string;
+  answer: string;
+};
+
 type QuizCreateRequest = {
   title: string;
   description?: string;
   category: Category;
   thumbnailKey?: string;
+  originalThumbnailKey?: string;
+  thumbnailTransform?: ImageTransform | null;
   isPublic: boolean;
-  questions: Array<{
-    imageKey?: string;
-    answerImageKey?: string;
-    questionText?: string;
-    answer: string;
-  }>;
+  questions: QuestionRequest[];
 };
 
 export type CategoryItem = {
@@ -71,7 +80,11 @@ export type MyQuizzesQuery = {
 export type QuestionUpdate = {
   id?: number;
   imageKey?: string | null;
+  originalImageKey?: string | null;
+  imageTransform?: ImageTransform | null;
   answerImageKey?: string | null;
+  originalAnswerImageKey?: string | null;
+  answerImageTransform?: ImageTransform | null;
   questionText?: string | null;
   answer: string;
 };
@@ -81,6 +94,8 @@ export type UpdateQuizPayload = {
   description?: string;
   category?: Category;
   thumbnailKey?: string;
+  originalThumbnailKey?: string;
+  thumbnailTransform?: ImageTransform | null;
   isPublic?: boolean;
   questions?: QuestionUpdate[];
 };

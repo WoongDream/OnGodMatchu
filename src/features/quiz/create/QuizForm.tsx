@@ -3,6 +3,7 @@ import { css, type Theme } from '@emotion/react';
 import Button from '@/components/button';
 import Toggle from '@/components/toggle';
 import QuizCreateStepper, { type QuizCreateStepKey } from '@/components/quiz-create-stepper';
+import { EMPTY_SLOT, applyEditResult, type ImageSlot } from '@/lib/image/imageSlot';
 import type { Category } from '@/types';
 import QuizInfoForm, { type QuizInfoFormErrors } from './QuizInfoForm';
 import QuestionsStep from './QuestionsStep';
@@ -14,7 +15,7 @@ export type QuizFormInitialValues = {
   title: string;
   description: string;
   category: Category | null;
-  thumbnailPreviewUrl: string | null;
+  thumbnail: ImageSlot;
   isPublic: boolean;
   questions: DraftQuestion[];
 };
@@ -23,7 +24,7 @@ export type QuizFormSubmitData = {
   title: string;
   description: string;
   category: Category;
-  thumbnailFile: File | null;
+  thumbnail: ImageSlot;
   isPublic: boolean;
   questions: DraftQuestion[];
 };
@@ -38,9 +39,7 @@ type QuizFormProps = {
   submittingLabel: string;
 };
 
-type InternalState = QuizFormInitialValues & {
-  thumbnailFile: File | null;
-};
+type InternalState = QuizFormInitialValues;
 
 const visibilityCardStyle = (theme: Theme) => css`
   display: flex;
@@ -127,8 +126,7 @@ const QuizForm = memo(
       title: initialValues.title,
       description: initialValues.description,
       category: initialValues.category,
-      thumbnailFile: null,
-      thumbnailPreviewUrl: initialValues.thumbnailPreviewUrl,
+      thumbnail: initialValues.thumbnail,
       isPublic: initialValues.isPublic,
       questions:
         initialValues.questions.length > 0 ? initialValues.questions : [createEmptyQuestion()],
@@ -224,7 +222,7 @@ const QuizForm = memo(
         title: form.title,
         description: form.description,
         category: form.category,
-        thumbnailFile: form.thumbnailFile,
+        thumbnail: form.thumbnail,
         isPublic: form.isPublic,
         questions: form.questions,
       });
@@ -264,7 +262,7 @@ const QuizForm = memo(
               title={form.title}
               description={form.description}
               category={form.category}
-              thumbnailPreviewUrl={form.thumbnailPreviewUrl}
+              thumbnailSlot={form.thumbnail}
               onTitleChange={(value) => {
                 setForm((prev) => ({ ...prev, title: value }));
                 clearInfoError('title');
@@ -277,11 +275,11 @@ const QuizForm = memo(
                 setForm((prev) => ({ ...prev, category: value }));
                 clearInfoError('category');
               }}
-              onThumbnailChange={(file, url) =>
-                setForm((prev) => ({ ...prev, thumbnailFile: file, thumbnailPreviewUrl: url }))
+              onThumbnailApply={(result) =>
+                setForm((prev) => ({ ...prev, thumbnail: applyEditResult(prev.thumbnail, result) }))
               }
               onThumbnailRemove={() =>
-                setForm((prev) => ({ ...prev, thumbnailFile: null, thumbnailPreviewUrl: null }))
+                setForm((prev) => ({ ...prev, thumbnail: { ...EMPTY_SLOT } }))
               }
               belowCategorySlot={visibilityCard}
               errors={infoErrors}

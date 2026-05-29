@@ -1,6 +1,10 @@
 import { memo } from 'react';
 import Input from '@/components/input';
 import ImageUpload from '@/components/image-upload';
+import type { ImageEditResult } from '@/components/image-edit-modal';
+import type { ImageSlot } from '@/lib/image/imageSlot';
+
+const QUESTION_ASPECT = 16 / 9;
 import {
   wrapperStyle,
   headerStyle,
@@ -31,14 +35,14 @@ export type QuestionItemProps = {
   index: number;
   questionText: string;
   answer: string;
-  imagePreviewUrl: string | null;
-  answerImagePreviewUrl: string | null;
+  imageSlot: ImageSlot;
+  answerImageSlot: ImageSlot;
   answerImageSameAsQuestion: boolean;
   onQuestionChange: (value: string) => void;
   onAnswerChange: (value: string) => void;
-  onImageChange: (file: File, url: string) => void;
+  onImageApply: (result: ImageEditResult) => void;
   onImageRemove: () => void;
-  onAnswerImageChange: (file: File, url: string) => void;
+  onAnswerImageApply: (result: ImageEditResult) => void;
   onAnswerImageRemove: () => void;
   onAnswerImageSameAsQuestionChange: (sameAsQuestion: boolean) => void;
   /** 미지정 시 위로 버튼 미노출. */
@@ -57,14 +61,14 @@ const QuestionItem = memo(
     index,
     questionText,
     answer,
-    imagePreviewUrl,
-    answerImagePreviewUrl,
+    imageSlot,
+    answerImageSlot,
     answerImageSameAsQuestion,
     onQuestionChange,
     onAnswerChange,
-    onImageChange,
+    onImageApply,
     onImageRemove,
-    onAnswerImageChange,
+    onAnswerImageApply,
     onAnswerImageRemove,
     onAnswerImageSameAsQuestionChange,
     onMoveUp,
@@ -111,8 +115,9 @@ const QuestionItem = memo(
           <div css={questionFieldGroupStyle}>
             <p css={questionInstructionStyle}>이미지 또는 문제 텍스트를 입력해주세요</p>
             <ImageUpload
-              previewUrl={imagePreviewUrl}
-              onChange={onImageChange}
+              slot={imageSlot}
+              aspect={QUESTION_ASPECT}
+              onApply={onImageApply}
               onRemove={onImageRemove}
             />
             <Input
@@ -138,8 +143,9 @@ const QuestionItem = memo(
             <p css={sameAsQuestionHintStyle}>정답 이미지로 문제 이미지를 그대로 사용해요.</p>
           ) : (
             <ImageUpload
-              previewUrl={answerImagePreviewUrl}
-              onChange={onAnswerImageChange}
+              slot={answerImageSlot}
+              aspect={QUESTION_ASPECT}
+              onApply={onAnswerImageApply}
               onRemove={onAnswerImageRemove}
             />
           )}

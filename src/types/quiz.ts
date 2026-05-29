@@ -1,3 +1,5 @@
+import type { ImageTransform } from './image';
+
 export const CATEGORIES = [
   { value: 'entertainment', label: '연예인' },
   { value: 'movie', label: '영화' },
@@ -24,6 +26,12 @@ export type Quiz = {
   category: Category;
   thumbnailKey?: string | null;
   thumbnailUrl: string | null;
+  /** 크롭 전 원본 key (소유자 상세 응답에만). 재편집 시 재전송해 원본 보존. */
+  originalThumbnailKey?: string | null;
+  /** 크롭 전 원본 presigned URL (재편집용). 소유자에게만, 원본 미보존이면 null. */
+  originalThumbnailUrl?: string | null;
+  /** 썸네일 크롭/변환 파라미터 (재편집 복원용). */
+  thumbnailTransform?: ImageTransform | null;
   playCount: number;
   starCount: number;
   commentCount: number;
@@ -39,8 +47,20 @@ export type Question = {
   orderNum: number;
   imageKey?: string | null;
   imageUrl: string | null;
+  /** 문제 이미지 크롭 전 원본 key (소유자에게만). 재편집 시 재전송용. */
+  originalImageKey?: string | null;
+  /** 문제 이미지 크롭 전 원본 presigned URL (재편집용, 소유자에게만). */
+  originalImageUrl?: string | null;
+  /** 문제 이미지 크롭/변환 파라미터. */
+  imageTransform?: ImageTransform | null;
   answerImageKey?: string | null;
   answerImageUrl?: string | null;
+  /** 정답 이미지 크롭 전 원본 key (소유자에게만). */
+  originalAnswerImageKey?: string | null;
+  /** 정답 이미지 크롭 전 원본 presigned URL (재편집용, 소유자에게만). */
+  originalAnswerImageUrl?: string | null;
+  /** 정답 이미지 크롭/변환 파라미터. */
+  answerImageTransform?: ImageTransform | null;
   questionText: string | null;
   answer: string;
 };

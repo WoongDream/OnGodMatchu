@@ -2,7 +2,41 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithTheme, screen } from '@/test/renderWithTheme';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
+import { EMPTY_SLOT, type ImageSlot } from '@/lib/image/imageSlot';
+import type { ImageEditResult } from '@/components/image-edit-modal';
 import QuestionItem from './QuestionItem';
+
+// ImageUpload 는 ImageEditModal(canvas) 체인을 끌고 오므로 더미로 모킹한다.
+// - 빈 슬롯이면 "클릭하여 이미지 업로드" 플레이스홀더 노출
+// - previewUrl 이 있으면 alt="업로드 이미지 미리보기" img 노출
+// - onApply/onRemove 를 트리거하는 버튼 노출
+const stubApplyResult: ImageEditResult = { transform: null, cropped: null, originalFile: null };
+
+vi.mock('@/components/image-upload', () => ({
+  default: ({
+    slot,
+    onApply,
+    onRemove,
+  }: {
+    slot: ImageSlot;
+    onApply: (result: ImageEditResult) => void;
+    onRemove: () => void;
+  }) => (
+    <div data-testid="image-upload-stub">
+      {slot.previewUrl ? (
+        <img alt="업로드 이미지 미리보기" src={slot.previewUrl} />
+      ) : (
+        <span>클릭하여 이미지 업로드</span>
+      )}
+      <button type="button" onClick={() => onApply(stubApplyResult)}>
+        apply-image
+      </button>
+      <button type="button" onClick={onRemove}>
+        remove-image
+      </button>
+    </div>
+  ),
+}));
 
 // Controlled-state wrapper for inputs
 const QuestionItemWrapper = (
@@ -37,9 +71,9 @@ describe('QuestionItem', () => {
   const mockCallbacks = {
     onQuestionChange: vi.fn(),
     onAnswerChange: vi.fn(),
-    onImageChange: vi.fn(),
+    onImageApply: vi.fn(),
     onImageRemove: vi.fn(),
-    onAnswerImageChange: vi.fn(),
+    onAnswerImageApply: vi.fn(),
     onAnswerImageRemove: vi.fn(),
     onAnswerImageSameAsQuestionChange: vi.fn(),
     onMoveUp: vi.fn(),
@@ -51,8 +85,8 @@ describe('QuestionItem', () => {
     index: 0,
     questionText: '테스트 문제',
     answer: '테스트 답',
-    imagePreviewUrl: null,
-    answerImagePreviewUrl: null,
+    imageSlot: EMPTY_SLOT,
+    answerImageSlot: EMPTY_SLOT,
     answerImageSameAsQuestion: true,
     isFirst: false,
     isLast: false,
@@ -271,18 +305,38 @@ describe('QuestionItem', () => {
       expect(screen.getByText('이미지 또는 문제 텍스트를 입력해주세요')).toBeInTheDocument();
     });
 
-    it('imagePreviewUrl 이 null 이면 미리보기 img 가 없다', () => {
-      renderWithTheme(<QuestionItem {...defaultProps} imagePreviewUrl={null} />);
+    it('imageSlot 이 빈 슬롯이면 미리보기 img 가 없다', () => {
+      renderWithTheme(<QuestionItem {...defaultProps} imageSlot={EMPTY_SLOT} />);
       expect(screen.queryByAltText('업로드 이미지 미리보기')).not.toBeInTheDocument();
     });
 
-    it('imagePreviewUrl 이 있으면 미리보기 img 가 노출된다', () => {
+    it('imageSlot.previewUrl 이 있으면 미리보기 img 가 노출된다', () => {
       renderWithTheme(
-        <QuestionItem {...defaultProps} imagePreviewUrl="data:image/png;base64,test" />,
+        <QuestionItem
+          {...defaultProps}
+          imageSlot={{ ...EMPTY_SLOT, previewUrl: 'data:image/png;base64,test' }}
+        />,
       );
       const previewImage = screen.getByAltText('업로드 이미지 미리보기');
       expect(previewImage).toBeInTheDocument();
       expect(previewImage).toHaveAttribute('src', 'data:image/png;base64,test');
+    });
+
+    it('문제 이미지 적용 시 onImageApply 콜백이 호출된다', async () => {
+      const user = userEvent.setup();
+      const onImageApply = vi.fn();
+      renderWithTheme(<QuestionItem {...defaultProps} onImageApply={onImageApply} />);
+      // 체크 ON 이므로 ImageUpload(=apply-image 버튼)는 문제 영역 1개만 존재
+      await user.click(screen.getByRole('button', { name: 'apply-image' }));
+      expect(onImageApply).toHaveBeenCalledOnce();
+    });
+
+    it('문제 이미지 삭제 시 onImageRemove 콜백이 호출된다', async () => {
+      const user = userEvent.setup();
+      const onImageRemove = vi.fn();
+      renderWithTheme(<QuestionItem {...defaultProps} onImageRemove={onImageRemove} />);
+      await user.click(screen.getByRole('button', { name: 'remove-image' }));
+      expect(onImageRemove).toHaveBeenCalledOnce();
     });
   });
 
@@ -342,12 +396,29 @@ describe('QuestionItem', () => {
         <QuestionItem
           {...defaultProps}
           answerImageSameAsQuestion={false}
-          answerImagePreviewUrl="blob:answer-preview"
+          answerImageSlot={{ ...EMPTY_SLOT, previewUrl: 'blob:answer-preview' }}
         />,
       );
       const previews = screen.getAllByAltText('업로드 이미지 미리보기');
       const sources = previews.map((img) => (img as HTMLImageElement).src);
       expect(sources).toContain('blob:answer-preview');
+    });
+
+    it('OFF 상태에서 정답 이미지 적용 시 onAnswerImageApply 콜백이 호출된다', async () => {
+      const user = userEvent.setup();
+      const onAnswerImageApply = vi.fn();
+      renderWithTheme(
+        <QuestionItem
+          {...defaultProps}
+          answerImageSameAsQuestion={false}
+          onAnswerImageApply={onAnswerImageApply}
+        />,
+      );
+      // OFF → ImageUpload(apply-image 버튼) 2개 (문제 + 정답), 두 번째가 정답
+      const applyButtons = screen.getAllByRole('button', { name: 'apply-image' });
+      expect(applyButtons).toHaveLength(2);
+      await user.click(applyButtons[1]);
+      expect(onAnswerImageApply).toHaveBeenCalledOnce();
     });
   });
 

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import type { Quiz, Question, User } from '@/types';
 import QuizEditPage from './QuizEditPage';
+import { EMPTY_SLOT } from '@/lib/image/imageSlot';
 
 // ── react-router-dom mock ────────────────────────────────────────────────────
 const mockNavigate = vi.hoisted(() => vi.fn());
@@ -305,7 +306,7 @@ describe('QuizEditPage', () => {
         description: '퀴즈 설명',
         category: 'general',
         isPublic: true,
-        thumbnailFile: null,
+        thumbnail: EMPTY_SLOT,
       });
       expect(Array.isArray(payload.questions)).toBe(true);
       expect(payload.questions).toHaveLength(1);

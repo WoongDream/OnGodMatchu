@@ -1,4 +1,5 @@
 import { memo, useCallback, useMemo } from 'react';
+import { EMPTY_SLOT, applyEditResult } from '@/lib/image/imageSlot';
 import QuestionCard from './QuestionCard';
 import QuestionItem, { type QuestionItemErrors } from './QuestionItem';
 import { type DraftQuestion } from './questionTypes';
@@ -78,7 +79,7 @@ const QuestionsStep = memo(
               <QuestionCard
                 key={q.id}
                 variant="item"
-                imageUrl={q.imagePreviewUrl}
+                imageUrl={q.image.previewUrl}
                 questionText={q.questionText}
                 selected={q.id === selectedId}
                 invalid={!!errors[q.id]}
@@ -95,8 +96,8 @@ const QuestionsStep = memo(
               index={selectedIndex}
               questionText={selected.questionText}
               answer={selected.answer}
-              imagePreviewUrl={selected.imagePreviewUrl}
-              answerImagePreviewUrl={selected.answerImagePreviewUrl}
+              imageSlot={selected.image}
+              answerImageSlot={selected.answerImage}
               answerImageSameAsQuestion={selected.answerImageSameAsQuestion}
               onQuestionChange={(value) => {
                 handleChange(selected.id, { questionText: value });
@@ -106,29 +107,23 @@ const QuestionsStep = memo(
                 handleChange(selected.id, { answer: value });
                 onClearError(selected.id, 'answer');
               }}
-              onImageChange={(file, url) => {
-                handleChange(selected.id, { imageFile: file, imagePreviewUrl: url });
+              onImageApply={(result) => {
+                handleChange(selected.id, { image: applyEditResult(selected.image, result) });
                 onClearError(selected.id, 'questionImageOrText');
               }}
-              onImageRemove={() =>
-                handleChange(selected.id, { imageFile: null, imagePreviewUrl: null })
-              }
-              onAnswerImageChange={(file, url) =>
+              onImageRemove={() => handleChange(selected.id, { image: { ...EMPTY_SLOT } })}
+              onAnswerImageApply={(result) =>
                 handleChange(selected.id, {
-                  answerImageFile: file,
-                  answerImagePreviewUrl: url,
+                  answerImage: applyEditResult(selected.answerImage, result),
                 })
               }
               onAnswerImageRemove={() =>
-                handleChange(selected.id, {
-                  answerImageFile: null,
-                  answerImagePreviewUrl: null,
-                })
+                handleChange(selected.id, { answerImage: { ...EMPTY_SLOT } })
               }
               onAnswerImageSameAsQuestionChange={(sameAsQuestion) =>
                 handleChange(selected.id, {
                   answerImageSameAsQuestion: sameAsQuestion,
-                  ...(sameAsQuestion ? { answerImageFile: null, answerImagePreviewUrl: null } : {}),
+                  ...(sameAsQuestion ? { answerImage: { ...EMPTY_SLOT } } : {}),
                 })
               }
               onDelete={() => handleDelete(selected.id)}

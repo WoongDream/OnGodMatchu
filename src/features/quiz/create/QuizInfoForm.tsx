@@ -4,11 +4,16 @@ import type { Category } from '@/types';
 import Input from '@/components/input';
 import ChipButton from '@/components/chip-button';
 import ImageUpload from '@/components/image-upload';
+import type { ImageEditResult } from '@/components/image-edit-modal';
+import type { ImageSlot } from '@/lib/image/imageSlot';
+
+const THUMBNAIL_ASPECT = 16 / 9;
 import useCategories from '@/hooks/useCategories';
 import {
   sectionStyle,
   sectionTitleStyle,
   categoryFieldStyle,
+  thumbnailFieldStyle,
   fieldGroupStyle,
   fieldLabelRowStyle,
   requiredDotStyle,
@@ -28,11 +33,11 @@ type QuizInfoFormProps = {
   title: string;
   description: string;
   category: Category | null;
-  thumbnailPreviewUrl: string | null;
+  thumbnailSlot: ImageSlot;
   onTitleChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onCategoryChange: (value: Category) => void;
-  onThumbnailChange: (file: File, url: string) => void;
+  onThumbnailApply: (result: ImageEditResult) => void;
   onThumbnailRemove: () => void;
   /** title 입력 바로 아래에 끼워넣을 슬롯. */
   belowTitleSlot?: ReactNode;
@@ -47,11 +52,11 @@ const QuizInfoForm = memo(
     title,
     description,
     category,
-    thumbnailPreviewUrl,
+    thumbnailSlot,
     onTitleChange,
     onDescriptionChange,
     onCategoryChange,
-    onThumbnailChange,
+    onThumbnailApply,
     onThumbnailRemove,
     belowTitleSlot,
     belowCategorySlot,
@@ -63,12 +68,15 @@ const QuizInfoForm = memo(
     return (
       <section css={sectionStyle}>
         <h2 css={sectionTitleStyle}>퀴즈 정보</h2>
-        <ImageUpload
-          label="썸네일 (선택)"
-          previewUrl={thumbnailPreviewUrl}
-          onChange={onThumbnailChange}
-          onRemove={onThumbnailRemove}
-        />
+        <div css={thumbnailFieldStyle}>
+          <ImageUpload
+            label="썸네일 (선택)"
+            slot={thumbnailSlot}
+            aspect={THUMBNAIL_ASPECT}
+            onApply={onThumbnailApply}
+            onRemove={onThumbnailRemove}
+          />
+        </div>
         <Input
           label={
             errors?.title ? (

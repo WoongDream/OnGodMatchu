@@ -7,6 +7,7 @@ import QuizForm, {
   type QuizFormSubmitData,
 } from '@/features/quiz/create/QuizForm';
 import type { DraftQuestion } from '@/features/quiz/create/questionTypes';
+import { slotFromServer } from '@/lib/image/imageSlot';
 import useQuizDetail from '@/hooks/useQuizDetail';
 import useUpdateQuiz from '@/hooks/useUpdateQuiz';
 import useAuthStore from '@/store/authStore';
@@ -21,12 +22,20 @@ const hydrateQuestion = (server: Question): DraftQuestion => {
     serverId: server.id,
     questionText: server.questionText ?? '',
     answer: server.answer,
-    imageKey,
-    imageFile: null,
-    imagePreviewUrl: server.imageUrl ?? null,
-    answerImageKey,
-    answerImageFile: null,
-    answerImagePreviewUrl: server.answerImageUrl ?? null,
+    image: slotFromServer({
+      imageKey,
+      imageUrl: server.imageUrl,
+      originalImageKey: server.originalImageKey,
+      originalImageUrl: server.originalImageUrl,
+      transform: server.imageTransform,
+    }),
+    answerImage: slotFromServer({
+      imageKey: answerImageKey,
+      imageUrl: server.answerImageUrl,
+      originalImageKey: server.originalAnswerImageKey,
+      originalImageUrl: server.originalAnswerImageUrl,
+      transform: server.answerImageTransform,
+    }),
     answerImageSameAsQuestion: imageKey !== null && imageKey === answerImageKey,
   };
 };
@@ -46,7 +55,13 @@ const QuizEditForm = ({ quizId, quiz }: QuizEditFormProps) => {
       title: quiz.title,
       description: quiz.description ?? '',
       category: quiz.category,
-      thumbnailPreviewUrl: quiz.thumbnailUrl ?? null,
+      thumbnail: slotFromServer({
+        imageKey: quiz.thumbnailKey,
+        imageUrl: quiz.thumbnailUrl,
+        originalImageKey: quiz.originalThumbnailKey,
+        originalImageUrl: quiz.originalThumbnailUrl,
+        transform: quiz.thumbnailTransform,
+      }),
       isPublic: quiz.isPublic,
       questions: quiz.questions.map(hydrateQuestion),
     }),
@@ -60,7 +75,7 @@ const QuizEditForm = ({ quizId, quiz }: QuizEditFormProps) => {
         description: data.description.trim() || undefined,
         category: data.category,
         isPublic: data.isPublic,
-        thumbnailFile: data.thumbnailFile,
+        thumbnail: data.thumbnail,
         questions: data.questions,
       });
       if (result) {
