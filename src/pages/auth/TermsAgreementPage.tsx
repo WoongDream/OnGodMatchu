@@ -26,14 +26,18 @@ const TermsAgreementPage = memo(() => {
   const [agreements, setAgreements] = useState<TermsAgreementState>({
     agreedToTerms: false,
     agreedToPrivacy: false,
-    agreedToMarketing: false,
+    agreedToAge14: false,
   });
   const [isAgreeing, setIsAgreeing] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const canAgree =
-    agreements.agreedToTerms && agreements.agreedToPrivacy && !isAgreeing && !isLoggingOut;
+    agreements.agreedToTerms &&
+    agreements.agreedToPrivacy &&
+    agreements.agreedToAge14 &&
+    !isAgreeing &&
+    !isLoggingOut;
 
   const handleAgree = async () => {
     if (!canAgree) {
@@ -42,8 +46,9 @@ const TermsAgreementPage = memo(() => {
     setIsAgreeing(true);
     setError(null);
     try {
-      await agreeTerms({ agreedToMarketing: agreements.agreedToMarketing });
-      await mutate(MY_PROFILE_KEY);
+      const updatedUser = await agreeTerms();
+      useAuthStore.getState().setUser(updatedUser);
+      await mutate(MY_PROFILE_KEY, updatedUser, { revalidate: false });
       navigate('/', { replace: true });
     } catch (err) {
       const code = axios.isAxiosError(err) ? mapUserError(err) : 'NETWORK';

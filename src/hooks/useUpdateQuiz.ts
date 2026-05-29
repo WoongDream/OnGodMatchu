@@ -1,12 +1,24 @@
 import { useCallback, useState } from 'react';
 import axios from 'axios';
-import { updateQuiz, mapQuizError, type UpdateQuizPayload, type QuizErrorCode } from '@/api/quiz';
+import {
+  updateQuiz,
+  mapQuizError,
+  type UpdateQuizPayload,
+  type QuestionUpdate,
+  type QuizErrorCode,
+} from '@/api/quiz';
 import { uploadImage } from '@/api/upload';
+import { resolveSlot, type ImageSlot } from '@/lib/image/imageSlot';
 import { ImageUploadError } from './useUploadImage';
+import type { DraftQuestion } from '@/features/quiz/create/questionTypes';
 import type { Quiz } from '@/types';
 
-export type UpdateQuizSubmitParams = UpdateQuizPayload & {
-  thumbnailFile?: File | null;
+export type UpdateQuizSubmitParams = Omit<
+  UpdateQuizPayload,
+  'questions' | 'thumbnailKey' | 'originalThumbnailKey' | 'thumbnailTransform'
+> & {
+  thumbnail?: ImageSlot;
+  questions?: DraftQuestion[];
 };
 
 const ERROR_MESSAGES: Record<QuizErrorCode, string> = {
@@ -25,6 +37,25 @@ export type UseUpdateQuizReturn = {
   clearError: () => void;
 };
 
+const buildQuestionsPayload = async (drafts: DraftQuestion[]): Promise<QuestionUpdate[]> =>
+  Promise.all(
+    drafts.map(async (q): Promise<QuestionUpdate> => {
+      const img = await resolveSlot(q.image, uploadImage);
+      const ans = q.answerImageSameAsQuestion ? img : await resolveSlot(q.answerImage, uploadImage);
+      return {
+        id: q.serverId,
+        imageKey: img.imageKey ?? null,
+        originalImageKey: img.originalImageKey ?? null,
+        imageTransform: img.transform ?? null,
+        answerImageKey: ans.imageKey ?? null,
+        originalAnswerImageKey: ans.originalImageKey ?? null,
+        answerImageTransform: ans.transform ?? null,
+        questionText: q.questionText.trim() || null,
+        answer: q.answer.trim(),
+      };
+    }),
+  );
+
 const useUpdateQuiz = (): UseUpdateQuizReturn => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,10 +71,16 @@ const useUpdateQuiz = (): UseUpdateQuizReturn => {
       setIsSubmitting(true);
       clearError();
       try {
-        const { thumbnailFile, ...rest } = params;
+        const { thumbnail, questions, ...rest } = params;
         const payload: UpdateQuizPayload = { ...rest };
-        if (thumbnailFile) {
-          payload.thumbnailKey = await uploadImage(thumbnailFile);
+        if (thumbnail) {
+          const thumb = await resolveSlot(thumbnail, uploadImage);
+          payload.thumbnailKey = thumb.imageKey;
+          payload.originalThumbnailKey = thumb.originalImageKey;
+          payload.thumbnailTransform = thumb.transform;
+        }
+        if (questions !== undefined) {
+          payload.questions = await buildQuestionsPayload(questions);
         }
         const updated = await updateQuiz(quizId, payload);
         return updated;

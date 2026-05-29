@@ -3,16 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { createQuiz } from '@/api/quiz';
 import { uploadImage } from '@/api/upload';
+import { resolveSlot, type ImageSlot } from '@/lib/image/imageSlot';
+import type { DraftQuestion } from '@/features/quiz/create/questionTypes';
 import type { Category, Quiz } from '@/types';
 import { ImageUploadError } from './useUploadImage';
-
-type QuestionDraft = {
-  imageFile: File | null;
-  answerImageFile?: File | null;
-  answerImageSameAsQuestion?: boolean;
-  questionText: string;
-  answer: string;
-};
 
 export type CreateQuizErrorCode =
   | 'INVALID_INPUT'
@@ -70,9 +64,9 @@ type SubmitParams = {
   title: string;
   description: string;
   category: Category;
-  thumbnailFile: File | null;
+  thumbnail: ImageSlot;
   isPublic: boolean;
-  questions: QuestionDraft[];
+  questions: DraftQuestion[];
 };
 
 type UseCreateQuizReturn = {
@@ -100,39 +94,35 @@ const useCreateQuiz = (): UseCreateQuizReturn => {
       setError(null);
       setErrorCode(null);
       try {
-        const uploadIfPresent = (file: File | null | undefined) =>
-          file ? uploadImage(file) : Promise.resolve(null);
-
-        const [thumbnailKey, questionImageKeys, answerImageKeys] = await Promise.all([
-          uploadIfPresent(params.thumbnailFile),
-          Promise.all(params.questions.map((q) => uploadIfPresent(q.imageFile))),
-          Promise.all(
-            params.questions.map((q) =>
-              q.answerImageSameAsQuestion
-                ? Promise.resolve(null)
-                : uploadIfPresent(q.answerImageFile),
-            ),
-          ),
-        ]);
+        const thumb = await resolveSlot(params.thumbnail, uploadImage);
+        const questions = await Promise.all(
+          params.questions.map(async (q) => {
+            const img = await resolveSlot(q.image, uploadImage);
+            const ans = q.answerImageSameAsQuestion
+              ? img
+              : await resolveSlot(q.answerImage, uploadImage);
+            return {
+              imageKey: img.imageKey,
+              originalImageKey: img.originalImageKey,
+              imageTransform: img.transform,
+              answerImageKey: ans.imageKey,
+              originalAnswerImageKey: ans.originalImageKey,
+              answerImageTransform: ans.transform,
+              questionText: q.questionText.trim() || undefined,
+              answer: q.answer.trim(),
+            };
+          }),
+        );
 
         const quiz = await createQuiz({
           title: params.title.trim(),
           description: params.description.trim() || undefined,
           category: params.category,
-          thumbnailKey: thumbnailKey ?? undefined,
+          thumbnailKey: thumb.imageKey,
+          originalThumbnailKey: thumb.originalImageKey,
+          thumbnailTransform: thumb.transform,
           isPublic: params.isPublic,
-          questions: params.questions.map((q, index) => {
-            const imageKey = questionImageKeys[index] ?? undefined;
-            const answerImageKey = q.answerImageSameAsQuestion
-              ? imageKey
-              : (answerImageKeys[index] ?? undefined);
-            return {
-              imageKey,
-              answerImageKey,
-              questionText: q.questionText.trim() || undefined,
-              answer: q.answer.trim(),
-            };
-          }),
+          questions,
         });
 
         return quiz;

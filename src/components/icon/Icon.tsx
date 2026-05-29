@@ -101,3 +101,72 @@ export const ArrowDownIcon = wrap(
     <path d="M6 12l6 6 6-6" />
   </>,
 );
+
+export const ArrowRightIcon = wrap(
+  'ArrowRightIcon',
+  <>
+    <path d="M5 12h14" />
+    <path d="M13 5l7 7-7 7" />
+  </>,
+);
+
+export const SendIcon = wrap(
+  'SendIcon',
+  <>
+    <path d="M22 2L11 13" />
+    <path d="M22 2L15 22 11 13 2 9z" />
+  </>,
+);
+
+export const AnnouncementIcon = wrap(
+  'AnnouncementIcon',
+  <>
+    <path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z" />
+    <path d="M14 8.5c1.2.7 2 2 2 3.5s-.8 2.8-2 3.5" />
+    <path d="M17 5.5c2.2 1.2 3.5 3.7 3.5 6.5s-1.3 5.3-3.5 6.5" />
+  </>,
+);
+
+export const ReleaseNoteIcon = wrap(
+  'ReleaseNoteIcon',
+  <>
+    <path d="M12 3v3" />
+    <path d="M12 18v3" />
+    <path d="M3 12h3" />
+    <path d="M18 12h3" />
+    <path d="M5.6 5.6l2.1 2.1" />
+    <path d="M16.3 16.3l2.1 2.1" />
+    <path d="M5.6 18.4l2.1-2.1" />
+    <path d="M16.3 7.7l2.1-2.1" />
+  </>,
+);
+
+export const CheckIcon = wrap('CheckIcon', <path d="M5 12.5l4.5 4.5L19 7" strokeWidth={2.4} />);
+
+export const PlusIcon = wrap(
+  'PlusIcon',
+  <>
+    <path d="M12 5v14" />
+    <path d="M5 12h14" />
+  </>,
+);
+
+export const TrashIcon = wrap(
+  'TrashIcon',
+  <>
+    <path d="M4 7h16" />
+    <path d="M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7" />
+    <path d="M6.5 7l1 12a2 2 0 0 0 2 2h5a2 2 0 0 0 2-2l1-12" />
+    <path d="M10 11v6" />
+    <path d="M14 11v6" />
+  </>,
+);
+
+export const AlertIcon = wrap(
+  'AlertIcon',
+  <>
+    <circle cx="12" cy="12" r="9" fill="currentColor" stroke="none" />
+    <path d="M12 7.5v5" stroke="#ffffff" strokeWidth={2} />
+    <circle cx="12" cy="16" r="1.1" fill="#ffffff" stroke="none" />
+  </>,
+);

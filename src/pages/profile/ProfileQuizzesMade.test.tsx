@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider } from '@emotion/react';
@@ -25,6 +25,19 @@ vi.mock('react-router-dom', async () => {
     useNavigate: () => mockNavigate,
   };
 });
+
+// ── useToast mock ────────────────────────────────────────────────────────────
+const mockToastSuccess = vi.hoisted(() => vi.fn());
+const mockToastError = vi.hoisted(() => vi.fn());
+
+vi.mock('@/components/toast', () => ({
+  useToast: () => ({
+    show: vi.fn(),
+    success: mockToastSuccess,
+    info: vi.fn(),
+    error: mockToastError,
+  }),
+}));
 
 // ── useMyQuizzesAggregate mock ───────────────────────────────────────────────
 const mockUseMyQuizzesAggregate = vi.hoisted(() => vi.fn());
@@ -54,6 +67,7 @@ vi.mock('@/components/my-quiz-list', () => ({
   default: ({
     items,
     onEdit,
+    onDelete,
     isMutating,
   }: {
     items: MyQuizListItem[];
@@ -70,6 +84,7 @@ vi.mock('@/components/my-quiz-list', () => ({
           'li',
           { key: item.id, 'data-testid': `quiz-item-${item.id}` },
           React.createElement('button', { onClick: () => onEdit(item.id) }, `편집-${item.id}`),
+          React.createElement('button', { onClick: () => onDelete(item.id) }, `삭제-${item.id}`),
         ),
       ),
     ),
@@ -414,6 +429,44 @@ describe('ProfileQuizzesMade', () => {
       });
       renderPage();
       expect(screen.queryByText('아직 만든 퀴즈가 없습니다.')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('삭제 토스트', () => {
+    it('remove 가 true 를 반환하면 성공 토스트가 노출된다', async () => {
+      const remove = vi.fn().mockResolvedValue(true);
+      mockUseMyQuizzes.mockReturnValue({
+        ...DEFAULT_QUIZ_RETURN,
+        items: [makeItem(7)],
+        totalElements: 1,
+        remove,
+      });
+      renderPage();
+      fireEvent.click(screen.getByText('삭제-7'));
+      await waitFor(() => {
+        expect(remove).toHaveBeenCalledWith(7);
+        expect(mockToastSuccess).toHaveBeenCalledWith('퀴즈를 삭제했어요.');
+      });
+      expect(mockToastError).not.toHaveBeenCalled();
+    });
+
+    it('remove 가 false 를 반환하면 에러 토스트가 노출된다', async () => {
+      const remove = vi.fn().mockResolvedValue(false);
+      mockUseMyQuizzes.mockReturnValue({
+        ...DEFAULT_QUIZ_RETURN,
+        items: [makeItem(8)],
+        totalElements: 1,
+        remove,
+      });
+      renderPage();
+      fireEvent.click(screen.getByText('삭제-8'));
+      await waitFor(() => {
+        expect(remove).toHaveBeenCalledWith(8);
+        expect(mockToastError).toHaveBeenCalledWith(
+          '퀴즈 삭제에 실패했어요. 잠시 후 다시 시도해주세요.',
+        );
+      });
+      expect(mockToastSuccess).not.toHaveBeenCalled();
     });
   });
 });

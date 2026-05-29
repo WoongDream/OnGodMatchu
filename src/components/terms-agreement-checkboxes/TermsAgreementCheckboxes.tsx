@@ -13,19 +13,18 @@ import {
   labelTextStyle,
   allLabelTextStyle,
   requiredTagStyle,
-  optionalTagStyle,
   linkStyle,
 } from './TermsAgreementCheckboxes.style';
 
 const TermsAgreementCheckboxes = memo(
   ({ value, onChange, disabled = false }: TermsAgreementCheckboxesProps) => {
-    const allChecked = value.agreedToTerms && value.agreedToPrivacy && value.agreedToMarketing;
+    const allChecked = value.agreedToTerms && value.agreedToPrivacy && value.agreedToAge14;
 
     const handleAllToggle = (next: boolean) => {
       const updated: TermsAgreementState = {
         agreedToTerms: next,
         agreedToPrivacy: next,
-        agreedToMarketing: next,
+        agreedToAge14: next,
       };
       onChange(updated);
     };
@@ -91,13 +90,13 @@ const TermsAgreementCheckboxes = memo(
             <input
               css={checkboxInputStyle}
               type="checkbox"
-              checked={value.agreedToMarketing}
-              onChange={(e) => handleItemToggle('agreedToMarketing', e.target.checked)}
+              checked={value.agreedToAge14}
+              onChange={(e) => handleItemToggle('agreedToAge14', e.target.checked)}
               disabled={disabled}
-              aria-label="마케팅 수신 동의 (선택)"
+              aria-label="만 14세 이상입니다 (필수)"
             />
             <span css={labelTextStyle}>
-              <span css={optionalTagStyle}>(선택)</span> 마케팅 수신 동의
+              <span css={requiredTagStyle}>(필수)</span> 만 14세 이상입니다
             </span>
           </label>
         </div>

@@ -1,7 +1,7 @@
 export type TermsAgreementState = {
   agreedToTerms: boolean;
   agreedToPrivacy: boolean;
-  agreedToMarketing: boolean;
+  agreedToAge14: boolean;
 };
 
 export type TermsAgreementCheckboxesProps = {

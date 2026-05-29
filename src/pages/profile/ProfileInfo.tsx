@@ -1,9 +1,12 @@
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useOutletContext } from 'react-router-dom';
 import Button from '@/components/button';
 import Input from '@/components/input';
 import Toggle from '@/components/toggle';
 import ProfileImage from '@/components/profile-image';
+import ImageEditModal, { type ImageEditResult } from '@/components/image-edit-modal';
+import { applyEditResult, slotFromServer, type ImageSlot } from '@/lib/image/imageSlot';
+import type { ImageTransform } from '@/types';
 import useNicknameCheck from '@/hooks/useNicknameCheck';
 import useProfileImage from '@/hooks/useProfileImage';
 import useUpdateProfile from '@/hooks/useUpdateProfile';
@@ -62,7 +65,7 @@ const ProfileInfoForm = memo(({ profile }: FormProps) => {
   const { update, toggleVisibility, isSaving, isToggling, error, errorCode, clearError } =
     useUpdateProfile();
   const {
-    upload,
+    applyEdited,
     regenerateDefault,
     isUploading,
     isRegenerating,
@@ -75,6 +78,27 @@ const ProfileInfoForm = memo(({ profile }: FormProps) => {
   const [bio, setBio] = useState(profile.bio ?? '');
   const [imageValidationError, setImageValidationError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const editOpenRef = useRef(0);
+  const [editModal, setEditModal] = useState<{
+    src: string;
+    initialFile: File | null;
+    initialTransform: ImageTransform | null;
+    key: number;
+  } | null>(null);
+
+  // 현재 프로필 이미지 슬롯 (재편집 시 원본 key/transform 보존).
+  const profileSlot = useMemo<ImageSlot>(
+    () =>
+      slotFromServer({
+        imageKey: profile.profileImageKey,
+        imageUrl: profile.profileImageUrl,
+        originalImageKey: profile.originalProfileImageKey,
+        originalImageUrl: profile.originalProfileImageUrl,
+        transform: profile.profileImageTransform,
+      }),
+    [profile],
+  );
 
   const nicknameCheck = useNicknameCheck(nickname, { exclude: profile.nickname });
 
@@ -114,7 +138,8 @@ const ProfileInfoForm = memo(({ profile }: FormProps) => {
     await update(payload);
   };
 
-  const handleFileChosen = async (file: File) => {
+  // 새 파일 선택 → 편집 모달 오픈 (업로드는 모달 적용 시).
+  const handleFileChosen = (file: File) => {
     setImageValidationError(null);
     clearImageError();
     if (!isAllowedProfileImageMime(file.type)) {
@@ -125,7 +150,35 @@ const ProfileInfoForm = memo(({ profile }: FormProps) => {
       setImageValidationError(`최대 ${PROFILE_IMAGE_MAX_MB}MB 이하만 업로드할 수 있어요.`);
       return;
     }
-    await upload(file);
+    editOpenRef.current += 1;
+    setEditModal({
+      src: URL.createObjectURL(file),
+      initialFile: file,
+      initialTransform: null,
+      key: editOpenRef.current,
+    });
+  };
+
+  // 현재 이미지 클릭 → 원본에서 재편집. 기본/자동생성 이미지(원본 없음)는 편집 불가 → 모달 미오픈.
+  const handleEditExisting = () => {
+    const src = profile.originalProfileImageUrl ?? null;
+    if (!src) {
+      return;
+    }
+    setImageValidationError(null);
+    clearImageError();
+    editOpenRef.current += 1;
+    setEditModal({
+      src,
+      initialFile: null,
+      initialTransform: profileSlot.transform,
+      key: editOpenRef.current,
+    });
+  };
+
+  const handleApplyEdit = async (result: ImageEditResult) => {
+    setEditModal(null);
+    await applyEdited(applyEditResult(profileSlot, result));
   };
 
   const handleRegenerateDefault = async () => {
@@ -147,7 +200,24 @@ const ProfileInfoForm = memo(({ profile }: FormProps) => {
       <section css={cardStyle} aria-label="이미지">
         <h3 css={cardHeadingStyle}>이미지</h3>
         <div css={imageRowStyle}>
-          <ProfileImage nickname={profile.nickname} imageUrl={profile.profileImageUrl} size="lg" />
+          <button
+            type="button"
+            onClick={handleEditExisting}
+            disabled={isImageProcessing || !profile.originalProfileImageUrl}
+            aria-label="프로필 이미지 편집"
+            css={{
+              border: 'none',
+              background: 'none',
+              padding: 0,
+              cursor: profile.originalProfileImageUrl ? 'pointer' : 'default',
+            }}
+          >
+            <ProfileImage
+              nickname={profile.nickname}
+              imageUrl={profile.profileImageUrl}
+              size="lg"
+            />
+          </button>
           <div css={imageActionsStyle}>
             <input
               ref={fileInputRef}
@@ -190,6 +260,20 @@ const ProfileInfoForm = memo(({ profile }: FormProps) => {
           </div>
         </div>
       </section>
+
+      {editModal && (
+        <ImageEditModal
+          key={editModal.key}
+          isOpen
+          src={editModal.src}
+          initialFile={editModal.initialFile}
+          initialTransform={editModal.initialTransform}
+          aspect={1}
+          fileName={editModal.initialFile?.name}
+          onCancel={() => setEditModal(null)}
+          onApply={handleApplyEdit}
+        />
+      )}
 
       <section css={cardStyle} aria-label="기본 정보">
         <h3 css={cardHeadingStyle}>기본 정보</h3>

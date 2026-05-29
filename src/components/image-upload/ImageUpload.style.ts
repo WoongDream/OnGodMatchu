@@ -13,25 +13,27 @@ export const labelStyle = (theme: Theme) => css`
   color: ${theme.colors.fg.primary};
 `;
 
-export const areaStyle = (hasPreview: boolean) => (theme: Theme) => css`
-  position: relative;
-  width: 100%;
-  aspect-ratio: ${hasPreview ? '16 / 9' : 'auto'};
-  min-height: ${hasPreview ? 'auto' : '7rem'};
-  border: 2px dashed ${theme.colors.border.primary};
-  border-radius: ${theme.borderRadius.lg};
-  background-color: ${theme.colors.bg.secondary};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  overflow: hidden;
-  transition: border-color 0.15s;
+export const areaStyle =
+  (hasPreview: boolean, invalid = false) =>
+  (theme: Theme) => css`
+    position: relative;
+    width: 100%;
+    aspect-ratio: ${hasPreview ? '16 / 9' : 'auto'};
+    min-height: ${hasPreview ? 'auto' : '7rem'};
+    border: 2px dashed ${invalid ? theme.colors.status.error : theme.colors.border.primary};
+    border-radius: ${theme.borderRadius.lg};
+    background-color: ${theme.colors.bg.secondary};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color 0.15s;
 
-  &:hover {
-    border-color: ${theme.colors.accent.primary};
-  }
-`;
+    &:hover {
+      border-color: ${invalid ? theme.colors.status.error : theme.colors.accent.primary};
+    }
+  `;
 
 export const placeholderStyle = (theme: Theme) => css`
   display: flex;

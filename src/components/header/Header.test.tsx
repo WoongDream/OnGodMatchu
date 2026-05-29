@@ -1,10 +1,19 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderWithTheme, screen } from '@/test/renderWithTheme';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import Header from './Header';
 import useAuthStore from '@/store/authStore';
+import useVisitorSummary from '@/hooks/useVisitorSummary';
 import * as router from 'react-router-dom';
 import type { User } from '@/types';
+
+const renderHeader = (path = '/') =>
+  renderWithTheme(
+    <MemoryRouter initialEntries={[path]}>
+      <Header />
+    </MemoryRouter>,
+  );
 
 // Mock react-router-dom
 vi.mock('react-router-dom', async () => {
@@ -18,6 +27,11 @@ vi.mock('react-router-dom', async () => {
 // Mock authStore
 vi.mock('@/store/authStore', () => ({
   default: vi.fn(),
+}));
+
+// Mock useVisitorSummary — 기본은 data undefined 라 VisitorBlock 미마운트 (기존 케이스 무영향)
+vi.mock('@/hooks/useVisitorSummary', () => ({
+  default: vi.fn(() => ({ data: undefined, isLoading: false, error: null })),
 }));
 
 // Mock ProfileImage to keep tests focused on Header behavior
@@ -54,7 +68,7 @@ describe('Header', () => {
         user: null,
       });
 
-      renderWithTheme(<Header />);
+      renderHeader();
       const logo = screen.getByRole('img', { name: 'OnGodMatchu' });
 
       expect(logo).toBeInTheDocument();
@@ -68,7 +82,7 @@ describe('Header', () => {
       });
 
       const user = userEvent.setup();
-      renderWithTheme(<Header />);
+      renderHeader();
       const logo = screen.getByRole('img', { name: 'OnGodMatchu' });
 
       await user.click(logo);
@@ -87,23 +101,23 @@ describe('Header', () => {
     });
 
     it('shows the "로그인" button', () => {
-      renderWithTheme(<Header />);
+      renderHeader();
       expect(screen.getByRole('button', { name: '로그인' })).toBeInTheDocument();
     });
 
     it('does not show the "퀴즈 만들기" button', () => {
-      renderWithTheme(<Header />);
+      renderHeader();
       expect(screen.queryByRole('button', { name: '퀴즈 만들기' })).not.toBeInTheDocument();
     });
 
     it('does not show the "프로필" button', () => {
-      renderWithTheme(<Header />);
+      renderHeader();
       expect(screen.queryByRole('button', { name: '프로필' })).not.toBeInTheDocument();
     });
 
     it('navigates to "/login" when login button is clicked', async () => {
       const user = userEvent.setup();
-      renderWithTheme(<Header />);
+      renderHeader();
       await user.click(screen.getByRole('button', { name: '로그인' }));
 
       expect(mockNavigate).toHaveBeenCalledWith('/login');
@@ -120,28 +134,28 @@ describe('Header', () => {
     });
 
     it('does not show the "퀴즈 만들기" button (헤더에서 제거)', () => {
-      renderWithTheme(<Header />);
+      renderHeader();
       expect(screen.queryByRole('button', { name: '퀴즈 만들기' })).not.toBeInTheDocument();
     });
 
     it('shows the "프로필" button (aria-label)', () => {
-      renderWithTheme(<Header />);
+      renderHeader();
       expect(screen.getByRole('button', { name: '프로필' })).toBeInTheDocument();
     });
 
     it('does not show the "로그인" button', () => {
-      renderWithTheme(<Header />);
+      renderHeader();
       expect(screen.queryByRole('button', { name: '로그인' })).not.toBeInTheDocument();
     });
 
     it('does not show a "로그아웃" button', () => {
-      renderWithTheme(<Header />);
+      renderHeader();
       expect(screen.queryByRole('button', { name: '로그아웃' })).not.toBeInTheDocument();
     });
 
     it('navigates to "/profile" when profile button is clicked', async () => {
       const user = userEvent.setup();
-      renderWithTheme(<Header />);
+      renderHeader();
       await user.click(screen.getByRole('button', { name: '프로필' }));
 
       expect(mockNavigate).toHaveBeenCalledWith('/profile');
@@ -149,19 +163,19 @@ describe('Header', () => {
     });
 
     it('profile button contains the ProfileImage mock', () => {
-      renderWithTheme(<Header />);
+      renderHeader();
       const profileButton = screen.getByRole('button', { name: '프로필' });
       expect(profileButton.querySelector('[data-testid="profile-image"]')).toBeInTheDocument();
     });
 
     it('passes user.nickname to ProfileImage', () => {
-      renderWithTheme(<Header />);
+      renderHeader();
       const profileImage = screen.getByTestId('profile-image');
       expect(profileImage).toHaveAttribute('data-nickname', MOCK_USER.nickname);
     });
 
     it('passes user.profileImageUrl to ProfileImage', () => {
-      renderWithTheme(<Header />);
+      renderHeader();
       const profileImage = screen.getByTestId('profile-image');
       expect(profileImage).toHaveAttribute('data-image-url', MOCK_USER.profileImageUrl);
     });
@@ -174,7 +188,7 @@ describe('Header', () => {
         user: null,
       });
 
-      renderWithTheme(<Header />);
+      renderHeader();
       const profileImage = screen.getByTestId('profile-image');
       expect(profileImage).toHaveAttribute('data-nickname', '');
     });
@@ -186,7 +200,7 @@ describe('Header', () => {
         isLoggedIn: false,
         user: null,
       });
-      const { unmount } = renderWithTheme(<Header />);
+      const { unmount } = renderHeader();
       expect(screen.getByRole('button', { name: '로그인' })).toBeInTheDocument();
       unmount();
 
@@ -194,15 +208,113 @@ describe('Header', () => {
         isLoggedIn: true,
         user: MOCK_USER,
       });
-      renderWithTheme(<Header />);
+      renderHeader();
       expect(screen.getByRole('button', { name: '프로필' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: '로그인' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('인증 부트스트랩 중 (status=bootstrapping)', () => {
+    it('비로그인 + bootstrapping 이면 로그인/프로필 버튼 없이 스켈레톤만 노출', () => {
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        isLoggedIn: false,
+        user: null,
+        status: 'bootstrapping',
+      });
+
+      renderHeader();
+      expect(screen.queryByRole('button', { name: '로그인' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '프로필' })).not.toBeInTheDocument();
+      expect(screen.getByTestId('header-auth-placeholder')).toBeInTheDocument();
+    });
+
+    it('isLoggedIn=true 여도 bootstrapping 이면 프로필 버튼 대신 스켈레톤만 노출', () => {
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        isLoggedIn: true,
+        user: MOCK_USER,
+        status: 'bootstrapping',
+      });
+
+      renderHeader();
+      expect(screen.queryByRole('button', { name: '로그인' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '프로필' })).not.toBeInTheDocument();
+      expect(screen.getByTestId('header-auth-placeholder')).toBeInTheDocument();
+    });
+
+    it('status=ready + 비로그인 이면 로그인 버튼 노출 (스켈레톤 없음)', () => {
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        isLoggedIn: false,
+        user: null,
+        status: 'ready',
+      });
+
+      renderHeader();
+      expect(screen.getByRole('button', { name: '로그인' })).toBeInTheDocument();
+      expect(screen.queryByTestId('header-auth-placeholder')).not.toBeInTheDocument();
+    });
+
+    it('status=ready + 로그인 이면 프로필 버튼 노출 (스켈레톤 없음)', () => {
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        isLoggedIn: true,
+        user: MOCK_USER,
+        status: 'ready',
+      });
+
+      renderHeader();
+      expect(screen.getByRole('button', { name: '프로필' })).toBeInTheDocument();
+      expect(screen.queryByTestId('header-auth-placeholder')).not.toBeInTheDocument();
     });
   });
 
   describe('memoization', () => {
     it('has displayName "Header"', () => {
       expect(Header.displayName).toBe('Header');
+    });
+  });
+
+  describe('VisitorBlock 마운트 회귀', () => {
+    beforeEach(() => {
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        isLoggedIn: false,
+        user: null,
+      });
+    });
+
+    it('useVisitorSummary 가 data 를 반환하면 VisitorBlock 이 마운트된다 (TODAY 노출)', () => {
+      (useVisitorSummary as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        data: {
+          today: 63,
+          total: 7_600_000,
+          daily: [
+            { date: '2026-05-22', visitorCount: 1 },
+            { date: '2026-05-23', visitorCount: 2 },
+            { date: '2026-05-24', visitorCount: 3 },
+            { date: '2026-05-25', visitorCount: 4 },
+            { date: '2026-05-26', visitorCount: 5 },
+            { date: '2026-05-27', visitorCount: 6 },
+            { date: '2026-05-28', visitorCount: 63 },
+          ],
+        },
+        isLoading: false,
+        error: null,
+      });
+
+      renderHeader();
+      expect(screen.getByLabelText('방문자 통계')).toBeInTheDocument();
+      expect(screen.getByText('TODAY')).toBeInTheDocument();
+      expect(screen.getByText('63')).toBeInTheDocument();
+    });
+
+    it('useVisitorSummary 가 data undefined 면 VisitorBlock 미마운트', () => {
+      (useVisitorSummary as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        error: null,
+      });
+
+      renderHeader();
+      expect(screen.queryByLabelText('방문자 통계')).not.toBeInTheDocument();
+      expect(screen.queryByText('TODAY')).not.toBeInTheDocument();
     });
   });
 });

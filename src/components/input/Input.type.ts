@@ -6,7 +6,7 @@ export type InputProps = {
   placeholder?: string;
   disabled?: boolean;
   error?: string;
-  label?: string;
+  label?: ReactNode;
   labelTrailing?: ReactNode;
   type?: 'text' | 'email' | 'password';
 };

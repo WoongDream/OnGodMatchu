@@ -1,5 +1,5 @@
 import instance from './instance';
-import type { User, MyQuizzesAggregate } from '@/types';
+import type { User, MyQuizzesAggregate, ImageTransform } from '@/types';
 
 type ApiResponse<T> = {
   success: boolean;
@@ -75,12 +75,9 @@ export const requestWithdrawalCode = async (): Promise<void> => {
   await instance.post('/api/users/me/withdrawal-code');
 };
 
-export type AgreeTermsPayload = {
-  agreedToMarketing?: boolean;
-};
-
-export const agreeTerms = async (payload: AgreeTermsPayload = {}): Promise<void> => {
-  await instance.post('/api/users/me/terms-agreement', payload);
+export const agreeTerms = async (): Promise<User> => {
+  const res = await instance.post<ApiResponse<User>>('/api/users/me/terms-agreement');
+  return res.data.data;
 };
 
 export const withdrawAccount = async (payload: WithdrawAccountPayload): Promise<void> => {
@@ -97,8 +94,16 @@ export const requestProfileImageUpload = async (
   return res.data.data;
 };
 
-export const applyProfileImage = async (key: string): Promise<User> => {
-  const res = await instance.patch<ApiResponse<User>>('/api/users/me/profile-image', { key });
+export const applyProfileImage = async (
+  key: string,
+  originalKey?: string | null,
+  transform?: ImageTransform | null,
+): Promise<User> => {
+  const res = await instance.patch<ApiResponse<User>>('/api/users/me/profile-image', {
+    key,
+    originalKey: originalKey ?? null,
+    transform: transform ?? null,
+  });
   return res.data.data;
 };
 

@@ -1,8 +1,18 @@
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest';
-import { renderWithTheme, screen } from '@/test/renderWithTheme';
-import userEvent from '@testing-library/user-event';
 import { fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { renderWithTheme, screen } from '@/test/renderWithTheme';
+import { EMPTY_SLOT, type ImageSlot } from '@/lib/image/imageSlot';
 import ImageUpload from './ImageUpload';
+
+// ImageEditModal 은 react-image-crop + canvas 에 의존하므로 더미로 대체 (렌더 안전).
+vi.mock('@/components/image-edit-modal', () => ({ default: () => null }));
+vi.mock('react-image-crop', () => ({ default: () => null }));
+
+const PLACEHOLDER_TEXT = '클릭하거나 이미지를 끌어다 놓으세요';
+const PLACEHOLDER_SUBTEXT = 'JPG, PNG, WEBP · 최대 5MB';
+
+const withImage = (previewUrl = 'blob:test-url'): ImageSlot => ({ ...EMPTY_SLOT, previewUrl });
 
 describe('ImageUpload', () => {
   beforeAll(() => {
@@ -19,11 +29,66 @@ describe('ImageUpload', () => {
   });
 
   const defaultProps = {
-    previewUrl: null,
-    onChange: vi.fn(),
+    slot: EMPTY_SLOT,
+    aspect: 16 / 9,
+    onApply: vi.fn(),
     onRemove: vi.fn(),
     label: '이미지 업로드',
   };
+
+  describe('empty slot (placeholder)', () => {
+    it('displays placeholder text when slot is empty', () => {
+      renderWithTheme(<ImageUpload {...defaultProps} slot={EMPTY_SLOT} />);
+      expect(screen.getByText(PLACEHOLDER_TEXT)).toBeInTheDocument();
+    });
+
+    it('displays both placeholder text lines', () => {
+      renderWithTheme(<ImageUpload {...defaultProps} slot={EMPTY_SLOT} />);
+      expect(screen.getByText(PLACEHOLDER_TEXT)).toBeInTheDocument();
+      expect(screen.getByText(PLACEHOLDER_SUBTEXT)).toBeInTheDocument();
+    });
+
+    it('renders a hidden file input with image accept', () => {
+      const { container } = renderWithTheme(<ImageUpload {...defaultProps} slot={EMPTY_SLOT} />);
+      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+      expect(fileInput).toBeInTheDocument();
+      expect(fileInput).toHaveAttribute('accept', 'image/*');
+    });
+
+    it('does not render preview image when slot is empty', () => {
+      renderWithTheme(<ImageUpload {...defaultProps} slot={EMPTY_SLOT} />);
+      expect(screen.queryByAltText('업로드 이미지 미리보기')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('slot with image (preview)', () => {
+    it('renders preview image with the slot previewUrl', () => {
+      renderWithTheme(<ImageUpload {...defaultProps} slot={withImage('blob:test-url')} />);
+      const previewImage = screen.getByAltText('업로드 이미지 미리보기');
+      expect(previewImage).toBeInTheDocument();
+      expect(previewImage).toHaveAttribute('src', 'blob:test-url');
+    });
+
+    it('renders preview image with a data URL', () => {
+      const dataUrl =
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+      renderWithTheme(<ImageUpload {...defaultProps} slot={withImage(dataUrl)} />);
+      expect(screen.getByAltText('업로드 이미지 미리보기')).toHaveAttribute('src', dataUrl);
+    });
+
+    it('hides placeholder when an image is present', () => {
+      renderWithTheme(<ImageUpload {...defaultProps} slot={withImage()} />);
+      expect(screen.queryByText(PLACEHOLDER_TEXT)).not.toBeInTheDocument();
+      expect(screen.queryByText(PLACEHOLDER_SUBTEXT)).not.toBeInTheDocument();
+    });
+
+    it('renders a button hosting the preview (clickable for edit)', () => {
+      const { container } = renderWithTheme(<ImageUpload {...defaultProps} slot={withImage()} />);
+      const button = container.querySelector('button[type="button"]');
+      expect(button).toBeInTheDocument();
+      expect(button?.querySelector('img')).toBeInTheDocument();
+    });
+  });
 
   describe('label rendering', () => {
     it('renders label when provided', () => {
@@ -32,493 +97,15 @@ describe('ImageUpload', () => {
     });
 
     it('does not render label when not provided', () => {
-      renderWithTheme(<ImageUpload {...defaultProps} label={undefined} />);
-      expect(screen.queryByText(defaultProps.label)).not.toBeInTheDocument();
-    });
-
-    it('does not render label when empty string', () => {
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} label="" />);
-      // Empty string is falsy, so no label span should render
+      const { container } = renderWithTheme(<ImageUpload {...defaultProps} label={undefined} />);
       const labelSpan = container.querySelector('span[id]');
       expect(labelSpan).not.toBeInTheDocument();
     });
 
-    it('has unique ID for each render instance', () => {
-      const { unmount: unmount1 } = renderWithTheme(
-        <ImageUpload {...defaultProps} label="Label 1" />,
-      );
-      const label1 = screen.getByText('Label 1');
-      const id1 = label1.id;
-      unmount1();
-
-      const { unmount: unmount2 } = renderWithTheme(
-        <ImageUpload {...defaultProps} label="Label 2" />,
-      );
-      const label2 = screen.getByText('Label 2');
-      const id2 = label2.id;
-      unmount2();
-
-      // Different instances should have different IDs
-      expect(id1).not.toBe(id2);
-    });
-  });
-
-  describe('placeholder rendering', () => {
-    it('displays placeholder when no preview URL', () => {
-      renderWithTheme(<ImageUpload {...defaultProps} previewUrl={null} />);
-      expect(screen.getByText('클릭하여 이미지 업로드')).toBeInTheDocument();
-    });
-
-    it('displays both placeholder text lines', () => {
-      renderWithTheme(<ImageUpload {...defaultProps} previewUrl={null} />);
-      expect(screen.getByText('클릭하여 이미지 업로드')).toBeInTheDocument();
-      expect(screen.getByText('JPG, PNG, WEBP · 최대 5MB')).toBeInTheDocument();
-    });
-
-    it('hides placeholder when preview URL exists', () => {
-      renderWithTheme(<ImageUpload {...defaultProps} previewUrl="blob:test-url" />);
-      expect(screen.queryByText('클릭하여 이미지 업로드')).not.toBeInTheDocument();
-      expect(screen.queryByText('JPG, PNG, WEBP · 최대 5MB')).not.toBeInTheDocument();
-    });
-  });
-
-  describe('preview image rendering', () => {
-    it('renders preview image when URL provided', () => {
-      renderWithTheme(<ImageUpload {...defaultProps} previewUrl="blob:test-url" />);
-      const previewImage = screen.getByAltText('업로드 이미지 미리보기');
-      expect(previewImage).toBeInTheDocument();
-      expect(previewImage).toHaveAttribute('src', 'blob:test-url');
-    });
-
-    it('updates preview src when URL changes', () => {
-      const { rerender } = renderWithTheme(
-        <ImageUpload {...defaultProps} previewUrl="blob:url1" />,
-      );
-      expect(screen.getByAltText('업로드 이미지 미리보기')).toHaveAttribute('src', 'blob:url1');
-
-      rerender(<ImageUpload {...defaultProps} previewUrl="blob:url2" />);
-      expect(screen.getByAltText('업로드 이미지 미리보기')).toHaveAttribute('src', 'blob:url2');
-    });
-
-    it('renders preview image with data URL', () => {
-      const dataUrl =
-        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
-      renderWithTheme(<ImageUpload {...defaultProps} previewUrl={dataUrl} />);
-      expect(screen.getByAltText('업로드 이미지 미리보기')).toHaveAttribute('src', dataUrl);
-    });
-
-    it('does not render preview when previewUrl is null', () => {
-      renderWithTheme(<ImageUpload {...defaultProps} previewUrl={null} />);
-      expect(screen.queryByAltText('업로드 이미지 미리보기')).not.toBeInTheDocument();
-    });
-
-    it('removes preview when URL changes from value to null', () => {
-      const { rerender } = renderWithTheme(<ImageUpload {...defaultProps} previewUrl="blob:url" />);
-      expect(screen.getByAltText('업로드 이미지 미리보기')).toBeInTheDocument();
-
-      rerender(<ImageUpload {...defaultProps} previewUrl={null} />);
-      expect(screen.queryByAltText('업로드 이미지 미리보기')).not.toBeInTheDocument();
-    });
-  });
-
-  describe('remove button', () => {
-    it('renders remove button when preview exists', () => {
-      const { container } = renderWithTheme(
-        <ImageUpload {...defaultProps} previewUrl="blob:url" />,
-      );
-      const removeButton = Array.from(container.querySelectorAll('button')).find((btn) =>
-        btn.textContent?.includes('✕'),
-      );
-      expect(removeButton).toBeInTheDocument();
-      expect(removeButton?.textContent).toContain('✕');
-    });
-
-    it('does not render remove button when no preview', () => {
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} previewUrl={null} />);
-      const buttons = container.querySelectorAll('button');
-      // Should only have the label button, not a remove button
-      const removeButtons = Array.from(buttons).filter((btn) => btn.textContent?.includes('✕'));
-      expect(removeButtons).toHaveLength(0);
-    });
-
-    it('calls onRemove when remove button clicked', async () => {
-      const user = userEvent.setup();
-      const onRemove = vi.fn();
-      const { container } = renderWithTheme(
-        <ImageUpload {...defaultProps} previewUrl="blob:url" onRemove={onRemove} />,
-      );
-
-      const removeButton = Array.from(container.querySelectorAll('button')).find((btn) =>
-        btn.textContent?.includes('✕'),
-      );
-      expect(removeButton).toBeInTheDocument();
-
-      await user.click(removeButton!);
-      expect(onRemove).toHaveBeenCalledOnce();
-    });
-
-    it('calls only onRemove, not onChange when remove button clicked', async () => {
-      const user = userEvent.setup();
-      const onChange = vi.fn();
-      const onRemove = vi.fn();
-      const { container } = renderWithTheme(
-        <ImageUpload
-          {...defaultProps}
-          previewUrl="blob:url"
-          onChange={onChange}
-          onRemove={onRemove}
-        />,
-      );
-
-      const removeButton = Array.from(container.querySelectorAll('button')).find((btn) =>
-        btn.textContent?.includes('✕'),
-      );
-      await user.click(removeButton!);
-
-      expect(onRemove).toHaveBeenCalledOnce();
-      expect(onChange).not.toHaveBeenCalled();
-    });
-
-    it('prevents default and stops propagation', async () => {
-      const onRemove = vi.fn();
-      const { container } = renderWithTheme(
-        <ImageUpload {...defaultProps} previewUrl="blob:url" onRemove={onRemove} />,
-      );
-
-      const removeButton = Array.from(container.querySelectorAll('button')).find((btn) =>
-        btn.textContent?.includes('✕'),
-      );
-
-      const clickEvent = new MouseEvent('click', { bubbles: true });
-      const preventDefaultSpy = vi.spyOn(clickEvent, 'preventDefault');
-      const stopPropagationSpy = vi.spyOn(clickEvent, 'stopPropagation');
-
-      removeButton?.dispatchEvent(clickEvent);
-
-      expect(preventDefaultSpy).toHaveBeenCalled();
-      expect(stopPropagationSpy).toHaveBeenCalled();
-      expect(onRemove).toHaveBeenCalled();
-    });
-
-    it('handles multiple remove button clicks', async () => {
-      const user = userEvent.setup();
-      const onRemove = vi.fn();
-      const { rerender, container } = renderWithTheme(
-        <ImageUpload {...defaultProps} previewUrl="blob:url" onRemove={onRemove} />,
-      );
-
-      let removeButton = Array.from(container.querySelectorAll('button')).find((btn) =>
-        btn.textContent?.includes('✕'),
-      );
-      await user.click(removeButton!);
-      expect(onRemove).toHaveBeenCalledTimes(1);
-
-      // Re-upload image
-      rerender(<ImageUpload {...defaultProps} previewUrl="blob:new-url" onRemove={onRemove} />);
-
-      removeButton = Array.from(container.querySelectorAll('button')).find((btn) =>
-        btn.textContent?.includes('✕'),
-      );
-      await user.click(removeButton!);
-
-      expect(onRemove).toHaveBeenCalledTimes(2);
-    });
-  });
-
-  describe('file input', () => {
-    it('has correct accept attribute', () => {
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} />);
-      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-      expect(fileInput).toHaveAttribute('accept', 'image/*');
-    });
-
-    it('is hidden from view', () => {
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} />);
-      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-      expect(fileInput).toBeInTheDocument();
-      // HiddenInput has display: none
-      const style = window.getComputedStyle(fileInput);
-      expect(style.display).toBe('none');
-    });
-  });
-
-  describe('onChange with file selection', () => {
-    it('calls onChange with file and blob URL when file selected', async () => {
-      const user = userEvent.setup();
-      const onChange = vi.fn();
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} onChange={onChange} />);
-
-      const file = new File(['image content'], 'test.png', { type: 'image/png' });
-      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-
-      await user.upload(fileInput, file);
-
-      expect(onChange).toHaveBeenCalledOnce();
-      expect(onChange).toHaveBeenCalledWith(file, 'blob:mock-url');
-    });
-
-    it('calls URL.createObjectURL with the file', async () => {
-      const user = userEvent.setup();
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} />);
-
-      const file = new File(['content'], 'image.jpg', { type: 'image/jpeg' });
-      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-
-      await user.upload(fileInput, file);
-
-      expect(global.URL.createObjectURL).toHaveBeenCalledWith(file);
-    });
-
-    it('handles PNG file upload', async () => {
-      const user = userEvent.setup();
-      const onChange = vi.fn();
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} onChange={onChange} />);
-
-      const file = new File(['png'], 'image.png', { type: 'image/png' });
-      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-
-      await user.upload(fileInput, file);
-
-      expect(onChange).toHaveBeenCalledWith(file, 'blob:mock-url');
-    });
-
-    it('handles JPEG file upload', async () => {
-      const user = userEvent.setup();
-      const onChange = vi.fn();
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} onChange={onChange} />);
-
-      const file = new File(['jpeg'], 'photo.jpg', { type: 'image/jpeg' });
-      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-
-      await user.upload(fileInput, file);
-
-      expect(onChange).toHaveBeenCalledWith(file, 'blob:mock-url');
-    });
-
-    it('handles WEBP file upload', async () => {
-      const user = userEvent.setup();
-      const onChange = vi.fn();
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} onChange={onChange} />);
-
-      const file = new File(['webp'], 'image.webp', { type: 'image/webp' });
-      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-
-      await user.upload(fileInput, file);
-
-      expect(onChange).toHaveBeenCalledWith(file, 'blob:mock-url');
-    });
-
-    it('does not call onChange when file selection is cancelled', async () => {
-      const onChange = vi.fn();
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} onChange={onChange} />);
-
-      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-      // Simulate cancel - no files selected
-      await userEvent.setup().click(fileInput);
-
-      expect(onChange).not.toHaveBeenCalled();
-    });
-
-    it('clears input value after successful upload', async () => {
-      const user = userEvent.setup();
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} />);
-
-      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-      const file = new File(['image'], 'test.png', { type: 'image/png' });
-
-      await user.upload(fileInput, file);
-
-      // Input value should be cleared
-      expect(fileInput.value).toBe('');
-    });
-
-    it('allows re-uploading same file after clear', async () => {
-      const user = userEvent.setup();
-      const onChange = vi.fn();
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} onChange={onChange} />);
-
-      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-      const file = new File(['image'], 'test.png', { type: 'image/png' });
-
-      // First upload
-      await user.upload(fileInput, file);
-      expect(onChange).toHaveBeenCalledOnce();
-      expect(fileInput.value).toBe('');
-
-      // Second upload same file
-      await user.upload(fileInput, file);
-      expect(onChange).toHaveBeenCalledTimes(2);
-    });
-
-    it('handles file with empty name', async () => {
-      const user = userEvent.setup();
-      const onChange = vi.fn();
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} onChange={onChange} />);
-
-      const file = new File(['content'], '', { type: 'image/png' });
-      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-
-      await user.upload(fileInput, file);
-
-      expect(onChange).toHaveBeenCalledOnce();
-      const [uploadedFile] = onChange.mock.calls[0];
-      expect(uploadedFile.name).toBe('');
-    });
-
-    it('handles file with very long name', async () => {
-      const user = userEvent.setup();
-      const onChange = vi.fn();
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} onChange={onChange} />);
-
-      const longName = 'a'.repeat(300) + '.png';
-      const file = new File(['content'], longName, { type: 'image/png' });
-      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-
-      await user.upload(fileInput, file);
-
-      expect(onChange).toHaveBeenCalledOnce();
-      const [uploadedFile] = onChange.mock.calls[0];
-      expect(uploadedFile.name).toBe(longName);
-    });
-
-    it('handles file with special characters in name', async () => {
-      const user = userEvent.setup();
-      const onChange = vi.fn();
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} onChange={onChange} />);
-
-      const specialName = '이미지-테스트_파일#1 (copy).png';
-      const file = new File(['content'], specialName, { type: 'image/png' });
-      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-
-      await user.upload(fileInput, file);
-
-      expect(onChange).toHaveBeenCalledOnce();
-      const [uploadedFile] = onChange.mock.calls[0];
-      expect(uploadedFile.name).toBe(specialName);
-    });
-
-    it('rejects files larger than 5MB with inline error', async () => {
-      const user = userEvent.setup();
-      const onChange = vi.fn();
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} onChange={onChange} />);
-
-      const largeFile = new File(['x'.repeat(1024)], 'large.png', { type: 'image/png' });
-      Object.defineProperty(largeFile, 'size', { value: 6 * 1024 * 1024 });
-
-      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-      await user.upload(fileInput, largeFile);
-
-      expect(onChange).not.toHaveBeenCalled();
-      expect(screen.getByRole('alert')).toHaveTextContent('5MB');
-    });
-
-    it('rejects non-image MIME types with inline error', () => {
-      const onChange = vi.fn();
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} onChange={onChange} />);
-
-      const pdfFile = new File(['pdf-content'], 'doc.pdf', { type: 'application/pdf' });
-      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-      fireEvent.change(fileInput, { target: { files: [pdfFile] } });
-
-      expect(onChange).not.toHaveBeenCalled();
-      expect(screen.getByRole('alert')).toHaveTextContent('JPG, PNG, WEBP');
-    });
-
-    it('clears error message after a valid file is selected', () => {
-      const onChange = vi.fn();
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} onChange={onChange} />);
-
-      const pdfFile = new File(['pdf'], 'doc.pdf', { type: 'application/pdf' });
-      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-      fireEvent.change(fileInput, { target: { files: [pdfFile] } });
-      expect(screen.getByRole('alert')).toBeInTheDocument();
-
-      const validFile = new File(['png'], 'image.png', { type: 'image/png' });
-      fireEvent.change(fileInput, { target: { files: [validFile] } });
-
-      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-      expect(onChange).toHaveBeenCalledWith(validFile, 'blob:mock-url');
-    });
-
-    it('handles previewUrl with special characters', () => {
-      const specialUrl = 'blob:https://example.com/12345-abcde_special%20chars';
-      renderWithTheme(<ImageUpload {...defaultProps} previewUrl={specialUrl} />);
-      const previewImage = screen.getByAltText('업로드 이미지 미리보기');
-      expect(previewImage).toHaveAttribute('src', specialUrl);
-    });
-  });
-
-  describe('input value reset', () => {
-    it('resets input value after file upload', async () => {
-      const user = userEvent.setup();
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} />);
-
-      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-      const file = new File(['data'], 'image.png', { type: 'image/png' });
-
-      expect(fileInput.value).toBe('');
-
-      await user.upload(fileInput, file);
-
-      expect(fileInput.value).toBe('');
-    });
-
-    it('input value is empty before any upload', () => {
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} />);
-
-      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-      expect(fileInput.value).toBe('');
-    });
-  });
-
-  describe('accessibility', () => {
-    it('associates upload area with label using aria-labelledby', () => {
-      const { container } = renderWithTheme(
-        <ImageUpload {...defaultProps} label="이미지 업로드" />,
-      );
-      const uploadArea = container.querySelector('label[for]') as HTMLLabelElement;
-      const labelId = uploadArea.getAttribute('aria-labelledby');
-      expect(labelId).toBeTruthy();
-    });
-
-    it('does not set aria-labelledby when label not provided', () => {
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} label={undefined} />);
-      const uploadArea = container.querySelector('label[for]') as HTMLLabelElement;
-      expect(uploadArea.getAttribute('aria-labelledby')).toBeNull();
-    });
-
-    it('preview image has alt text', () => {
-      renderWithTheme(<ImageUpload {...defaultProps} previewUrl="blob:url" />);
-      expect(screen.getByAltText('업로드 이미지 미리보기')).toBeInTheDocument();
-    });
-
-    it('remove button is keyboard accessible', async () => {
-      const user = userEvent.setup();
-      const onRemove = vi.fn();
-      const { container } = renderWithTheme(
-        <ImageUpload {...defaultProps} previewUrl="blob:url" onRemove={onRemove} />,
-      );
-
-      const removeButton = Array.from(container.querySelectorAll('button')).find((btn) =>
-        btn.textContent?.includes('✕'),
-      );
-      expect(removeButton).toBeInTheDocument();
-
-      removeButton?.focus();
-      expect(removeButton).toHaveFocus();
-
-      await user.keyboard('{Enter}');
-      expect(onRemove).toHaveBeenCalledOnce();
-    });
-  });
-
-  describe('prop changes', () => {
-    it('updates preview when previewUrl prop changes', () => {
-      const { rerender } = renderWithTheme(<ImageUpload {...defaultProps} previewUrl="url1" />);
-      expect(screen.getByAltText('업로드 이미지 미리보기')).toHaveAttribute('src', 'url1');
-
-      rerender(<ImageUpload {...defaultProps} previewUrl="url2" />);
-      expect(screen.getByAltText('업로드 이미지 미리보기')).toHaveAttribute('src', 'url2');
+    it('does not render label when empty string', () => {
+      const { container } = renderWithTheme(<ImageUpload {...defaultProps} label="" />);
+      const labelSpan = container.querySelector('span[id]');
+      expect(labelSpan).not.toBeInTheDocument();
     });
 
     it('updates label when label prop changes', () => {
@@ -529,229 +116,117 @@ describe('ImageUpload', () => {
       expect(screen.getByText('Label 2')).toBeInTheDocument();
       expect(screen.queryByText('Label 1')).not.toBeInTheDocument();
     });
+  });
 
-    it('changes from labeled to unlabeled', () => {
-      const { rerender } = renderWithTheme(<ImageUpload {...defaultProps} label="Label" />);
-      expect(screen.getByText('Label')).toBeInTheDocument();
-
-      rerender(<ImageUpload {...defaultProps} label={undefined} />);
-      expect(screen.queryByText('Label')).not.toBeInTheDocument();
+  describe('invalid prop', () => {
+    it('renders the upload area in empty slot when invalid', () => {
+      const { container } = renderWithTheme(
+        <ImageUpload {...defaultProps} slot={EMPTY_SLOT} invalid />,
+      );
+      const uploadArea = container.querySelector('label[for]');
+      expect(uploadArea).toBeInTheDocument();
+      expect(screen.getByText(PLACEHOLDER_TEXT)).toBeInTheDocument();
     });
 
-    it('changes from unlabeled to labeled', () => {
-      const { rerender } = renderWithTheme(<ImageUpload {...defaultProps} label={undefined} />);
-      expect(screen.queryByText('이미지 업로드')).not.toBeInTheDocument();
-
-      rerender(<ImageUpload {...defaultProps} label="이미지 업로드" />);
-      expect(screen.getByText('이미지 업로드')).toBeInTheDocument();
-    });
-
-    it('updates callbacks when onChange prop changes', async () => {
-      const user = userEvent.setup();
-      const onChange1 = vi.fn();
-      const onChange2 = vi.fn();
-
-      const { rerender, container } = renderWithTheme(
-        <ImageUpload {...defaultProps} onChange={onChange1} />,
+    it('renders the preview button when invalid with image', () => {
+      const { container } = renderWithTheme(
+        <ImageUpload {...defaultProps} slot={withImage()} invalid />,
       );
-
-      const file = new File(['content'], 'test.png', { type: 'image/png' });
-      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-      await user.upload(fileInput, file);
-
-      expect(onChange1).toHaveBeenCalledOnce();
-      expect(onChange2).not.toHaveBeenCalled();
-
-      rerender(<ImageUpload {...defaultProps} onChange={onChange2} />);
-
-      const file2 = new File(['content2'], 'test2.png', { type: 'image/png' });
-      await user.upload(fileInput, file2);
-
-      expect(onChange1).toHaveBeenCalledOnce();
-      expect(onChange2).toHaveBeenCalledOnce();
-    });
-
-    it('updates callbacks when onRemove prop changes', async () => {
-      const user = userEvent.setup();
-      const onRemove1 = vi.fn();
-      const onRemove2 = vi.fn();
-
-      const { rerender, container } = renderWithTheme(
-        <ImageUpload {...defaultProps} previewUrl="blob:url" onRemove={onRemove1} />,
-      );
-
-      let removeButton = Array.from(container.querySelectorAll('button')).find((btn) =>
-        btn.textContent?.includes('✕'),
-      );
-      await user.click(removeButton!);
-
-      expect(onRemove1).toHaveBeenCalledOnce();
-      expect(onRemove2).not.toHaveBeenCalled();
-
-      rerender(<ImageUpload {...defaultProps} previewUrl="blob:url" onRemove={onRemove2} />);
-
-      removeButton = Array.from(container.querySelectorAll('button')).find((btn) =>
-        btn.textContent?.includes('✕'),
-      );
-      await user.click(removeButton!);
-
-      expect(onRemove1).toHaveBeenCalledOnce();
-      expect(onRemove2).toHaveBeenCalledOnce();
+      expect(container.querySelector('button[type="button"]')).toBeInTheDocument();
     });
   });
 
-  describe('integration scenarios', () => {
-    it('handles full upload and remove cycle', async () => {
+  describe('file input change', () => {
+    it('does not throw when a valid file is selected', async () => {
       const user = userEvent.setup();
-      const onChange = vi.fn();
-      const onRemove = vi.fn();
-      const { rerender, container } = renderWithTheme(
-        <ImageUpload {...defaultProps} previewUrl={null} onChange={onChange} onRemove={onRemove} />,
-      );
+      const { container } = renderWithTheme(<ImageUpload {...defaultProps} slot={EMPTY_SLOT} />);
 
-      // Step 1: Verify placeholder visible
-      expect(screen.getByText('클릭하여 이미지 업로드')).toBeInTheDocument();
-
-      // Step 2: Upload image
-      const file = new File(['image'], 'test.png', { type: 'image/png' });
+      const file = new File(['image content'], 'test.png', { type: 'image/png' });
       const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+
       await user.upload(fileInput, file);
 
-      expect(onChange).toHaveBeenCalledWith(file, 'blob:mock-url');
+      // openWithFile 경로: 검증 통과 → createObjectURL 호출, 인라인 에러 없음.
+      expect(global.URL.createObjectURL).toHaveBeenCalledWith(file);
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
+    it('clears the input value after selection', async () => {
+      const user = userEvent.setup();
+      const { container } = renderWithTheme(<ImageUpload {...defaultProps} slot={EMPTY_SLOT} />);
+
+      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+      const file = new File(['image'], 'test.png', { type: 'image/png' });
+
+      await user.upload(fileInput, file);
+
       expect(fileInput.value).toBe('');
-
-      // Step 3: Simulate preview update
-      rerender(
-        <ImageUpload
-          {...defaultProps}
-          previewUrl="blob:mock-url"
-          onChange={onChange}
-          onRemove={onRemove}
-        />,
-      );
-
-      // Step 4: Verify preview visible
-      expect(screen.queryByText('클릭하여 이미지 업로드')).not.toBeInTheDocument();
-      expect(screen.getByAltText('업로드 이미지 미리보기')).toHaveAttribute('src', 'blob:mock-url');
-
-      // Step 5: Click remove
-      const removeButton = Array.from(container.querySelectorAll('button')).find((btn) =>
-        btn.textContent?.includes('✕'),
-      );
-      await user.click(removeButton!);
-
-      expect(onRemove).toHaveBeenCalledOnce();
-
-      // Step 6: Simulate removal
-      rerender(
-        <ImageUpload {...defaultProps} previewUrl={null} onChange={onChange} onRemove={onRemove} />,
-      );
-
-      // Step 7: Verify back to placeholder
-      expect(screen.getByText('클릭하여 이미지 업로드')).toBeInTheDocument();
-      expect(screen.queryByAltText('업로드 이미지 미리보기')).not.toBeInTheDocument();
     });
 
-    it('handles multiple upload cycles with different files', async () => {
+    it('rejects files larger than 5MB with an inline error', async () => {
       const user = userEvent.setup();
-      const onChange = vi.fn();
-      const onRemove = vi.fn();
-      const { rerender, container } = renderWithTheme(
-        <ImageUpload {...defaultProps} previewUrl={null} onChange={onChange} onRemove={onRemove} />,
-      );
+      const { container } = renderWithTheme(<ImageUpload {...defaultProps} slot={EMPTY_SLOT} />);
 
-      // First upload
-      const file1 = new File(['image1'], 'test1.png', { type: 'image/png' });
+      const largeFile = new File(['x'.repeat(1024)], 'large.png', { type: 'image/png' });
+      Object.defineProperty(largeFile, 'size', { value: 6 * 1024 * 1024 });
+
       const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-      await user.upload(fileInput, file1);
+      await user.upload(fileInput, largeFile);
 
-      rerender(
-        <ImageUpload
-          {...defaultProps}
-          previewUrl="blob:url1"
-          onChange={onChange}
-          onRemove={onRemove}
-        />,
-      );
-
-      // Remove first image
-      let removeButton = Array.from(container.querySelectorAll('button')).find((btn) =>
-        btn.textContent?.includes('✕'),
-      );
-      await user.click(removeButton!);
-
-      rerender(
-        <ImageUpload {...defaultProps} previewUrl={null} onChange={onChange} onRemove={onRemove} />,
-      );
-
-      // Second upload
-      const file2 = new File(['image2'], 'test2.jpg', { type: 'image/jpeg' });
-      await user.upload(fileInput, file2);
-
-      expect(onChange).toHaveBeenCalledTimes(2);
-      expect(onRemove).toHaveBeenCalledTimes(1);
-
-      rerender(
-        <ImageUpload
-          {...defaultProps}
-          previewUrl="blob:url2"
-          onChange={onChange}
-          onRemove={onRemove}
-        />,
-      );
-
-      removeButton = Array.from(container.querySelectorAll('button')).find((btn) =>
-        btn.textContent?.includes('✕'),
-      );
-      await user.click(removeButton!);
-
-      expect(onRemove).toHaveBeenCalledTimes(2);
+      expect(screen.getByRole('alert')).toHaveTextContent('5MB');
     });
 
-    it('rapid onChange and onRemove calls work correctly', async () => {
-      const user = userEvent.setup();
-      const onChange = vi.fn();
-      const onRemove = vi.fn();
-      const { rerender, container } = renderWithTheme(
-        <ImageUpload {...defaultProps} previewUrl={null} onChange={onChange} onRemove={onRemove} />,
-      );
+    it('rejects non-image MIME types with an inline error', () => {
+      const { container } = renderWithTheme(<ImageUpload {...defaultProps} slot={EMPTY_SLOT} />);
 
-      // Upload file
-      const file1 = new File(['content1'], 'file1.png', { type: 'image/png' });
+      const pdfFile = new File(['pdf-content'], 'doc.pdf', { type: 'application/pdf' });
       const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-      await user.upload(fileInput, file1);
-      expect(onChange).toHaveBeenCalledTimes(1);
+      fireEvent.change(fileInput, { target: { files: [pdfFile] } });
 
-      // Update preview
-      rerender(
-        <ImageUpload
-          {...defaultProps}
-          previewUrl="blob:url1"
-          onChange={onChange}
-          onRemove={onRemove}
-        />,
-      );
+      expect(screen.getByRole('alert')).toHaveTextContent('JPG, PNG, WEBP');
+    });
 
-      // Remove
-      const removeButton = Array.from(container.querySelectorAll('button')).find((btn) =>
-        btn.textContent?.includes('✕'),
-      );
-      await user.click(removeButton!);
-      expect(onRemove).toHaveBeenCalledTimes(1);
+    it('clears the error after a subsequent valid file', () => {
+      const { container } = renderWithTheme(<ImageUpload {...defaultProps} slot={EMPTY_SLOT} />);
 
-      // Upload another
-      rerender(
-        <ImageUpload {...defaultProps} previewUrl={null} onChange={onChange} onRemove={onRemove} />,
+      const pdfFile = new File(['pdf'], 'doc.pdf', { type: 'application/pdf' });
+      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+      fireEvent.change(fileInput, { target: { files: [pdfFile] } });
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+
+      const validFile = new File(['png'], 'image.png', { type: 'image/png' });
+      fireEvent.change(fileInput, { target: { files: [validFile] } });
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('accessibility', () => {
+    it('associates upload area with label via aria-labelledby', () => {
+      const { container } = renderWithTheme(
+        <ImageUpload {...defaultProps} label="이미지 업로드" />,
       );
-      const file2 = new File(['content2'], 'file2.jpg', { type: 'image/jpeg' });
-      await user.upload(fileInput, file2);
-      expect(onChange).toHaveBeenCalledTimes(2);
+      const uploadArea = container.querySelector('label[for]') as HTMLLabelElement;
+      expect(uploadArea.getAttribute('aria-labelledby')).toBeTruthy();
+    });
+
+    it('does not set aria-labelledby when label not provided', () => {
+      const { container } = renderWithTheme(<ImageUpload {...defaultProps} label={undefined} />);
+      const uploadArea = container.querySelector('label[for]') as HTMLLabelElement;
+      expect(uploadArea.getAttribute('aria-labelledby')).toBeNull();
+    });
+
+    it('preview image has alt text', () => {
+      renderWithTheme(<ImageUpload {...defaultProps} slot={withImage()} />);
+      expect(screen.getByAltText('업로드 이미지 미리보기')).toBeInTheDocument();
     });
   });
 
   describe('React.memo behavior', () => {
     it('component is wrapped with React.memo', () => {
-      expect(ImageUpload.$$typeof).toBe(Symbol.for('react.memo'));
+      expect((ImageUpload as unknown as { $$typeof: symbol }).$$typeof).toBe(
+        Symbol.for('react.memo'),
+      );
     });
 
     it('has displayName set for debugging', () => {
@@ -759,78 +234,23 @@ describe('ImageUpload', () => {
     });
   });
 
-  describe('styling props', () => {
-    it('applies hasPreview styling when preview URL exists', () => {
-      const { container } = renderWithTheme(
-        <ImageUpload {...defaultProps} previewUrl="blob:url" />,
-      );
-      const uploadArea = container.querySelector('label[for]');
-      expect(uploadArea).toBeInTheDocument();
-      expect(uploadArea).toHaveAttribute('aria-labelledby');
+  describe('prop changes', () => {
+    it('switches from empty to image slot', () => {
+      const { rerender } = renderWithTheme(<ImageUpload {...defaultProps} slot={EMPTY_SLOT} />);
+      expect(screen.getByText(PLACEHOLDER_TEXT)).toBeInTheDocument();
+
+      rerender(<ImageUpload {...defaultProps} slot={withImage('blob:new')} />);
+      expect(screen.queryByText(PLACEHOLDER_TEXT)).not.toBeInTheDocument();
+      expect(screen.getByAltText('업로드 이미지 미리보기')).toHaveAttribute('src', 'blob:new');
     });
 
-    it('applies no preview styling when previewUrl is null', () => {
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} previewUrl={null} />);
-      const uploadArea = container.querySelector('label[for]');
-      expect(uploadArea).toBeInTheDocument();
-    });
-
-    it('updates styling when preview URL changes', () => {
-      const { rerender } = renderWithTheme(<ImageUpload {...defaultProps} previewUrl={null} />);
-      expect(screen.getByText('클릭하여 이미지 업로드')).toBeInTheDocument();
-
-      rerender(<ImageUpload {...defaultProps} previewUrl="blob:new" />);
-      expect(screen.queryByText('클릭하여 이미지 업로드')).not.toBeInTheDocument();
+    it('switches from image to empty slot', () => {
+      const { rerender } = renderWithTheme(<ImageUpload {...defaultProps} slot={withImage()} />);
       expect(screen.getByAltText('업로드 이미지 미리보기')).toBeInTheDocument();
-    });
-  });
 
-  describe('edge cases', () => {
-    it('handles missing onChange callback gracefully', async () => {
-      const user = userEvent.setup();
-      const onChange = vi.fn();
-      const { container } = renderWithTheme(
-        <ImageUpload previewUrl={null} onChange={onChange} onRemove={vi.fn()} label={undefined} />,
-      );
-
-      const file = new File(['data'], 'test.png', { type: 'image/png' });
-      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-
-      await user.upload(fileInput, file);
-      expect(onChange).toHaveBeenCalledOnce();
-    });
-
-    it('handles null previewUrl consistently', () => {
-      const { rerender } = renderWithTheme(<ImageUpload {...defaultProps} previewUrl={null} />);
-      expect(screen.getByText('클릭하여 이미지 업로드')).toBeInTheDocument();
-
-      rerender(<ImageUpload {...defaultProps} previewUrl={null} />);
-      expect(screen.getByText('클릭하여 이미지 업로드')).toBeInTheDocument();
-    });
-
-    it('handles empty label string correctly', () => {
-      const { container } = renderWithTheme(<ImageUpload {...defaultProps} label="" />);
-      const labelElement = container.querySelector('span[id]');
-      // Empty string is falsy, so no label span should exist
-      expect(labelElement?.textContent).not.toBe('');
-    });
-
-    it('maintains input ref correctly across renders', async () => {
-      const user = userEvent.setup();
-      const { container, rerender } = renderWithTheme(
-        <ImageUpload {...defaultProps} onChange={vi.fn()} />,
-      );
-
-      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-      const file = new File(['data'], 'test.png', { type: 'image/png' });
-
-      await user.upload(fileInput, file);
-      expect(fileInput.value).toBe('');
-
-      // Re-render with same props
-      rerender(<ImageUpload {...defaultProps} onChange={vi.fn()} />);
-      // Input should still be accessible
-      expect(fileInput).toBeInTheDocument();
+      rerender(<ImageUpload {...defaultProps} slot={EMPTY_SLOT} />);
+      expect(screen.queryByAltText('업로드 이미지 미리보기')).not.toBeInTheDocument();
+      expect(screen.getByText(PLACEHOLDER_TEXT)).toBeInTheDocument();
     });
   });
 });

@@ -40,13 +40,13 @@ vi.mock('@/hooks/useUpdateProfile', () => ({
 }));
 
 // ── useProfileImage mock ──────────────────────────────────────────────────────
-const mockUpload = vi.hoisted(() => vi.fn());
+const mockApplyEdited = vi.hoisted(() => vi.fn());
 const mockRegenerateDefault = vi.hoisted(() => vi.fn());
 const mockRemoveImage = vi.hoisted(() => vi.fn());
 const mockClearImageError = vi.hoisted(() => vi.fn());
 const mockUseProfileImage = vi.hoisted(() =>
   vi.fn().mockReturnValue({
-    upload: mockUpload,
+    applyEdited: mockApplyEdited,
     removeImage: mockRemoveImage,
     regenerateDefault: mockRegenerateDefault,
     isUploading: false,
@@ -61,6 +61,31 @@ const mockUseProfileImage = vi.hoisted(() =>
 
 vi.mock('@/hooks/useProfileImage', () => ({
   default: mockUseProfileImage,
+}));
+
+// ── ImageEditModal stub (canvas 의존 회피) ────────────────────────────────────
+// isOpen 일 때 「이미지 적용」 버튼 하나만 렌더하고, 클릭 시 onApply 를 호출한다.
+const stubOriginalFile = vi.hoisted(() => new File(['stub'], 'edited.jpg', { type: 'image/jpeg' }));
+
+vi.mock('@/components/image-edit-modal', () => ({
+  default: ({
+    isOpen,
+    onApply,
+  }: {
+    isOpen: boolean;
+    onApply: (result: { transform: null; cropped: null; originalFile: File }) => void;
+  }) =>
+    isOpen
+      ? React.createElement(
+          'button',
+          {
+            type: 'button',
+            onClick: () =>
+              onApply({ transform: null, cropped: null, originalFile: stubOriginalFile }),
+          },
+          '이미지 적용',
+        )
+      : null,
 }));
 
 // ── useNicknameCheck mock ─────────────────────────────────────────────────────
@@ -114,7 +139,7 @@ describe('ProfileInfo', () => {
       clearError: mockClearError,
     });
     mockUseProfileImage.mockReturnValue({
-      upload: mockUpload,
+      applyEdited: mockApplyEdited,
       removeImage: mockRemoveImage,
       regenerateDefault: mockRegenerateDefault,
       isUploading: false,
@@ -127,9 +152,10 @@ describe('ProfileInfo', () => {
     });
     mockUpdate.mockResolvedValue(MOCK_PROFILE);
     mockToggleVisibility.mockResolvedValue(MOCK_PROFILE);
-    mockUpload.mockResolvedValue(MOCK_PROFILE);
+    mockApplyEdited.mockResolvedValue(MOCK_PROFILE);
     mockRegenerateDefault.mockResolvedValue(MOCK_PROFILE);
     mockRemoveImage.mockResolvedValue({ ...MOCK_PROFILE, profileImageUrl: null });
+    global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
   });
 
   describe('접근 제어', () => {
@@ -303,18 +329,34 @@ describe('ProfileInfo', () => {
   });
 
   describe('이미지 업로드 버튼', () => {
-    it('클릭 시 파일 input 을 트리거하여 파일 선택 후 upload(file) 가 호출된다', async () => {
+    it('파일 선택 시 즉시 업로드하지 않고 편집 모달(stub)을 연다', async () => {
       renderProfileInfo();
       const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]')!;
       const file = new File(['data'], 'photo.jpg', { type: 'image/jpeg' });
       Object.defineProperty(fileInput, 'files', { value: [file], configurable: true });
       fireEvent.change(fileInput);
-      await waitFor(() => expect(mockUpload).toHaveBeenCalledWith(file));
+      // 모달 stub 의 「이미지 적용」 버튼이 노출됨 = 모달이 열림
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: '이미지 적용' })).toBeInTheDocument(),
+      );
+      // 아직 applyEdited 는 호출되지 않음
+      expect(mockApplyEdited).not.toHaveBeenCalled();
+    });
+
+    it('모달(stub)에서 「이미지 적용」 클릭 시 applyEdited 가 호출된다', async () => {
+      renderProfileInfo();
+      const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]')!;
+      const file = new File(['data'], 'photo.jpg', { type: 'image/jpeg' });
+      Object.defineProperty(fileInput, 'files', { value: [file], configurable: true });
+      fireEvent.change(fileInput);
+      const applyButton = await screen.findByRole('button', { name: '이미지 적용' });
+      fireEvent.click(applyButton);
+      await waitFor(() => expect(mockApplyEdited).toHaveBeenCalledTimes(1));
     });
 
     it('isUploading=true 일 때 업로드 버튼만 "처리 중..."(disabled), 기본 이미지로 라벨 유지(disabled)', () => {
       mockUseProfileImage.mockReturnValue({
-        upload: mockUpload,
+        applyEdited: mockApplyEdited,
         removeImage: mockRemoveImage,
         regenerateDefault: mockRegenerateDefault,
         isUploading: true,
@@ -332,7 +374,7 @@ describe('ProfileInfo', () => {
 
     it('isProcessing=true 일 때 저장 버튼/토글 은 영향 없음', () => {
       mockUseProfileImage.mockReturnValue({
-        upload: mockUpload,
+        applyEdited: mockApplyEdited,
         removeImage: mockRemoveImage,
         regenerateDefault: mockRegenerateDefault,
         isUploading: true,
@@ -366,7 +408,7 @@ describe('ProfileInfo', () => {
 
     it('isProcessing=true 이면 disabled', () => {
       mockUseProfileImage.mockReturnValue({
-        upload: mockUpload,
+        applyEdited: mockApplyEdited,
         removeImage: mockRemoveImage,
         regenerateDefault: mockRegenerateDefault,
         isUploading: false,
@@ -383,7 +425,7 @@ describe('ProfileInfo', () => {
 
     it('isRegenerating=true 일 때 기본 이미지로 버튼만 "처리 중..."(disabled), 업로드 라벨 유지(disabled)', () => {
       mockUseProfileImage.mockReturnValue({
-        upload: mockUpload,
+        applyEdited: mockApplyEdited,
         removeImage: mockRemoveImage,
         regenerateDefault: mockRegenerateDefault,
         isUploading: false,
@@ -436,7 +478,7 @@ describe('ProfileInfo', () => {
   });
 
   describe('이미지 정책 위반', () => {
-    it('허용되지 않는 mime 타입 파일 선택 시 에러 메시지 노출, upload 미호출', async () => {
+    it('허용되지 않는 mime 타입 파일 선택 시 에러 메시지 노출, 모달 미오픈 + applyEdited 미호출', async () => {
       renderProfileInfo();
       const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]')!;
       const file = new File(['data'], 'test.gif', { type: 'image/gif' });
@@ -445,10 +487,11 @@ describe('ProfileInfo', () => {
       await waitFor(() =>
         expect(screen.getByRole('alert')).toHaveTextContent('JPEG / PNG / WebP 파일만'),
       );
-      expect(mockUpload).not.toHaveBeenCalled();
+      expect(screen.queryByRole('button', { name: '이미지 적용' })).not.toBeInTheDocument();
+      expect(mockApplyEdited).not.toHaveBeenCalled();
     });
 
-    it('파일 크기 초과 시 에러 메시지 노출, upload 미호출', async () => {
+    it('파일 크기 초과 시 에러 메시지 노출, 모달 미오픈 + applyEdited 미호출', async () => {
       renderProfileInfo();
       const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]')!;
       const file = Object.defineProperty(
@@ -459,7 +502,8 @@ describe('ProfileInfo', () => {
       Object.defineProperty(fileInput, 'files', { value: [file], configurable: true });
       fireEvent.change(fileInput);
       await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('최대'));
-      expect(mockUpload).not.toHaveBeenCalled();
+      expect(screen.queryByRole('button', { name: '이미지 적용' })).not.toBeInTheDocument();
+      expect(mockApplyEdited).not.toHaveBeenCalled();
     });
   });
 });

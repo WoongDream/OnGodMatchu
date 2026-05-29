@@ -74,10 +74,14 @@ vi.mock('@/lib/auth', () => ({
 
 // ── @/store/authStore mock ────────────────────────────────────────────────────
 const mockAuthStoreLogout = vi.hoisted(() => vi.fn());
+const mockAuthStoreSetUser = vi.hoisted(() => vi.fn());
 
 vi.mock('@/store/authStore', () => ({
   default: {
-    getState: vi.fn(() => ({ logout: mockAuthStoreLogout })),
+    getState: vi.fn(() => ({
+      logout: mockAuthStoreLogout,
+      setUser: mockAuthStoreSetUser,
+    })),
   },
 }));
 
@@ -88,7 +92,7 @@ vi.mock('@/components/terms-agreement-checkboxes', () => {
   type TermsAgreementState = {
     agreedToTerms: boolean;
     agreedToPrivacy: boolean;
-    agreedToMarketing: boolean;
+    agreedToAge14: boolean;
   };
 
   type Props = {
@@ -101,34 +105,29 @@ vi.mock('@/components/terms-agreement-checkboxes', () => {
     React.createElement(
       'div',
       { 'data-testid': 'terms-checkboxes', 'data-disabled': String(disabled ?? false) },
-      // 필수 2개를 한 번에 체크하는 버튼
       React.createElement(
         'button',
         {
           onClick: () =>
-            onChange({ agreedToTerms: true, agreedToPrivacy: true, agreedToMarketing: false }),
+            onChange({ agreedToTerms: true, agreedToPrivacy: true, agreedToAge14: true }),
         },
         '필수 동의',
       ),
-      // 마케팅 포함 전체 체크 버튼
       React.createElement(
         'button',
         {
           onClick: () =>
-            onChange({ agreedToTerms: true, agreedToPrivacy: true, agreedToMarketing: true }),
-        },
-        '전체 동의',
-      ),
-      // 모두 해제 버튼
-      React.createElement(
-        'button',
-        {
-          onClick: () =>
-            onChange({ agreedToTerms: false, agreedToPrivacy: false, agreedToMarketing: false }),
+            onChange({ agreedToTerms: false, agreedToPrivacy: false, agreedToAge14: false }),
         },
         '동의 해제',
       ),
-      // disabled 상태 노출용 체크박스
+      React.createElement(
+        'button',
+        {
+          onClick: () => onChange({ ...value, agreedToAge14: !value.agreedToAge14 }),
+        },
+        '14세 토글',
+      ),
       React.createElement('input', {
         type: 'checkbox',
         'data-testid': 'mock-checkbox',
@@ -155,13 +154,26 @@ const makeAxiosError = (status: number, code?: string) => {
   return err;
 };
 
+// ── User fixture ──────────────────────────────────────────────────────────────
+const updatedUser = {
+  id: 1,
+  email: 'test@example.com',
+  nickname: '테스터',
+  provider: 'LOCAL' as const,
+  profileImageKey: null,
+  profileImageUrl: null,
+  isProfilePublic: true,
+  createdAt: '2024-01-01T00:00:00Z',
+  needsTermsAgreement: false,
+};
+
 // ── render 헬퍼 ───────────────────────────────────────────────────────────────
 const render = () => renderWithTheme(<TermsAgreementPage />);
 
 describe('TermsAgreementPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAgreeTerms.mockResolvedValue(undefined);
+    mockAgreeTerms.mockResolvedValue(updatedUser);
     mockLogoutApi.mockResolvedValue(undefined);
   });
 
@@ -207,10 +219,18 @@ describe('TermsAgreementPage', () => {
       expect(screen.getByRole('button', { name: '동의하고 계속하기' })).toBeDisabled();
     });
 
-    it('필수 2개 체크 후 enabled 다', () => {
+    it('필수 항목 전체 (약관·개인정보·14세) 체크 후 enabled 다', () => {
       render();
       fireEvent.click(screen.getByRole('button', { name: '필수 동의' }));
       expect(screen.getByRole('button', { name: '동의하고 계속하기' })).not.toBeDisabled();
+    });
+
+    it('14세 동의만 미체크면 disabled 다', () => {
+      render();
+      fireEvent.click(screen.getByRole('button', { name: '필수 동의' }));
+      // 14세만 다시 해제 → canAgree=false
+      fireEvent.click(screen.getByRole('button', { name: '14세 토글' }));
+      expect(screen.getByRole('button', { name: '동의하고 계속하기' })).toBeDisabled();
     });
 
     it('동의 해제하면 다시 disabled 다', () => {
@@ -223,28 +243,45 @@ describe('TermsAgreementPage', () => {
 
   // ── [동의하고 계속하기] 클릭 — 성공 흐름 ─────────────────────────────────────
   describe('[동의하고 계속하기] 클릭 — 성공', () => {
-    it('agreeTerms({agreedToMarketing: false}) 가 호출된다', async () => {
+    it('agreeTerms 가 인자 없이 호출된다', async () => {
       render();
       fireEvent.click(screen.getByRole('button', { name: '필수 동의' }));
       fireEvent.click(screen.getByRole('button', { name: '동의하고 계속하기' }));
       await waitFor(() => expect(mockAgreeTerms).toHaveBeenCalledOnce());
-      expect(mockAgreeTerms).toHaveBeenCalledWith({ agreedToMarketing: false });
+      expect(mockAgreeTerms).toHaveBeenCalledWith();
     });
 
-    it('마케팅 포함 전체 동의 후 agreeTerms({agreedToMarketing: true}) 가 호출된다', async () => {
+    it('성공 시 useAuthStore.getState().setUser 가 응답 user 로 호출된다', async () => {
       render();
-      fireEvent.click(screen.getByRole('button', { name: '전체 동의' }));
+      fireEvent.click(screen.getByRole('button', { name: '필수 동의' }));
       fireEvent.click(screen.getByRole('button', { name: '동의하고 계속하기' }));
-      await waitFor(() => expect(mockAgreeTerms).toHaveBeenCalledOnce());
-      expect(mockAgreeTerms).toHaveBeenCalledWith({ agreedToMarketing: true });
+      await waitFor(() => expect(mockAuthStoreSetUser).toHaveBeenCalledOnce());
+      expect(mockAuthStoreSetUser).toHaveBeenCalledWith(updatedUser);
     });
 
-    it('성공 시 mutate(["profile", "me"]) 가 호출된다', async () => {
+    it('성공 시 mutate(["profile","me"], user, {revalidate:false}) 가 호출된다', async () => {
       render();
       fireEvent.click(screen.getByRole('button', { name: '필수 동의' }));
       fireEvent.click(screen.getByRole('button', { name: '동의하고 계속하기' }));
       await waitFor(() => expect(mockMutate).toHaveBeenCalledOnce());
-      expect(mockMutate).toHaveBeenCalledWith(['profile', 'me']);
+      expect(mockMutate).toHaveBeenCalledWith(['profile', 'me'], updatedUser, {
+        revalidate: false,
+      });
+    });
+
+    it('성공 시 setUser → mutate 순서로 호출된다', async () => {
+      const callOrder: string[] = [];
+      mockAuthStoreSetUser.mockImplementation(() => callOrder.push('setUser'));
+      mockMutate.mockImplementation(() => {
+        callOrder.push('mutate');
+        return Promise.resolve();
+      });
+
+      render();
+      fireEvent.click(screen.getByRole('button', { name: '필수 동의' }));
+      fireEvent.click(screen.getByRole('button', { name: '동의하고 계속하기' }));
+      await waitFor(() => expect(mockNavigate).toHaveBeenCalled());
+      expect(callOrder).toEqual(['setUser', 'mutate']);
     });
 
     it('성공 시 navigate("/", {replace: true}) 가 호출된다', async () => {
@@ -295,6 +332,24 @@ describe('TermsAgreementPage', () => {
       fireEvent.click(screen.getByRole('button', { name: '동의하고 계속하기' }));
       await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
       expect(screen.getByRole('button', { name: '동의하고 계속하기' })).not.toBeDisabled();
+    });
+
+    it('에러 시 setUser 가 호출되지 않는다', async () => {
+      mockAgreeTerms.mockRejectedValue(makeAxiosError(500));
+      render();
+      fireEvent.click(screen.getByRole('button', { name: '필수 동의' }));
+      fireEvent.click(screen.getByRole('button', { name: '동의하고 계속하기' }));
+      await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+      expect(mockAuthStoreSetUser).not.toHaveBeenCalled();
+    });
+
+    it('에러 시 mutate 가 호출되지 않는다', async () => {
+      mockAgreeTerms.mockRejectedValue(makeAxiosError(500));
+      render();
+      fireEvent.click(screen.getByRole('button', { name: '필수 동의' }));
+      fireEvent.click(screen.getByRole('button', { name: '동의하고 계속하기' }));
+      await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+      expect(mockMutate).not.toHaveBeenCalled();
     });
   });
 
@@ -353,9 +408,9 @@ describe('TermsAgreementPage', () => {
   describe('처리 중 체크박스 disabled', () => {
     it('isAgreeing 중에는 TermsAgreementCheckboxes 에 disabled=true 가 전달된다', async () => {
       // agreeTerms 가 즉시 resolve 되지 않도록 제어
-      let resolveAgreeTerms!: () => void;
+      let resolveAgreeTerms!: (user: typeof updatedUser) => void;
       mockAgreeTerms.mockReturnValue(
-        new Promise<void>((res) => {
+        new Promise<typeof updatedUser>((res) => {
           resolveAgreeTerms = res;
         }),
       );
@@ -368,7 +423,7 @@ describe('TermsAgreementPage', () => {
       await waitFor(() => expect(screen.getByTestId('mock-checkbox')).toBeDisabled());
 
       // 정리
-      resolveAgreeTerms();
+      resolveAgreeTerms(updatedUser);
     });
 
     it('isLoggingOut 중에는 TermsAgreementCheckboxes 에 disabled=true 가 전달된다', async () => {

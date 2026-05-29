@@ -11,7 +11,8 @@ export const INITIAL_PALETTE = [
 export const FALLBACK_INITIAL = '?';
 export const FALLBACK_COLOR = '#a1a1aa';
 
-const normalize = (value: string): string => value.trim().normalize('NFC');
+const normalize = (value: string | null | undefined): string =>
+  typeof value === 'string' ? value.trim().normalize('NFC') : '';
 
 export const getInitial = (nickname: string): string => {
   const normalized = normalize(nickname);

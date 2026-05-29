@@ -1,37 +1,59 @@
 import { memo } from 'react';
 import Input from '@/components/input';
 import ImageUpload from '@/components/image-upload';
+import type { ImageEditResult } from '@/components/image-edit-modal';
+import type { ImageSlot } from '@/lib/image/imageSlot';
+
+const QUESTION_ASPECT = 16 / 9;
 import {
   wrapperStyle,
   headerStyle,
+  headerLeftStyle,
   numberStyle,
+  invalidPillStyle,
   actionsStyle,
   iconButtonStyle,
-  sectionStyle,
-  sectionHeadingStyle,
+  deleteButtonStyle,
   checkboxRowStyle,
   sameAsQuestionHintStyle,
+  questionBlockStyle,
+  questionInstructionStyle,
+  questionFieldGroupStyle,
+  answerBlockStyle,
+  answerHeadingStyle,
+  fieldErrorStyle,
 } from './QuestionItem.style';
 
-type QuestionItemProps = {
+export type QuestionItemErrors = {
+  /** 문제 이미지/텍스트 중 하나는 있어야 함. */
+  questionImageOrText?: string;
+  /** 정답 텍스트 필수. */
+  answer?: string;
+};
+
+export type QuestionItemProps = {
   index: number;
   questionText: string;
   answer: string;
-  imagePreviewUrl: string | null;
-  answerImagePreviewUrl: string | null;
+  imageSlot: ImageSlot;
+  answerImageSlot: ImageSlot;
   answerImageSameAsQuestion: boolean;
   onQuestionChange: (value: string) => void;
   onAnswerChange: (value: string) => void;
-  onImageChange: (file: File, url: string) => void;
+  onImageApply: (result: ImageEditResult) => void;
   onImageRemove: () => void;
-  onAnswerImageChange: (file: File, url: string) => void;
+  onAnswerImageApply: (result: ImageEditResult) => void;
   onAnswerImageRemove: () => void;
   onAnswerImageSameAsQuestionChange: (sameAsQuestion: boolean) => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
+  /** 미지정 시 위로 버튼 미노출. */
+  onMoveUp?: () => void;
+  /** 미지정 시 아래로 버튼 미노출. */
+  onMoveDown?: () => void;
   onDelete: () => void;
-  isFirst: boolean;
-  isLast: boolean;
+  isFirst?: boolean;
+  isLast?: boolean;
+  /** 외부에서 트리거된 검증 에러. */
+  errors?: QuestionItemErrors;
 };
 
 const QuestionItem = memo(
@@ -39,62 +61,76 @@ const QuestionItem = memo(
     index,
     questionText,
     answer,
-    imagePreviewUrl,
-    answerImagePreviewUrl,
+    imageSlot,
+    answerImageSlot,
     answerImageSameAsQuestion,
     onQuestionChange,
     onAnswerChange,
-    onImageChange,
+    onImageApply,
     onImageRemove,
-    onAnswerImageChange,
+    onAnswerImageApply,
     onAnswerImageRemove,
     onAnswerImageSameAsQuestionChange,
     onMoveUp,
     onMoveDown,
     onDelete,
-    isFirst,
-    isLast,
+    isFirst = false,
+    isLast = false,
+    errors,
   }: QuestionItemProps) => {
+    const hasAnyError = !!(errors?.questionImageOrText || errors?.answer);
+    const questionInvalid = !!errors?.questionImageOrText;
+    const answerInvalid = !!errors?.answer;
+
     return (
-      <div css={wrapperStyle}>
+      <div css={wrapperStyle(hasAnyError)}>
         <div css={headerStyle}>
-          <span css={numberStyle}>{index + 1}번 문제</span>
+          <div css={headerLeftStyle}>
+            <span css={numberStyle}>문제 {index + 1}</span>
+            {hasAnyError && <span css={invalidPillStyle}>입력 필요</span>}
+          </div>
           <div css={actionsStyle}>
-            <button css={iconButtonStyle} onClick={onMoveUp} disabled={isFirst} aria-label="위로">
-              ↑
-            </button>
-            <button
-              css={iconButtonStyle}
-              onClick={onMoveDown}
-              disabled={isLast}
-              aria-label="아래로"
-            >
-              ↓
-            </button>
-            <button css={iconButtonStyle} onClick={onDelete} aria-label="삭제">
-              ✕
+            {onMoveUp && (
+              <button css={iconButtonStyle} onClick={onMoveUp} disabled={isFirst} aria-label="위로">
+                ↑
+              </button>
+            )}
+            {onMoveDown && (
+              <button
+                css={iconButtonStyle}
+                onClick={onMoveDown}
+                disabled={isLast}
+                aria-label="아래로"
+              >
+                ↓
+              </button>
+            )}
+            <button css={deleteButtonStyle} onClick={onDelete} aria-label="삭제">
+              삭제
             </button>
           </div>
         </div>
 
-        <section css={sectionStyle}>
-          <h3 css={sectionHeadingStyle}>문제</h3>
-          <ImageUpload
-            label="문제 이미지 (선택)"
-            previewUrl={imagePreviewUrl}
-            onChange={onImageChange}
-            onRemove={onImageRemove}
-          />
-          <Input
-            label="문제"
-            value={questionText}
-            onChange={onQuestionChange}
-            placeholder="문제를 입력하세요"
-          />
+        <section css={questionBlockStyle}>
+          <div css={questionFieldGroupStyle}>
+            <p css={questionInstructionStyle}>이미지 또는 문제 텍스트를 입력해주세요</p>
+            <ImageUpload
+              slot={imageSlot}
+              aspect={QUESTION_ASPECT}
+              onApply={onImageApply}
+              onRemove={onImageRemove}
+            />
+            <Input
+              value={questionText}
+              onChange={onQuestionChange}
+              placeholder="문제를 입력하세요"
+            />
+          </div>
+          {questionInvalid && <span css={fieldErrorStyle}>{errors?.questionImageOrText}</span>}
         </section>
 
-        <section css={sectionStyle}>
-          <h3 css={sectionHeadingStyle}>정답</h3>
+        <section css={answerBlockStyle}>
+          <h3 css={answerHeadingStyle}>정답</h3>
           <label css={checkboxRowStyle}>
             <input
               type="checkbox"
@@ -107,18 +143,14 @@ const QuestionItem = memo(
             <p css={sameAsQuestionHintStyle}>정답 이미지로 문제 이미지를 그대로 사용해요.</p>
           ) : (
             <ImageUpload
-              label="정답 이미지 (선택)"
-              previewUrl={answerImagePreviewUrl}
-              onChange={onAnswerImageChange}
+              slot={answerImageSlot}
+              aspect={QUESTION_ASPECT}
+              onApply={onAnswerImageApply}
               onRemove={onAnswerImageRemove}
             />
           )}
-          <Input
-            label="정답"
-            value={answer}
-            onChange={onAnswerChange}
-            placeholder="정답을 입력하세요"
-          />
+          <Input value={answer} onChange={onAnswerChange} placeholder="정답을 입력하세요" />
+          {answerInvalid && <span css={fieldErrorStyle}>{errors?.answer}</span>}
         </section>
       </div>
     );
