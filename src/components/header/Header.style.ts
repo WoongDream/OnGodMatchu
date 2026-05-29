@@ -1,4 +1,4 @@
-import { css, type Theme } from '@emotion/react';
+import { css, keyframes, type Theme } from '@emotion/react';
 import { HEADER_HEIGHT, Z_INDEX } from '@/styles/constants';
 
 export const wrapperStyle = (theme: Theme) => css`
@@ -133,4 +133,20 @@ export const profileButtonStyle = css`
   border: none;
   background: transparent;
   cursor: pointer;
+`;
+
+const authPlaceholderPulse = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+`;
+
+// 인증 복원(bootstrapping) 중 노출되는 스켈레톤 원. 프로필 sm 아바타(2rem)와 동일 크기라
+// 복원 완료 후 아바타로 전환돼도 레이아웃 시프트가 없다.
+export const authPlaceholderStyle = (theme: Theme) => css`
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background-color: ${theme.colors.border.primary};
+  animation: ${authPlaceholderPulse} 1.2s ease-in-out infinite;
 `;

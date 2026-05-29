@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithTheme, screen } from '@/test/renderWithTheme';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
 
 const { useAuthStoreMock } = vi.hoisted(() => ({
@@ -231,6 +231,144 @@ describe('ProtectedRoute', () => {
 
       expect(screen.getByTestId('item-0')).toBeInTheDocument();
       expect(screen.getByTestId('item-99')).toBeInTheDocument();
+    });
+  });
+
+  describe('status 분기', () => {
+    it("status 가 'bootstrapping' 이면 isLoggedIn 이 false 여도 children 도 redirect 도 없다 (null)", () => {
+      useAuthStoreMock.mockImplementation((sel: any) =>
+        sel({
+          user: null,
+          isLoggedIn: false,
+          status: 'bootstrapping',
+          setUser: vi.fn(),
+          logout: vi.fn(),
+        }),
+      );
+
+      renderWithTheme(
+        <MemoryRouter initialEntries={['/quiz/create']}>
+          <Routes>
+            <Route
+              path="/quiz/create"
+              element={
+                <ProtectedRoute>
+                  <div data-testid="protected-child">Protected Content</div>
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/login" element={<div data-testid="login-route">Login</div>} />
+          </Routes>
+        </MemoryRouter>,
+      );
+
+      expect(screen.queryByTestId('protected-child')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('login-route')).not.toBeInTheDocument();
+    });
+
+    it("status 가 'bootstrapping' 이면 isLoggedIn 이 true 여도 children 을 보류한다 (null)", () => {
+      useAuthStoreMock.mockImplementation((sel: any) =>
+        sel({
+          user: { id: '1', username: 'testuser', email: 'test@example.com' },
+          isLoggedIn: true,
+          status: 'bootstrapping',
+          setUser: vi.fn(),
+          logout: vi.fn(),
+        }),
+      );
+
+      renderWithTheme(
+        <MemoryRouter initialEntries={['/quiz/create']}>
+          <Routes>
+            <Route
+              path="/quiz/create"
+              element={
+                <ProtectedRoute>
+                  <div data-testid="protected-child">Protected Content</div>
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/login" element={<div data-testid="login-route">Login</div>} />
+          </Routes>
+        </MemoryRouter>,
+      );
+
+      expect(screen.queryByTestId('protected-child')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('login-route')).not.toBeInTheDocument();
+    });
+
+    it("status 가 'ready' 이고 비로그인이면 /login 으로 redirect 하며 state.from 에 원래 경로를 담는다", () => {
+      useAuthStoreMock.mockImplementation((sel: any) =>
+        sel({
+          user: null,
+          isLoggedIn: false,
+          status: 'ready',
+          setUser: vi.fn(),
+          logout: vi.fn(),
+        }),
+      );
+
+      const LoginRoute = () => {
+        const location = useLocation();
+        const from = (location.state as { from?: string } | null)?.from;
+        return (
+          <div>
+            <span data-testid="login-route">Login</span>
+            <span data-testid="from-value">{from ?? 'none'}</span>
+          </div>
+        );
+      };
+
+      renderWithTheme(
+        <MemoryRouter initialEntries={['/quiz/create?step=2']}>
+          <Routes>
+            <Route
+              path="/quiz/create"
+              element={
+                <ProtectedRoute>
+                  <div data-testid="protected-child">Protected Content</div>
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/login" element={<LoginRoute />} />
+          </Routes>
+        </MemoryRouter>,
+      );
+
+      expect(screen.queryByTestId('protected-child')).not.toBeInTheDocument();
+      expect(screen.getByTestId('login-route')).toBeInTheDocument();
+      expect(screen.getByTestId('from-value')).toHaveTextContent('/quiz/create?step=2');
+    });
+
+    it("status 가 'ready' 이고 로그인 상태면 children 을 렌더한다", () => {
+      useAuthStoreMock.mockImplementation((sel: any) =>
+        sel({
+          user: { id: '1', username: 'testuser', email: 'test@example.com' },
+          isLoggedIn: true,
+          status: 'ready',
+          setUser: vi.fn(),
+          logout: vi.fn(),
+        }),
+      );
+
+      renderWithTheme(
+        <MemoryRouter initialEntries={['/quiz/create']}>
+          <Routes>
+            <Route
+              path="/quiz/create"
+              element={
+                <ProtectedRoute>
+                  <div data-testid="protected-child">Protected Content</div>
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/login" element={<div data-testid="login-route">Login</div>} />
+          </Routes>
+        </MemoryRouter>,
+      );
+
+      expect(screen.getByTestId('protected-child')).toBeInTheDocument();
+      expect(screen.queryByTestId('login-route')).not.toBeInTheDocument();
     });
   });
 

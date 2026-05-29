@@ -15,12 +15,13 @@ import {
   navActionsStyle,
   loginPillStyle,
   profileButtonStyle,
+  authPlaceholderStyle,
 } from './Header.style';
 
 const Header = memo(() => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isLoggedIn, user } = useAuthStore();
+  const { isLoggedIn, user, status } = useAuthStore();
   const { data: visitors } = useVisitorSummary();
 
   const handleLogoClick = () => {
@@ -59,7 +60,13 @@ const Header = memo(() => {
           </NavLink>
         </nav>
         <div css={navActionsStyle}>
-          {isLoggedIn ? (
+          {status === 'bootstrapping' ? (
+            <div
+              css={authPlaceholderStyle}
+              aria-hidden="true"
+              data-testid="header-auth-placeholder"
+            />
+          ) : isLoggedIn ? (
             <button
               type="button"
               onClick={handleProfileClick}

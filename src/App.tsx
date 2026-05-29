@@ -30,6 +30,7 @@ import AnnouncementDetail from './pages/announcements/AnnouncementDetail';
 import ReleaseNotesList from './pages/announcements/ReleaseNotesList';
 import ReleaseNoteDetail from './pages/announcements/ReleaseNoteDetail';
 import ProtectedRoute from '@/components/protected-route/ProtectedRoute';
+import GuestOnlyRoute from '@/components/guest-only-route/GuestOnlyRoute';
 import TermsAgreementGate from '@/components/terms-agreement-gate';
 
 const RouteTracker = (): null => {
@@ -69,8 +70,22 @@ const App = () => {
                     </ProtectedRoute>
                   }
                 />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/signup" element={<SignupPage />} />
+                <Route
+                  path="/login"
+                  element={
+                    <GuestOnlyRoute>
+                      <LoginPage />
+                    </GuestOnlyRoute>
+                  }
+                />
+                <Route
+                  path="/signup"
+                  element={
+                    <GuestOnlyRoute>
+                      <SignupPage />
+                    </GuestOnlyRoute>
+                  }
+                />
                 <Route path="/oauth2/callback" element={<OAuthCallbackPage />} />
                 <Route
                   path="/terms-agreement"

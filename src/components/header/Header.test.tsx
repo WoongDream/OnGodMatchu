@@ -214,6 +214,58 @@ describe('Header', () => {
     });
   });
 
+  describe('인증 부트스트랩 중 (status=bootstrapping)', () => {
+    it('비로그인 + bootstrapping 이면 로그인/프로필 버튼 없이 스켈레톤만 노출', () => {
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        isLoggedIn: false,
+        user: null,
+        status: 'bootstrapping',
+      });
+
+      renderHeader();
+      expect(screen.queryByRole('button', { name: '로그인' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '프로필' })).not.toBeInTheDocument();
+      expect(screen.getByTestId('header-auth-placeholder')).toBeInTheDocument();
+    });
+
+    it('isLoggedIn=true 여도 bootstrapping 이면 프로필 버튼 대신 스켈레톤만 노출', () => {
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        isLoggedIn: true,
+        user: MOCK_USER,
+        status: 'bootstrapping',
+      });
+
+      renderHeader();
+      expect(screen.queryByRole('button', { name: '로그인' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '프로필' })).not.toBeInTheDocument();
+      expect(screen.getByTestId('header-auth-placeholder')).toBeInTheDocument();
+    });
+
+    it('status=ready + 비로그인 이면 로그인 버튼 노출 (스켈레톤 없음)', () => {
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        isLoggedIn: false,
+        user: null,
+        status: 'ready',
+      });
+
+      renderHeader();
+      expect(screen.getByRole('button', { name: '로그인' })).toBeInTheDocument();
+      expect(screen.queryByTestId('header-auth-placeholder')).not.toBeInTheDocument();
+    });
+
+    it('status=ready + 로그인 이면 프로필 버튼 노출 (스켈레톤 없음)', () => {
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        isLoggedIn: true,
+        user: MOCK_USER,
+        status: 'ready',
+      });
+
+      renderHeader();
+      expect(screen.getByRole('button', { name: '프로필' })).toBeInTheDocument();
+      expect(screen.queryByTestId('header-auth-placeholder')).not.toBeInTheDocument();
+    });
+  });
+
   describe('memoization', () => {
     it('has displayName "Header"', () => {
       expect(Header.displayName).toBe('Header');
