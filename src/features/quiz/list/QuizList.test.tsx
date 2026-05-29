@@ -199,7 +199,7 @@ describe('QuizList', () => {
         createMockQuiz({ id: 1, playCount: 0, title: 'Zero Plays' }),
         createMockQuiz({ id: 2, playCount: 999999, title: 'Many Plays' }),
         createMockQuiz({ id: 3, category: 'music', title: 'Music Quiz' }),
-        createMockQuiz({ id: 4, category: 'movie', title: 'Movie Quiz' }),
+        createMockQuiz({ id: 4, category: 'culture', title: 'Culture Quiz' }),
       ];
       renderWithTheme(<QuizList quizzes={quizzes} />);
 

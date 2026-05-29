@@ -1,15 +1,19 @@
 import type { ImageTransform } from './image';
 
+// 카테고리 10종 (영문 키 + 한글 라벨). 라벨 표시·fallback 의 단일 소스.
+// 메인/만들기 화면의 실제 노출 순서는 BE categories API(총 플레이수 내림차순)를 따르고,
+// 이 배열 순서는 API 미응답 시 fallback 기본 순서로만 쓰인다.
 export const CATEGORIES = [
-  { value: 'entertainment', label: '연예인' },
-  { value: 'movie', label: '영화' },
-  { value: 'drama', label: '드라마' },
-  { value: 'anime', label: '애니메이션' },
   { value: 'game', label: '게임' },
   { value: 'music', label: '음악' },
-  { value: 'sports', label: '스포츠' },
+  { value: 'culture', label: '문화' },
+  { value: 'broadcast', label: '방송' },
   { value: 'general', label: '상식' },
-  { value: 'etc', label: '기타' },
+  { value: 'comic', label: '만화' },
+  { value: 'food', label: '음식' },
+  { value: 'person', label: '인물' },
+  { value: 'sports', label: '스포츠' },
+  { value: 'meme', label: '병맛' },
 ] as const;
 
 export type Category = (typeof CATEGORIES)[number]['value'];

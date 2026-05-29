@@ -171,15 +171,12 @@ describe('QuizCard', () => {
   describe('카테고리 분기', () => {
     it('각 카테고리가 한글 라벨로 렌더된다', () => {
       const cases: Array<[Quiz['category'], string]> = [
-        ['entertainment', '연예인'],
-        ['movie', '영화'],
-        ['drama', '드라마'],
-        ['anime', '애니메이션'],
         ['game', '게임'],
         ['music', '음악'],
-        ['sports', '스포츠'],
-        ['general', '상식'],
-        ['etc', '기타'],
+        ['culture', '문화'],
+        ['broadcast', '방송'],
+        ['comic', '만화'],
+        ['meme', '병맛'],
       ];
       for (const [value, label] of cases) {
         const q: Quiz = { ...baseQuiz, category: value };
@@ -189,6 +186,13 @@ describe('QuizCard', () => {
         expect(screen.getByText(label)).toBeInTheDocument();
         unmount();
       }
+    });
+
+    it('CATEGORIES 에 없는 키는 키 문자열을 그대로 표시한다 (fallback)', () => {
+      // 화이트리스트에 없는 키 → CATEGORIES.find 가 undefined → quiz.category 원문 표시
+      const q: Quiz = { ...baseQuiz, category: 'unknown' as Quiz['category'] };
+      renderWithTheme(<QuizCard quiz={q} onClick={onClick} onStarClick={onStarClick} />);
+      expect(screen.getByText('unknown')).toBeInTheDocument();
     });
   });
 });

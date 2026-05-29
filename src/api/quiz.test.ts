@@ -31,8 +31,8 @@ const makeRawItem = (overrides: Partial<Record<string, unknown>> = {}) => ({
   id: 1,
   quizId: 'uuid-1',
   title: '테스트 퀴즈',
-  category: 'movie',
-  categoryLabel: '영화',
+  category: 'culture',
+  categoryLabel: '문화',
   visibility: 'PUBLIC',
   thumbnailKey: null,
   thumbnailUrl: null,
@@ -141,8 +141,8 @@ describe('getQuizDetail', () => {
     publicId: 'uuid-1',
     title: '상세 퀴즈',
     description: '설명',
-    category: 'movie',
-    categoryLabel: '영화',
+    category: 'culture',
+    categoryLabel: '문화',
     visibility: 'PUBLIC',
     thumbnailKey: null,
     thumbnailUrl: null,
@@ -239,7 +239,7 @@ describe('getQuizDetail', () => {
         data: makeRawDetail({
           id: 99,
           title: '보존 테스트',
-          category: 'movie',
+          category: 'culture',
           playCount: 777,
         }),
       },
@@ -247,7 +247,7 @@ describe('getQuizDetail', () => {
     const res = await getQuizDetail(99);
     expect(res.id).toBe(99);
     expect(res.title).toBe('보존 테스트');
-    expect(res.category).toBe('movie');
+    expect(res.category).toBe('culture');
     expect(res.playCount).toBe(777);
   });
 });
