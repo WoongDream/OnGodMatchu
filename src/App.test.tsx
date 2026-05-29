@@ -159,6 +159,13 @@ vi.mock('@/components/protected-route/ProtectedRoute', () => ({
   default: mockProtectedRouteImpl,
 }));
 
+// GuestOnlyRoute 도 ProtectedRoute 처럼 실제 구현은 useLocation 을 호출한다.
+// BrowserRouter 가 구조 검사용 div 로 mock 돼 Router 컨텍스트가 없으므로, passthrough 로 mock 해야
+// 라우트 트리 렌더 시 useLocation invariant 가 터지지 않는다.
+vi.mock('@/components/guest-only-route/GuestOnlyRoute', () => ({
+  default: ({ children }: any) => <>{children}</>,
+}));
+
 vi.mock('@/components/terms-agreement-gate', () => ({
   default: () => null,
 }));
