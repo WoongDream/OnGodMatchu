@@ -26,9 +26,17 @@ export const pageContentStyle = (theme: Theme) => css`
   }
 `;
 
-export const pageWrapperStyle = (gap?: keyof Theme['spacing']) => (theme: Theme) => css`
-  display: flex;
-  flex-direction: column;
-  padding: ${theme.spacing.lg} 0;
-  gap: ${gap ? theme.spacing[gap] : 0};
-`;
+export const pageWrapperStyle = (gap?: keyof Theme['spacing']) => (theme: Theme) => {
+  const mobileGap = gap === 'xl' ? 'lg' : gap === 'lg' ? 'md' : gap;
+  return css`
+    display: flex;
+    flex-direction: column;
+    padding: ${theme.spacing.lg} 0;
+    gap: ${gap ? theme.spacing[gap] : 0};
+
+    @media (max-width: ${theme.breakpoints.tablet}) {
+      padding: ${theme.spacing.md} 0;
+      gap: ${mobileGap ? theme.spacing[mobileGap] : 0};
+    }
+  `;
+};

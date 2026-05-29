@@ -37,14 +37,51 @@ export const leftCaptionStyle = (theme: Theme) => css`
 `;
 
 export const cardsGridStyle = (theme: Theme) => css`
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  align-content: start;
+  border: 1px solid ${theme.colors.border.primary};
+  border-radius: ${theme.borderRadius.md};
+  padding: ${theme.spacing.sm};
   gap: ${theme.spacing.sm};
-  padding-right: ${theme.spacing.xs};
-  max-height: 32rem;
-  overflow-y: auto;
-  overflow-x: hidden;
+
+  /* mobile: 카드 1행 가로 스크롤 */
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  overflow-y: hidden;
+  & > * {
+    flex: 0 0 8.5rem;
+  }
+
+  /* 아주 작은 primary 톤 스크롤바 (가로/세로 공용) */
+  scrollbar-width: thin;
+  scrollbar-color: ${theme.colors.accent.primary} transparent;
+  &::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: ${theme.colors.accent.primary};
+    border-radius: 9999px;
+  }
+
+  /* tablet+: 2열 grid + 카드 5.5 row 고정 높이 (11번째 카드부터 세로 스크롤) */
+  @media (min-width: ${theme.breakpoints.tablet}) {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: max-content;
+    align-content: start;
+    overflow-x: hidden;
+    overflow-y: auto;
+    /* card cell width = (22rem - 2*padding - gap) / 2
+       card height = cell width * 3/4 (aspect 4:3)
+       container height = 5.5 cards + 5 gaps + 2 paddings */
+    height: calc(((22rem - ${theme.spacing.sm} * 3) / 2 * 0.75) * 5.5 + ${theme.spacing.sm} * 7);
+    & > * {
+      flex: initial;
+    }
+  }
 `;
 
 export const rightPaneStyle = (theme: Theme) => css`

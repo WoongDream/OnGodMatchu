@@ -113,48 +113,54 @@ export const sameAsQuestionHintStyle = (theme: Theme) => css`
   background-color: ${theme.colors.bg.secondary};
 `;
 
-export const questionBlockStyle =
-  (invalid = false) =>
-  (theme: Theme) => css`
-    display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing.sm};
-    padding: ${invalid ? theme.spacing.md : '0'};
-    border-radius: ${theme.borderRadius.md};
-    border: 1px solid ${invalid ? theme.colors.status.error : 'transparent'};
-  `;
+export const questionBlockStyle = (theme: Theme) => css`
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing.sm};
+`;
 
-export const answerBlockStyle =
-  (invalid = false) =>
-  (theme: Theme) => css`
-    display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing.sm};
-    padding: ${theme.spacing.md};
-    border-radius: ${theme.borderRadius.md};
-    border: 1px solid ${invalid ? theme.colors.status.error : theme.colors.accent.muted};
-    background-color: ${invalid ? theme.colors.bg.secondary : theme.colors.accent.subtle};
-  `;
+export const questionInstructionStyle = (theme: Theme) => css`
+  ${text({ size: 'sm' })({ theme })}
+  color: ${theme.colors.fg.secondary};
+  margin: 0;
+`;
 
-export const answerHeadingStyle =
-  (invalid = false) =>
-  (theme: Theme) => css`
-    ${text({ size: 'sm', weight: 'semibold' })({ theme })}
-    color: ${invalid ? theme.colors.status.error : theme.colors.accent.active};
-    display: inline-flex;
-    align-items: center;
-    gap: ${theme.spacing.xs};
-    margin: 0;
+export const questionFieldGroupStyle = (theme: Theme) => css`
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing.sm};
+  padding: ${theme.spacing.md};
+  border-radius: ${theme.borderRadius.md};
+  background-color: ${theme.colors.bg.secondary};
+`;
 
-    &::before {
-      content: '';
-      display: inline-block;
-      width: 0.4rem;
-      height: 0.4rem;
-      border-radius: 50%;
-      background-color: ${invalid ? theme.colors.status.error : theme.colors.accent.active};
-    }
-  `;
+export const answerBlockStyle = (theme: Theme) => css`
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing.sm};
+  padding: ${theme.spacing.md};
+  border-radius: ${theme.borderRadius.md};
+  border: 1px solid ${theme.colors.accent.muted};
+  background-color: ${theme.colors.accent.subtle};
+`;
+
+export const answerHeadingStyle = (theme: Theme) => css`
+  ${text({ size: 'sm', weight: 'semibold' })({ theme })}
+  color: ${theme.colors.accent.active};
+  display: inline-flex;
+  align-items: center;
+  gap: ${theme.spacing.xs};
+  margin: 0;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    background-color: ${theme.colors.accent.active};
+  }
+`;
 
 export const fieldErrorStyle = (theme: Theme) => css`
   ${text({ size: 'xs' })({ theme })}

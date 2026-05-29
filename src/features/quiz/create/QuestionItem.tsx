@@ -10,14 +10,14 @@ import {
   actionsStyle,
   iconButtonStyle,
   deleteButtonStyle,
-  sectionHeadingStyle,
   checkboxRowStyle,
   sameAsQuestionHintStyle,
   questionBlockStyle,
+  questionInstructionStyle,
+  questionFieldGroupStyle,
   answerBlockStyle,
   answerHeadingStyle,
   fieldErrorStyle,
-  requiredDotStyle,
 } from './QuestionItem.style';
 
 export type QuestionItemErrors = {
@@ -107,30 +107,25 @@ const QuestionItem = memo(
           </div>
         </div>
 
-        <section css={questionBlockStyle(questionInvalid)}>
-          <h3 css={sectionHeadingStyle}>
-            문제
-            {questionInvalid && <span css={requiredDotStyle}> •</span>}
-          </h3>
-          <ImageUpload
-            label="문제 이미지 (선택)"
-            previewUrl={imagePreviewUrl}
-            onChange={onImageChange}
-            onRemove={onImageRemove}
-            invalid={questionInvalid}
-          />
-          <Input
-            label="문제"
-            value={questionText}
-            onChange={onQuestionChange}
-            placeholder="문제를 입력하세요"
-            error={questionInvalid ? errors?.questionImageOrText : undefined}
-          />
+        <section css={questionBlockStyle}>
+          <div css={questionFieldGroupStyle}>
+            <p css={questionInstructionStyle}>이미지 또는 문제 텍스트를 입력해주세요</p>
+            <ImageUpload
+              previewUrl={imagePreviewUrl}
+              onChange={onImageChange}
+              onRemove={onImageRemove}
+            />
+            <Input
+              value={questionText}
+              onChange={onQuestionChange}
+              placeholder="문제를 입력하세요"
+            />
+          </div>
           {questionInvalid && <span css={fieldErrorStyle}>{errors?.questionImageOrText}</span>}
         </section>
 
-        <section css={answerBlockStyle(answerInvalid)}>
-          <h3 css={answerHeadingStyle(answerInvalid)}>정답</h3>
+        <section css={answerBlockStyle}>
+          <h3 css={answerHeadingStyle}>정답</h3>
           <label css={checkboxRowStyle}>
             <input
               type="checkbox"
@@ -143,19 +138,13 @@ const QuestionItem = memo(
             <p css={sameAsQuestionHintStyle}>정답 이미지로 문제 이미지를 그대로 사용해요.</p>
           ) : (
             <ImageUpload
-              label="정답 이미지 (선택)"
               previewUrl={answerImagePreviewUrl}
               onChange={onAnswerImageChange}
               onRemove={onAnswerImageRemove}
             />
           )}
-          <Input
-            label="정답"
-            value={answer}
-            onChange={onAnswerChange}
-            placeholder="정답을 입력하세요"
-            error={answerInvalid ? errors?.answer : undefined}
-          />
+          <Input value={answer} onChange={onAnswerChange} placeholder="정답을 입력하세요" />
+          {answerInvalid && <span css={fieldErrorStyle}>{errors?.answer}</span>}
         </section>
       </div>
     );

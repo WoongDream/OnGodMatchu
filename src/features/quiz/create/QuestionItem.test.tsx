@@ -266,9 +266,9 @@ describe('QuestionItem', () => {
   });
 
   describe('문제 이미지 업로드', () => {
-    it('ImageUpload 의 "문제 이미지 (선택)" 라벨이 표시된다', () => {
+    it('문제 섹션 상단에 안내 문구 "이미지 또는 문제 텍스트를 입력해주세요" 가 표시된다', () => {
       renderWithTheme(<QuestionItem {...defaultProps} />);
-      expect(screen.getByText('문제 이미지 (선택)')).toBeInTheDocument();
+      expect(screen.getByText('이미지 또는 문제 텍스트를 입력해주세요')).toBeInTheDocument();
     });
 
     it('imagePreviewUrl 이 null 이면 미리보기 img 가 없다', () => {
@@ -297,13 +297,15 @@ describe('QuestionItem', () => {
 
     it('체크 ON: 정답 ImageUpload 미노출 + 안내 문구 노출', () => {
       renderWithTheme(<QuestionItem {...defaultProps} answerImageSameAsQuestion={true} />);
-      expect(screen.queryByText('정답 이미지 (선택)')).not.toBeInTheDocument();
+      // 문제 + 정답 두 영역이 모두 ImageUpload 를 가지므로 ON 일 때는 문제 영역의 1개만 남음
+      expect(screen.getAllByText('클릭하여 이미지 업로드')).toHaveLength(1);
       expect(screen.getByText(/정답 이미지로 문제 이미지를 그대로 사용/)).toBeInTheDocument();
     });
 
     it('체크 OFF: 정답 ImageUpload 가 노출된다', () => {
       renderWithTheme(<QuestionItem {...defaultProps} answerImageSameAsQuestion={false} />);
-      expect(screen.getByText('정답 이미지 (선택)')).toBeInTheDocument();
+      // 문제 + 정답 두 영역이 모두 ImageUpload 가 마운트됨
+      expect(screen.getAllByText('클릭하여 이미지 업로드')).toHaveLength(2);
       expect(screen.queryByText(/정답 이미지로 문제 이미지를 그대로 사용/)).not.toBeInTheDocument();
     });
 
@@ -350,13 +352,13 @@ describe('QuestionItem', () => {
   });
 
   describe('섹션 헤딩', () => {
-    it('"문제" / "정답" h3 헤딩이 모두 존재한다', () => {
+    it('"정답" h3 헤딩이 존재한다 (문제 헤딩은 안내 문구로 대체됨)', () => {
       renderWithTheme(<QuestionItem {...defaultProps} />);
       const headings = screen.getAllByRole('heading', { level: 3 });
       const headingTexts = headings.map((h) => h.textContent);
-      // "문제" 옆에 invalid dot 이 붙을 수 있어 부분 매칭
-      expect(headingTexts.some((t) => t?.includes('문제'))).toBe(true);
       expect(headingTexts.some((t) => t?.includes('정답'))).toBe(true);
+      // "문제" h3 는 더 이상 존재하지 않고, 같은 자리에 안내 문구가 노출됨
+      expect(screen.getByText('이미지 또는 문제 텍스트를 입력해주세요')).toBeInTheDocument();
     });
   });
 
