@@ -153,6 +153,22 @@ export const getQuizzes = async (params?: {
   return res.data.data;
 };
 
+export const getMyStarredQuizzes = async (params?: {
+  page?: number;
+  size?: number;
+  title?: string;
+}): Promise<Page<Quiz>> => {
+  const query: Record<string, string | number> = {
+    page: params?.page ?? 0,
+    size: params?.size ?? 20,
+  };
+  if (params?.title && params.title.trim() !== '') {
+    query.title = params.title.trim();
+  }
+  const res = await instance.get<ApiResponse<Page<Quiz>>>('/api/users/me/stars', { params: query });
+  return res.data.data;
+};
+
 export const starQuiz = async (quizId: number): Promise<void> => {
   await instance.put(`/api/quizzes/${quizId}/star`);
 };

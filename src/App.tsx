@@ -23,6 +23,7 @@ import ProfileLayout from './pages/profile/ProfileLayout';
 import ProfileInfo from './pages/profile/ProfileInfo';
 import ProfileQuizzesMade from './pages/profile/ProfileQuizzesMade';
 import ProfileQuizzesPlayed from './pages/profile/ProfileQuizzesPlayed';
+import ProfileQuizzesStarred from './pages/profile/ProfileQuizzesStarred';
 import ProfileAccount from './pages/profile/ProfileAccount';
 import AnnouncementsLayout from './pages/announcements/AnnouncementsLayout';
 import AnnouncementsList from './pages/announcements/AnnouncementsList';
@@ -108,6 +109,7 @@ const App = () => {
                   <Route index element={<ProfileInfo />} />
                   <Route path="quizzes-made" element={<ProfileQuizzesMade />} />
                   <Route path="quizzes-played" element={<ProfileQuizzesPlayed />} />
+                  <Route path="quizzes-starred" element={<ProfileQuizzesStarred />} />
                   <Route path="account" element={<ProfileAccount />} />
                 </Route>
                 <Route path="/profile/:userId" element={<ProfileLayout />}>

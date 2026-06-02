@@ -495,10 +495,14 @@ describe('QuizPlayPage', () => {
       renderAtLastQuestionFeedback();
       fireEvent.click(screen.getByLabelText('결과 보기'));
       await waitFor(() => expect(mockSubmit).toHaveBeenCalledTimes(1));
-      expect(mockSubmit).toHaveBeenCalledWith(42, [
-        { questionId: 1, userAnswer: '첫 답' },
-        { questionId: 2, userAnswer: '둘째 답' },
-      ]);
+      expect(mockSubmit).toHaveBeenCalledWith(
+        42,
+        [
+          { questionId: 1, userAnswer: '첫 답' },
+          { questionId: 2, userAnswer: '둘째 답' },
+        ],
+        null,
+      );
     });
 
     it('submit 성공 시 navigate(`/quiz/42/result`) 가 result 와 questions state 로 호출된다', async () => {
@@ -530,7 +534,7 @@ describe('QuizPlayPage', () => {
       fireEvent.click(screen.getByLabelText('제출'));
       fireEvent.click(screen.getByLabelText('결과 보기'));
       await waitFor(() =>
-        expect(mockSubmit).toHaveBeenCalledWith(42, [{ questionId: 1, userAnswer: '내 답' }]),
+        expect(mockSubmit).toHaveBeenCalledWith(42, [{ questionId: 1, userAnswer: '내 답' }], null),
       );
     });
   });
@@ -677,10 +681,14 @@ describe('QuizPlayPage', () => {
       // 결과 보기 클릭 → submit 호출
       fireEvent.click(screen.getByLabelText('결과 보기'));
       await waitFor(() =>
-        expect(mockSubmit).toHaveBeenCalledWith(42, [
-          { questionId: 1, userAnswer: '정답1' },
-          { questionId: 2, userAnswer: '정답2' },
-        ]),
+        expect(mockSubmit).toHaveBeenCalledWith(
+          42,
+          [
+            { questionId: 1, userAnswer: '정답1' },
+            { questionId: 2, userAnswer: '정답2' },
+          ],
+          null,
+        ),
       );
       await waitFor(() =>
         expect(mockNavigate).toHaveBeenCalledWith('/quiz/42/result', {
@@ -834,7 +842,7 @@ describe('QuizPlayPage', () => {
       vi.useRealTimers();
       fireEvent.click(screen.getByLabelText('결과 보기'));
       await waitFor(() =>
-        expect(mockSubmit).toHaveBeenCalledWith(42, [{ questionId: 1, userAnswer: '' }]),
+        expect(mockSubmit).toHaveBeenCalledWith(42, [{ questionId: 1, userAnswer: '' }], 20),
       );
     });
   });
@@ -911,12 +919,62 @@ describe('QuizPlayPage', () => {
       vi.useRealTimers();
       fireEvent.click(screen.getByLabelText('결과 보기'));
       await waitFor(() =>
-        expect(mockSubmit).toHaveBeenCalledWith(42, [{ questionId: 1, userAnswer: '' }]),
+        expect(mockSubmit).toHaveBeenCalledWith(42, [{ questionId: 1, userAnswer: '' }], 20),
       );
       await waitFor(() =>
         expect(mockNavigate).toHaveBeenCalledWith('/quiz/42/result', {
           state: { result: mockAttemptResponse, questions: singleQuiz.questions },
         }),
+      );
+    });
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // ── submit 의 timeLimitSec 인자 전달 ──────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────────────
+  describe('submit timeLimitSec 인자 전달', () => {
+    it('option.timeLimitSec 가 설정되면 결과 보기 시 submit 의 세 번째 인자로 전달된다', async () => {
+      const singleQuiz = { ...baseQuiz, questions: [q1] };
+      mockUseQuizDetail.mockReturnValue({ isLoading: false, quiz: singleQuiz, error: undefined });
+      mockLocationState.current = { count: 10, timeLimitSec: 30, shuffle: false };
+      renderWithTheme(<QuizPlayPage />);
+
+      fireEvent.change(screen.getByTestId('quiz-answer-input'), { target: { value: '내 답' } });
+      fireEvent.click(screen.getByLabelText('제출'));
+      fireEvent.click(screen.getByLabelText('결과 보기'));
+
+      await waitFor(() =>
+        expect(mockSubmit).toHaveBeenCalledWith(42, [{ questionId: 1, userAnswer: '내 답' }], 30),
+      );
+    });
+
+    it('타이머가 없으면(timeLimitSec=null) submit 의 세 번째 인자가 null 이다', async () => {
+      const singleQuiz = { ...baseQuiz, questions: [q1] };
+      mockUseQuizDetail.mockReturnValue({ isLoading: false, quiz: singleQuiz, error: undefined });
+      mockLocationState.current = { count: 10, timeLimitSec: null, shuffle: false };
+      renderWithTheme(<QuizPlayPage />);
+
+      fireEvent.change(screen.getByTestId('quiz-answer-input'), { target: { value: '내 답' } });
+      fireEvent.click(screen.getByLabelText('제출'));
+      fireEvent.click(screen.getByLabelText('결과 보기'));
+
+      await waitFor(() =>
+        expect(mockSubmit).toHaveBeenCalledWith(42, [{ questionId: 1, userAnswer: '내 답' }], null),
+      );
+    });
+
+    it('location.state 가 null 이면 submit 의 세 번째 인자가 null 이다', async () => {
+      const singleQuiz = { ...baseQuiz, questions: [q1] };
+      mockUseQuizDetail.mockReturnValue({ isLoading: false, quiz: singleQuiz, error: undefined });
+      mockLocationState.current = null;
+      renderWithTheme(<QuizPlayPage />);
+
+      fireEvent.change(screen.getByTestId('quiz-answer-input'), { target: { value: '내 답' } });
+      fireEvent.click(screen.getByLabelText('제출'));
+      fireEvent.click(screen.getByLabelText('결과 보기'));
+
+      await waitFor(() =>
+        expect(mockSubmit).toHaveBeenCalledWith(42, [{ questionId: 1, userAnswer: '내 답' }], null),
       );
     });
   });

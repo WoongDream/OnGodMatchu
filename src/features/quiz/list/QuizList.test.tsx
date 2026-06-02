@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderWithTheme, screen } from '@/test/renderWithTheme';
+import { renderWithTheme, screen, waitFor } from '@/test/renderWithTheme';
 import userEvent from '@testing-library/user-event';
 import type { Quiz } from '@/types';
 import QuizList from './QuizList';
@@ -12,11 +12,43 @@ vi.mock('react-router-dom', () => ({
 }));
 
 vi.mock('./QuizCard', () => ({
-  default: ({ quiz, onClick }: { quiz: Quiz; onClick: (id: number) => void }) => (
+  default: ({
+    quiz,
+    onClick,
+    onStarClick,
+  }: {
+    quiz: Quiz;
+    onClick: (id: number) => void;
+    onStarClick: (id: number, isStarred: boolean, e: React.MouseEvent) => void;
+  }) => (
     <div data-testid={`quiz-card-${quiz.id}`} onClick={() => onClick(quiz.id)}>
       {quiz.title}
+      <button
+        type="button"
+        data-testid={`star-button-${quiz.id}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onStarClick(quiz.id, !!quiz.isStarred, e);
+        }}
+      >
+        star
+      </button>
     </div>
   ),
+}));
+
+// ── useToggleStar mock ────────────────────────────────────────────────────────
+const mockToggle = vi.hoisted(() => vi.fn());
+
+vi.mock('@/hooks/useToggleStar', () => ({
+  default: () => ({ toggle: mockToggle, pendingQuizId: null, error: null }),
+}));
+
+// ── auth store mock (로그인 상태 제어) ─────────────────────────────────────────
+const mockUseAuthStore = vi.hoisted(() => vi.fn());
+
+vi.mock('@/store/authStore', () => ({
+  default: () => mockUseAuthStore(),
 }));
 
 const createMockQuiz = (overrides?: Partial<Quiz>): Quiz => ({
@@ -40,6 +72,8 @@ const createMockQuiz = (overrides?: Partial<Quiz>): Quiz => ({
 describe('QuizList', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseAuthStore.mockReturnValue({ isLoggedIn: true });
+    mockToggle.mockResolvedValue(undefined);
   });
 
   describe('empty state', () => {
@@ -265,6 +299,58 @@ describe('QuizList', () => {
 
       expect(screen.queryByText('First')).not.toBeInTheDocument();
       expect(screen.getByText('Second')).toBeInTheDocument();
+    });
+  });
+
+  describe('onStarToggled 콜백', () => {
+    it('로그인 상태에서 스타 버튼 클릭 시 toggle 성공 후 onStarToggled(quizId, !wasStarred) 를 호출한다', async () => {
+      const user = userEvent.setup();
+      const onStarToggled = vi.fn();
+      const quizzes = [createMockQuiz({ id: 7, isStarred: false })];
+      renderWithTheme(<QuizList quizzes={quizzes} onStarToggled={onStarToggled} />);
+
+      await user.click(screen.getByTestId('star-button-7'));
+
+      expect(mockToggle).toHaveBeenCalledWith(7, false);
+      await waitFor(() => expect(onStarToggled).toHaveBeenCalledWith(7, true));
+    });
+
+    it('이미 스타된 퀴즈를 토글하면 onStarToggled(quizId, false) 로 호출한다', async () => {
+      const user = userEvent.setup();
+      const onStarToggled = vi.fn();
+      const quizzes = [createMockQuiz({ id: 9, isStarred: true })];
+      renderWithTheme(<QuizList quizzes={quizzes} onStarToggled={onStarToggled} />);
+
+      await user.click(screen.getByTestId('star-button-9'));
+
+      expect(mockToggle).toHaveBeenCalledWith(9, true);
+      await waitFor(() => expect(onStarToggled).toHaveBeenCalledWith(9, false));
+    });
+
+    it('toggle 실패 시 onStarToggled 를 호출하지 않는다', async () => {
+      const user = userEvent.setup();
+      const onStarToggled = vi.fn();
+      mockToggle.mockRejectedValueOnce(new Error('fail'));
+      const quizzes = [createMockQuiz({ id: 3, isStarred: false })];
+      renderWithTheme(<QuizList quizzes={quizzes} onStarToggled={onStarToggled} />);
+
+      await user.click(screen.getByTestId('star-button-3'));
+
+      await waitFor(() => expect(mockToggle).toHaveBeenCalledWith(3, false));
+      expect(onStarToggled).not.toHaveBeenCalled();
+    });
+
+    it('비로그인 상태에서는 toggle/onStarToggled 를 호출하지 않고 로그인 모달을 연다', async () => {
+      const user = userEvent.setup();
+      const onStarToggled = vi.fn();
+      mockUseAuthStore.mockReturnValue({ isLoggedIn: false });
+      const quizzes = [createMockQuiz({ id: 5, isStarred: false })];
+      renderWithTheme(<QuizList quizzes={quizzes} onStarToggled={onStarToggled} />);
+
+      await user.click(screen.getByTestId('star-button-5'));
+
+      expect(mockToggle).not.toHaveBeenCalled();
+      expect(onStarToggled).not.toHaveBeenCalled();
     });
   });
 

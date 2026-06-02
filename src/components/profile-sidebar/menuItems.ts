@@ -1,4 +1,9 @@
-export type MenuItemKey = 'info' | 'quizzes-made' | 'quizzes-played' | 'account';
+export type MenuItemKey =
+  | 'info'
+  | 'quizzes-made'
+  | 'quizzes-played'
+  | 'quizzes-starred'
+  | 'account';
 
 export type MenuGroupId = 'quiz';
 
@@ -37,6 +42,14 @@ export const PROFILE_MENU_ITEMS: MenuItem[] = [
     mobileLabel: '내가 푼 퀴즈',
     to: 'quizzes-played',
     countKey: 'playCount',
+    groupId: 'quiz',
+  },
+  {
+    key: 'quizzes-starred',
+    label: '스타 준',
+    mobileLabel: '스타 준 퀴즈',
+    to: 'quizzes-starred',
+    myOnly: true,
     groupId: 'quiz',
   },
   { key: 'account', label: '계정', to: 'account', myOnly: true },

@@ -80,6 +80,10 @@ vi.mock('./pages/profile/ProfileQuizzesPlayed', () => ({
   default: () => <div data-testid="profile-quizzes-played">Profile Quizzes Played</div>,
 }));
 
+vi.mock('./pages/profile/ProfileQuizzesStarred', () => ({
+  default: () => <div data-testid="profile-quizzes-starred">Profile Quizzes Starred</div>,
+}));
+
 vi.mock('./pages/profile/ProfileAccount', () => ({
   default: () => <div data-testid="profile-account">Profile Account</div>,
 }));
@@ -314,14 +318,25 @@ describe('App', () => {
       expect(screen.getByTestId('navigate-to-/quiz')).toBeInTheDocument();
     });
 
-    it('has 29 routes total (1 layout + 16 top-level + 7 nested profile + 5 announcements children)', () => {
+    it('has 30 routes total (1 layout + 16 top-level + 8 nested profile + 5 announcements children)', () => {
       renderWithTheme(<App />);
       const routeElements = screen.getAllByTestId(/^route-/);
       // 1 (TermsAgreementGate 레이아웃) + 16 top-level (/, /quiz, /quiz/create, /quiz/:id,
       // /quiz/:id/play, /quiz/:id/result, /quiz/:id/edit, /login, /signup, /oauth2/callback,
       // /terms-agreement, /privacy, /terms, /profile, /profile/:userId, /announcements)
-      // + 4 /profile 자식 + 3 /profile/:userId 자식 + 5 /announcements 자식 = 29
-      expect(routeElements).toHaveLength(29);
+      // + 5 /profile 자식 (index, quizzes-made, quizzes-played, quizzes-starred, account)
+      // + 3 /profile/:userId 자식 + 5 /announcements 자식 = 30
+      expect(routeElements).toHaveLength(30);
+    });
+
+    it('renders /profile/quizzes-starred route (only under /profile)', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-quizzes-starred')).toBeInTheDocument();
+    });
+
+    it('renders ProfileQuizzesStarred component for the quizzes-starred route', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('profile-quizzes-starred')).toBeInTheDocument();
     });
 
     it('renders /profile route protected by ProtectedRoute', () => {
