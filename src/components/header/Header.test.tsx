@@ -266,6 +266,54 @@ describe('Header', () => {
     });
   });
 
+  describe('백오피스(BO) 탭 노출 (role 기반)', () => {
+    it('role 없는 일반 user 면 "BO" 탭을 노출하지 않는다', () => {
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        isLoggedIn: true,
+        user: MOCK_USER,
+        status: 'ready',
+      });
+
+      renderHeader();
+      expect(screen.queryByRole('link', { name: 'BO' })).not.toBeInTheDocument();
+    });
+
+    it('비로그인(user=null) 이면 "BO" 탭을 노출하지 않는다', () => {
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        isLoggedIn: false,
+        user: null,
+        status: 'ready',
+      });
+
+      renderHeader();
+      expect(screen.queryByRole('link', { name: 'BO' })).not.toBeInTheDocument();
+    });
+
+    it('role 이 "ADMIN" 이면 /admin 으로 가는 "BO" 탭을 노출한다', () => {
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        isLoggedIn: true,
+        user: { ...MOCK_USER, role: 'ADMIN' },
+        status: 'ready',
+      });
+
+      renderHeader();
+      const boLink = screen.getByRole('link', { name: 'BO' });
+      expect(boLink).toBeInTheDocument();
+      expect(boLink).toHaveAttribute('href', '/admin');
+    });
+
+    it('role 이 "OWNER" 이면 "BO" 탭을 노출한다', () => {
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        isLoggedIn: true,
+        user: { ...MOCK_USER, role: 'OWNER' },
+        status: 'ready',
+      });
+
+      renderHeader();
+      expect(screen.getByRole('link', { name: 'BO' })).toBeInTheDocument();
+    });
+  });
+
   describe('memoization', () => {
     it('has displayName "Header"', () => {
       expect(Header.displayName).toBe('Header');

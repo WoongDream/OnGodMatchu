@@ -74,6 +74,19 @@ export const rowStyle = (theme: Theme) => css`
   }
 `;
 
+export const rowTitleWrapStyle = (theme: Theme) => css`
+  display: inline-flex;
+  align-items: center;
+  gap: ${theme.spacing.xs};
+  overflow: hidden;
+`;
+
+export const pinIconStyle = (theme: Theme) => css`
+  color: ${theme.colors.accent.primary};
+  flex-shrink: 0;
+  display: inline-flex;
+`;
+
 export const rowTitleStyle = (theme: Theme) => css`
   ${text({ size: 'sm', weight: 'medium' })({ theme })}
   color: ${theme.colors.fg.primary};

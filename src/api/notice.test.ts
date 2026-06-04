@@ -16,9 +16,12 @@ import { getAnnouncements, getAnnouncementDetail, type NoticePage } from './noti
 const mockGet = vi.mocked(instance.get);
 
 const makeListItem = (overrides: Partial<NoticeListItem> = {}): NoticeListItem => ({
-  slug: 'service-open',
+  id: 1,
   title: '공지 제목',
+  pinned: false,
   publishedAt: '2026-05-01T00:00:00+09:00',
+  updatedAt: null,
+  viewCount: 0,
   ...overrides,
 });
 
@@ -38,10 +41,13 @@ const makePage = (
 });
 
 const makeDetail = (overrides: Partial<NoticeDetail> = {}): NoticeDetail => ({
-  slug: 'service-open',
+  id: 1,
   title: '상세 제목',
   content: '본문',
+  pinned: false,
   publishedAt: '2026-05-01T00:00:00+09:00',
+  updatedAt: null,
+  viewCount: 0,
   ...overrides,
 });
 
@@ -92,8 +98,8 @@ describe('getAnnouncements', () => {
 
   it('ApiResponse 에서 data.data (NoticePage) 를 언랩해서 반환한다', async () => {
     const fixture = makePage([
-      makeListItem({ slug: 'service-open', title: '첫 공지' }),
-      makeListItem({ slug: 'maintenance-notice', title: '둘째 공지' }),
+      makeListItem({ id: 1, title: '첫 공지' }),
+      makeListItem({ id: 2, title: '둘째 공지' }),
     ]);
     mockGet.mockResolvedValueOnce({ data: { success: true, data: fixture } });
 
@@ -110,52 +116,42 @@ describe('getAnnouncements', () => {
 });
 
 describe('getAnnouncementDetail', () => {
-  it('GET /api/announcements/{slug} 를 호출한다', async () => {
+  it('GET /api/announcements/{id} 를 호출한다', async () => {
     mockGet.mockResolvedValueOnce({
-      data: { success: true, data: makeDetail({ slug: 'service-open' }) },
+      data: { success: true, data: makeDetail({ id: 7 }) },
     });
 
-    await getAnnouncementDetail('service-open');
+    await getAnnouncementDetail(7);
 
-    expect(mockGet).toHaveBeenCalledWith('/api/announcements/service-open');
+    expect(mockGet).toHaveBeenCalledWith('/api/announcements/7');
   });
 
   it('ApiResponse 에서 data.data (NoticeDetail) 를 언랩해서 반환한다', async () => {
     const fixture = makeDetail({
-      slug: 'service-open',
+      id: 7,
       title: '공지 상세',
       content: '본문 내용',
     });
     mockGet.mockResolvedValueOnce({ data: { success: true, data: fixture } });
 
-    const result = await getAnnouncementDetail('service-open');
+    const result = await getAnnouncementDetail(7);
 
     expect(result).toEqual(fixture);
   });
 
-  it('slug 가 다른 경우 각각 다른 URL 로 호출한다', async () => {
+  it('id 가 다른 경우 각각 다른 URL 로 호출한다', async () => {
     mockGet.mockResolvedValue({ data: { success: true, data: makeDetail() } });
 
-    await getAnnouncementDetail('service-open');
-    await getAnnouncementDetail('maintenance-notice');
+    await getAnnouncementDetail(1);
+    await getAnnouncementDetail(2);
 
-    expect(mockGet).toHaveBeenNthCalledWith(1, '/api/announcements/service-open');
-    expect(mockGet).toHaveBeenNthCalledWith(2, '/api/announcements/maintenance-notice');
-  });
-
-  it('slug 에 특수문자가 있으면 encodeURIComponent 로 escape 한다', async () => {
-    mockGet.mockResolvedValueOnce({ data: { success: true, data: makeDetail() } });
-
-    await getAnnouncementDetail('한글 슬러그/test');
-
-    expect(mockGet).toHaveBeenCalledWith(
-      '/api/announcements/%ED%95%9C%EA%B8%80%20%EC%8A%AC%EB%9F%AC%EA%B7%B8%2Ftest',
-    );
+    expect(mockGet).toHaveBeenNthCalledWith(1, '/api/announcements/1');
+    expect(mockGet).toHaveBeenNthCalledWith(2, '/api/announcements/2');
   });
 
   it('axios 에러를 그대로 throw 한다', async () => {
     mockGet.mockRejectedValueOnce(new Error('not found'));
 
-    await expect(getAnnouncementDetail('missing')).rejects.toThrow('not found');
+    await expect(getAnnouncementDetail(999)).rejects.toThrow('not found');
   });
 });

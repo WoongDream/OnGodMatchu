@@ -6,6 +6,12 @@ export type UserStats = {
 
 export type AuthProvider = 'LOCAL' | 'GOOGLE' | 'NAVER';
 
+/** 사용자 역할 (USER < ADMIN < OWNER). 상위가 하위 권한을 포함. */
+export type Role = 'USER' | 'ADMIN' | 'OWNER';
+
+/** 파생 상태 — 정상/정지/탈퇴. BE 가 isActive/suspendedUntil 에서 파생해 내려준다. */
+export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'WITHDRAWN';
+
 export type User = {
   id: number;
   /** 공개 식별자(UUID). BE /me 응답의 userId — 타인 프로필과 본인 비교에 사용 */
@@ -13,6 +19,12 @@ export type User = {
   email: string;
   nickname: string;
   provider: AuthProvider;
+  /** 역할. 응답에 없으면 USER 로 간주(least-privilege). */
+  role?: Role;
+  /** 파생 상태. */
+  status?: UserStatus;
+  /** 정지 만료 시각(ISO). 정지 아니면 null. */
+  suspendedUntil?: string | null;
   profileImageKey?: string | null;
   profileImageUrl?: string | null;
   /** 크롭 전 원본 key (소유자 응답에만). 재편집 시 재전송용. */

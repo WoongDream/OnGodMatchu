@@ -35,7 +35,11 @@ import ReleaseNotesList from './pages/announcements/ReleaseNotesList';
 import ReleaseNoteDetail from './pages/announcements/ReleaseNoteDetail';
 import ProtectedRoute from '@/components/protected-route/ProtectedRoute';
 import GuestOnlyRoute from '@/components/guest-only-route/GuestOnlyRoute';
+import RoleRoute from '@/components/role-route/RoleRoute';
 import TermsAgreementGate from '@/components/terms-agreement-gate';
+import AdminLayout from './pages/admin/AdminLayout';
+import BoNoticeListPage from './pages/admin/notices/BoNoticeListPage';
+import BoNoticeEditPage from './pages/admin/notices/BoNoticeEditPage';
 
 const RouteTracker = (): null => {
   usePageViewTracker();
@@ -125,10 +129,44 @@ const App = () => {
                   <Route path="quizzes-made" element={<PublicQuizzesMade />} />
                   <Route path="quizzes-played" element={<PublicQuizzesPlayed />} />
                 </Route>
+                <Route
+                  path="/admin"
+                  element={
+                    <RoleRoute min="ADMIN">
+                      <AdminLayout />
+                    </RoleRoute>
+                  }
+                >
+                  <Route index element={<Navigate to="notices" replace />} />
+                  <Route
+                    path="notices"
+                    element={
+                      <RoleRoute min="OWNER">
+                        <BoNoticeListPage />
+                      </RoleRoute>
+                    }
+                  />
+                  <Route
+                    path="notices/new"
+                    element={
+                      <RoleRoute min="OWNER">
+                        <BoNoticeEditPage />
+                      </RoleRoute>
+                    }
+                  />
+                  <Route
+                    path="notices/:id"
+                    element={
+                      <RoleRoute min="OWNER">
+                        <BoNoticeEditPage />
+                      </RoleRoute>
+                    }
+                  />
+                </Route>
                 <Route path="/announcements" element={<AnnouncementsLayout />}>
                   <Route index element={<Navigate to="notices" replace />} />
                   <Route path="notices" element={<AnnouncementsList />} />
-                  <Route path="notices/:slug" element={<AnnouncementDetail />} />
+                  <Route path="notices/:id" element={<AnnouncementDetail />} />
                   <Route path="release-notes" element={<ReleaseNotesList />} />
                   <Route path="release-notes/:version" element={<ReleaseNoteDetail />} />
                 </Route>

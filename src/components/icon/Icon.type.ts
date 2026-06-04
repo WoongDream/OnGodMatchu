@@ -19,4 +19,5 @@ export type IconName =
   | 'check'
   | 'plus'
   | 'trash'
-  | 'alert';
+  | 'alert'
+  | 'pin';
