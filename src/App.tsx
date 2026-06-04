@@ -40,6 +40,10 @@ import TermsAgreementGate from '@/components/terms-agreement-gate';
 import AdminLayout from './pages/admin/AdminLayout';
 import BoNoticeListPage from './pages/admin/notices/BoNoticeListPage';
 import BoNoticeEditPage from './pages/admin/notices/BoNoticeEditPage';
+import BoUsersPage from './pages/admin/users/BoUsersPage';
+import BoUserEditPage from './pages/admin/users/BoUserEditPage';
+import InquiryPage from './pages/inquiry/InquiryPage';
+import NotificationQueue from '@/features/notification/NotificationQueue';
 
 const RouteTracker = (): null => {
   usePageViewTracker();
@@ -105,6 +109,7 @@ const App = () => {
                 />
                 <Route path="/privacy" element={<PrivacyPage />} />
                 <Route path="/terms" element={<TermsPage />} />
+                <Route path="/inquiry" element={<InquiryPage />} />
                 <Route
                   path="/profile"
                   element={
@@ -137,7 +142,7 @@ const App = () => {
                     </RoleRoute>
                   }
                 >
-                  <Route index element={<Navigate to="notices" replace />} />
+                  <Route index element={<Navigate to="users" replace />} />
                   <Route
                     path="notices"
                     element={
@@ -162,6 +167,8 @@ const App = () => {
                       </RoleRoute>
                     }
                   />
+                  <Route path="users" element={<BoUsersPage />} />
+                  <Route path="users/:publicId" element={<BoUserEditPage />} />
                 </Route>
                 <Route path="/announcements" element={<AnnouncementsLayout />}>
                   <Route index element={<Navigate to="notices" replace />} />
@@ -175,6 +182,7 @@ const App = () => {
           </main>
           <Footer />
           <ToastContainer />
+          <NotificationQueue />
         </div>
       </BrowserRouter>
     </ThemeProvider>

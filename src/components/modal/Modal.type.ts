@@ -7,5 +7,5 @@ export type ModalProps = {
   children: ReactNode;
   footer?: ReactNode;
   closeOnOverlay?: boolean;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
 };

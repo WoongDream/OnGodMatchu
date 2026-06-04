@@ -30,3 +30,4 @@ export type {
 } from './notice';
 export type { Comment, CommentPage } from './comment';
 export type { Rotation, NormalizedCrop, ImageTransform } from './image';
+export type { NotificationType, UserNotification, NotificationDraft } from './notification';

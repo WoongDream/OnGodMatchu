@@ -13,7 +13,7 @@ type Menu = { key: string; label: string; to?: string };
 /** 8개 BO 메뉴 — 공지사항만 활성, 나머지는 추후(placeholder). */
 const MENUS: Menu[] = [
   { key: 'notices', label: '공지사항 관리', to: '/admin/notices' },
-  { key: 'users', label: '유저 관리' },
+  { key: 'users', label: '유저 관리', to: '/admin/users' },
   { key: 'quizzes', label: '퀴즈 관리' },
   { key: 'categories', label: '카테고리 관리' },
   { key: 'comments', label: '댓글 관리' },
