@@ -61,6 +61,13 @@ const setup = (overrides?: Partial<MyQuizListItem>, isMutating = false) => {
   return { onEdit, onDelete, container: result.container };
 };
 
+const setupReadOnly = (overrides?: Partial<MyQuizListItem>) => {
+  const item = { ...BASE_ITEM, ...overrides };
+  const onOpen = vi.fn();
+  const result = renderWithTheme(<MyQuizCard item={item} readOnly onOpen={onOpen} />);
+  return { onOpen, container: result.container };
+};
+
 describe('MyQuizCard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -242,6 +249,53 @@ describe('MyQuizCard', () => {
       setup();
       expect(screen.getByRole('button', { name: '편집' })).not.toBeDisabled();
       expect(screen.getByRole('button', { name: '삭제' })).not.toBeDisabled();
+    });
+  });
+
+  describe('readOnly 모드', () => {
+    it('편집/삭제 버튼이 렌더되지 않는다', () => {
+      setupReadOnly();
+      expect(screen.queryByRole('button', { name: '편집' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '삭제' })).not.toBeInTheDocument();
+    });
+
+    it('공개/비공개 Badge 가 렌더되지 않는다', () => {
+      setupReadOnly({ isPublic: true });
+      expect(screen.queryByTestId('badge')).not.toBeInTheDocument();
+    });
+
+    it('article 이 role="button" + aria-label "{title} 퀴즈 보기" 로 렌더된다', () => {
+      setupReadOnly();
+      const card = screen.getByRole('button', { name: '테스트 퀴즈 퀴즈 보기' });
+      expect(card.tagName).toBe('ARTICLE');
+    });
+
+    it('카드 클릭 시 onOpen(item.id) 가 호출된다', async () => {
+      const { onOpen } = setupReadOnly();
+      await userEvent.click(screen.getByRole('button', { name: '테스트 퀴즈 퀴즈 보기' }));
+      expect(onOpen).toHaveBeenCalledTimes(1);
+      expect(onOpen).toHaveBeenCalledWith(1);
+    });
+
+    it('카드에 Enter 키 입력 시 onOpen(item.id) 가 호출된다', async () => {
+      const { onOpen } = setupReadOnly();
+      const card = screen.getByRole('button', { name: '테스트 퀴즈 퀴즈 보기' });
+      card.focus();
+      await userEvent.keyboard('{Enter}');
+      expect(onOpen).toHaveBeenCalledWith(1);
+    });
+
+    it('카드에 Space 키 입력 시 onOpen(item.id) 가 호출된다', async () => {
+      const { onOpen } = setupReadOnly();
+      const card = screen.getByRole('button', { name: '테스트 퀴즈 퀴즈 보기' });
+      card.focus();
+      await userEvent.keyboard('{ }');
+      expect(onOpen).toHaveBeenCalledWith(1);
+    });
+
+    it('확인(삭제) 모달이 렌더되지 않는다', () => {
+      setupReadOnly();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
   });
 

@@ -24,6 +24,7 @@ import {
   removeProfileImage,
   regenerateDefaultProfileImage,
   getMyProfileStats,
+  getPublicProfileSummary,
   mapUserError,
   getRetryAfter,
   USER_ERROR_MESSAGES,
@@ -321,6 +322,53 @@ describe('getMyProfileStats', () => {
     const result = await getMyProfileStats();
 
     expect(result).toEqual(stats);
+  });
+});
+
+describe('getPublicProfileSummary', () => {
+  const SUMMARY = {
+    userId: 'u1',
+    nickname: '지호',
+    profileImageUrl: '',
+    bio: '소개',
+    isProfilePublic: true,
+    solvedCount: 209,
+    avgSolveRate: 71,
+    quizCount: 27,
+    totalPlayCount: 23104,
+    totalStarCount: 1840,
+  };
+
+  it('GET /api/users/:publicId/profile/summary 를 호출한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: SUMMARY } });
+
+    await getPublicProfileSummary('u1');
+
+    expect(mockGet).toHaveBeenCalledWith('/api/users/u1/profile/summary');
+  });
+
+  it('ApiResponse 에서 data.data 를 언랩해 반환한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: SUMMARY } });
+
+    const result = await getPublicProfileSummary('u1');
+
+    expect(result).toEqual(SUMMARY);
+  });
+
+  it('publicId 가 다르면 각각 다른 URL 로 호출한다', async () => {
+    mockGet.mockResolvedValue({ data: { success: true, data: SUMMARY } });
+
+    await getPublicProfileSummary('abc');
+    await getPublicProfileSummary('xyz');
+
+    expect(mockGet).toHaveBeenNthCalledWith(1, '/api/users/abc/profile/summary');
+    expect(mockGet).toHaveBeenNthCalledWith(2, '/api/users/xyz/profile/summary');
+  });
+
+  it('axios 에러를 그대로 throw 한다', async () => {
+    mockGet.mockRejectedValueOnce(new Error('forbidden'));
+
+    await expect(getPublicProfileSummary('u1')).rejects.toThrow('forbidden');
   });
 });
 

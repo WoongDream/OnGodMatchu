@@ -88,6 +88,18 @@ vi.mock('./pages/profile/ProfileAccount', () => ({
   default: () => <div data-testid="profile-account">Profile Account</div>,
 }));
 
+vi.mock('./pages/users/PublicProfileLayout', () => ({
+  default: () => <div data-testid="public-profile-layout">Public Profile Layout</div>,
+}));
+
+vi.mock('./pages/users/PublicQuizzesMade', () => ({
+  default: () => <div data-testid="public-quizzes-made">Public Quizzes Made</div>,
+}));
+
+vi.mock('./pages/users/PublicQuizzesPlayed', () => ({
+  default: () => <div data-testid="public-quizzes-played">Public Quizzes Played</div>,
+}));
+
 vi.mock('./pages/auth/TermsAgreementPage', () => ({
   default: () => <div data-testid="terms-agreement-page">Terms Agreement</div>,
 }));
@@ -318,15 +330,16 @@ describe('App', () => {
       expect(screen.getByTestId('navigate-to-/quiz')).toBeInTheDocument();
     });
 
-    it('has 30 routes total (1 layout + 16 top-level + 8 nested profile + 5 announcements children)', () => {
+    it('has 34 routes total (1 layout + 17 top-level + 8 nested profile + 3 public profile + 5 announcements children)', () => {
       renderWithTheme(<App />);
       const routeElements = screen.getAllByTestId(/^route-/);
-      // 1 (TermsAgreementGate 레이아웃) + 16 top-level (/, /quiz, /quiz/create, /quiz/:id,
+      // 1 (TermsAgreementGate 레이아웃) + 17 top-level (/, /quiz, /quiz/create, /quiz/:id,
       // /quiz/:id/play, /quiz/:id/result, /quiz/:id/edit, /login, /signup, /oauth2/callback,
-      // /terms-agreement, /privacy, /terms, /profile, /profile/:userId, /announcements)
+      // /terms-agreement, /privacy, /terms, /profile, /profile/:userId, /users/:publicId, /announcements)
       // + 5 /profile 자식 (index, quizzes-made, quizzes-played, quizzes-starred, account)
-      // + 3 /profile/:userId 자식 + 5 /announcements 자식 = 30
-      expect(routeElements).toHaveLength(30);
+      // + 3 /profile/:userId 자식 + 3 /users/:publicId 자식 (index, quizzes-made, quizzes-played)
+      // + 5 /announcements 자식 = 34
+      expect(routeElements).toHaveLength(34);
     });
 
     it('renders /profile/quizzes-starred route (only under /profile)', () => {
@@ -347,6 +360,36 @@ describe('App', () => {
     it('renders /profile/:userId public route', () => {
       renderWithTheme(<App />);
       expect(screen.getByTestId('route-/profile/:userId')).toBeInTheDocument();
+    });
+
+    it('renders /users/:publicId public route', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-/users/:publicId')).toBeInTheDocument();
+    });
+
+    it('renders PublicProfileLayout for the /users/:publicId route', () => {
+      renderWithTheme(<App />);
+      const route = screen.getByTestId('route-/users/:publicId');
+      expect(within(route).getByTestId('public-profile-layout')).toBeInTheDocument();
+    });
+
+    it('renders /users/:publicId/quizzes-made (PublicQuizzesMade)', () => {
+      renderWithTheme(<App />);
+      const route = screen.getByTestId('route-/users/:publicId');
+      expect(within(route).getByTestId('public-quizzes-made')).toBeInTheDocument();
+    });
+
+    it('renders /users/:publicId/quizzes-played (PublicQuizzesPlayed)', () => {
+      renderWithTheme(<App />);
+      const route = screen.getByTestId('route-/users/:publicId');
+      expect(within(route).getByTestId('public-quizzes-played')).toBeInTheDocument();
+    });
+
+    it('does not wrap /users/:publicId with ProtectedRoute', () => {
+      renderWithTheme(<App />);
+      const route = screen.getByTestId('route-/users/:publicId');
+      expect(within(route).queryByTestId('navigate-to-login')).not.toBeInTheDocument();
+      expect(within(route).getByTestId('public-profile-layout')).toBeInTheDocument();
     });
 
     it('route "/" has correct path attribute', () => {

@@ -25,6 +25,9 @@ import ProfileQuizzesMade from './pages/profile/ProfileQuizzesMade';
 import ProfileQuizzesPlayed from './pages/profile/ProfileQuizzesPlayed';
 import ProfileQuizzesStarred from './pages/profile/ProfileQuizzesStarred';
 import ProfileAccount from './pages/profile/ProfileAccount';
+import PublicProfileLayout from './pages/users/PublicProfileLayout';
+import PublicQuizzesMade from './pages/users/PublicQuizzesMade';
+import PublicQuizzesPlayed from './pages/users/PublicQuizzesPlayed';
 import AnnouncementsLayout from './pages/announcements/AnnouncementsLayout';
 import AnnouncementsList from './pages/announcements/AnnouncementsList';
 import AnnouncementDetail from './pages/announcements/AnnouncementDetail';
@@ -116,6 +119,11 @@ const App = () => {
                   <Route index element={<ProfileInfo />} />
                   <Route path="quizzes-made" element={<ProfileQuizzesMade />} />
                   <Route path="quizzes-played" element={<ProfileQuizzesPlayed />} />
+                </Route>
+                <Route path="/users/:publicId" element={<PublicProfileLayout />}>
+                  <Route index element={<Navigate to="quizzes-made" replace />} />
+                  <Route path="quizzes-made" element={<PublicQuizzesMade />} />
+                  <Route path="quizzes-played" element={<PublicQuizzesPlayed />} />
                 </Route>
                 <Route path="/announcements" element={<AnnouncementsLayout />}>
                   <Route index element={<Navigate to="notices" replace />} />

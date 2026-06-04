@@ -1,16 +1,22 @@
 import { css, type Theme } from '@emotion/react';
 import { text } from '@/styles/text';
 
-export const cardStyle = (theme: Theme) => css`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: ${theme.spacing.sm};
-  padding: ${theme.spacing.lg};
-  border: 1px solid ${theme.colors.border.primary};
-  border-radius: ${theme.borderRadius.lg};
-  background-color: ${theme.colors.bg.primary};
-`;
+export const cardStyle =
+  (variant: 'card' | 'plain' = 'card') =>
+  (theme: Theme) => css`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: ${theme.spacing.sm};
+    ${variant === 'card'
+      ? css`
+          padding: ${theme.spacing.lg};
+          border: 1px solid ${theme.colors.border.primary};
+          border-radius: ${theme.borderRadius.lg};
+          background-color: ${theme.colors.bg.primary};
+        `
+      : ''}
+  `;
 
 export const headerRowStyle = (theme: Theme) => css`
   display: inline-flex;

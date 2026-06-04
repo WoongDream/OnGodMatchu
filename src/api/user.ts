@@ -1,5 +1,5 @@
 import instance from './instance';
-import type { User, MyQuizzesAggregate, ImageTransform } from '@/types';
+import type { User, MyQuizzesAggregate, PublicProfileSummary, ImageTransform } from '@/types';
 
 type ApiResponse<T> = {
   success: boolean;
@@ -119,6 +119,14 @@ export const regenerateDefaultProfileImage = async (): Promise<User> => {
 
 export const getMyProfileStats = async (): Promise<MyQuizzesAggregate> => {
   const res = await instance.get<ApiResponse<MyQuizzesAggregate>>('/api/users/me/profile/stats');
+  return res.data.data;
+};
+
+/** 타 유저 프로필 요약 (프로필 모달 / 공개 프로필 화면). 비로그인도 호출 가능. */
+export const getPublicProfileSummary = async (publicId: string): Promise<PublicProfileSummary> => {
+  const res = await instance.get<ApiResponse<PublicProfileSummary>>(
+    `/api/users/${publicId}/profile/summary`,
+  );
   return res.data.data;
 };
 

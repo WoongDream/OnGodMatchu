@@ -1,4 +1,4 @@
-export type { User, UserStats } from './user';
+export type { User, UserStats, PublicProfileSummary } from './user';
 export type {
   Category,
   Quiz,

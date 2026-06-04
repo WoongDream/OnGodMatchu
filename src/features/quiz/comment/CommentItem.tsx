@@ -3,11 +3,13 @@ import ProfileImage from '@/components/profile-image';
 import type { Comment } from '@/types';
 import {
   actionsStyle,
+  avatarButtonStyle,
   bodyStyle,
   contentStyle,
   deleteButtonStyle,
   headStyle,
   itemStyle,
+  nicknameButtonStyle,
   nicknameStyle,
   timeStyle,
 } from './CommentItem.style';
@@ -30,36 +32,63 @@ type CommentItemProps = {
   canDelete: boolean;
   onDelete: (commentId: number) => void;
   isMutating?: boolean;
+  /** 글쓴이 프로필 클릭 시 (publicId 전달) — 프로필 모달 오픈용 */
+  onAuthorClick?: (publicId: string) => void;
 };
 
-const CommentItem = memo(({ comment, canDelete, onDelete, isMutating }: CommentItemProps) => {
-  const nickname = comment.authorNickname || '익명';
+const CommentItem = memo(
+  ({ comment, canDelete, onDelete, isMutating, onAuthorClick }: CommentItemProps) => {
+    const nickname = comment.authorNickname || '익명';
+    const clickable = !!onAuthorClick && !!comment.authorPublicId;
+    const handleAuthorClick = () => {
+      if (onAuthorClick && comment.authorPublicId) {
+        onAuthorClick(comment.authorPublicId);
+      }
+    };
 
-  return (
-    <li css={itemStyle}>
-      <ProfileImage nickname={nickname} imageUrl={comment.authorProfileImageUrl} size="sm" />
-      <div css={bodyStyle}>
-        <div css={headStyle}>
-          <span css={nicknameStyle}>{nickname}</span>
-          <span css={timeStyle}>{formatDateTime(comment.createdAt)}</span>
-        </div>
-        <p css={contentStyle}>{comment.content}</p>
-      </div>
-      {canDelete && (
-        <div css={actionsStyle}>
+    return (
+      <li css={itemStyle}>
+        {clickable ? (
           <button
             type="button"
-            css={deleteButtonStyle}
-            onClick={() => onDelete(comment.id)}
-            disabled={isMutating}
+            css={avatarButtonStyle}
+            onClick={handleAuthorClick}
+            aria-label={`${nickname} 프로필 보기`}
           >
-            삭제
+            <ProfileImage nickname={nickname} imageUrl={comment.authorProfileImageUrl} size="sm" />
           </button>
+        ) : (
+          <ProfileImage nickname={nickname} imageUrl={comment.authorProfileImageUrl} size="sm" />
+        )}
+        <div css={bodyStyle}>
+          <div css={headStyle}>
+            {clickable ? (
+              <button type="button" css={nicknameButtonStyle} onClick={handleAuthorClick}>
+                {nickname}
+              </button>
+            ) : (
+              <span css={nicknameStyle}>{nickname}</span>
+            )}
+            <span css={timeStyle}>{formatDateTime(comment.createdAt)}</span>
+          </div>
+          <p css={contentStyle}>{comment.content}</p>
         </div>
-      )}
-    </li>
-  );
-});
+        {canDelete && (
+          <div css={actionsStyle}>
+            <button
+              type="button"
+              css={deleteButtonStyle}
+              onClick={() => onDelete(comment.id)}
+              disabled={isMutating}
+            >
+              삭제
+            </button>
+          </div>
+        )}
+      </li>
+    );
+  },
+);
 
 CommentItem.displayName = 'CommentItem';
 export default CommentItem;

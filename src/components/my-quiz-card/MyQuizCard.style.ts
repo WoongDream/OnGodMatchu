@@ -16,6 +16,22 @@ export const cardStyle = (theme: Theme) => css`
   }
 `;
 
+export const clickableStyle = (theme: Theme) => css`
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover {
+    border-color: ${theme.colors.accent.primary};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${theme.colors.accent.primary};
+    outline-offset: 2px;
+  }
+`;
+
 export const thumbStyle = (theme: Theme) => css`
   flex-shrink: 0;
   width: 7rem;

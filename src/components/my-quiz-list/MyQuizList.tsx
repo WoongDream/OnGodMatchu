@@ -10,6 +10,8 @@ const MyQuizList = memo(
     onDelete,
     isMutating = false,
     emptyLabel = '아직 만든 퀴즈가 없습니다.',
+    readOnly = false,
+    onOpen,
   }: MyQuizListProps) => {
     if (items.length === 0) {
       return <p css={emptyStyle}>{emptyLabel}</p>;
@@ -19,7 +21,14 @@ const MyQuizList = memo(
       <ul css={listStyle}>
         {items.map((item) => (
           <li key={item.id} css={itemStyle}>
-            <MyQuizCard item={item} onEdit={onEdit} onDelete={onDelete} isMutating={isMutating} />
+            <MyQuizCard
+              item={item}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              isMutating={isMutating}
+              readOnly={readOnly}
+              onOpen={onOpen}
+            />
           </li>
         ))}
       </ul>

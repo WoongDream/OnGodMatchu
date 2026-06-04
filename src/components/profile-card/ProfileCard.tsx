@@ -23,9 +23,9 @@ const formatRate = (rate: number | null | undefined): string =>
   rate == null ? '—' : `${Math.round(rate)}%`;
 
 const ProfileCard = memo(
-  ({ nickname, imageUrl, bio, isProfilePublic, stats }: ProfileCardProps) => {
+  ({ nickname, imageUrl, bio, isProfilePublic, stats, variant = 'card' }: ProfileCardProps) => {
     return (
-      <section css={cardStyle}>
+      <section css={cardStyle(variant)}>
         <ProfileImage nickname={nickname} imageUrl={imageUrl} size="lg" />
         <div css={headerRowStyle}>
           <span css={nicknameStyle}>{nickname}</span>
