@@ -7,6 +7,8 @@ import WithdrawConfirmModal from './WithdrawConfirmModal';
 
 const mockSendCode = vi.hoisted(() => vi.fn().mockResolvedValue(true));
 const mockCodeReset = vi.hoisted(() => vi.fn());
+const mockVerify = vi.hoisted(() => vi.fn().mockResolvedValue(true));
+const mockClearVerifyError = vi.hoisted(() => vi.fn());
 
 let codeState = {
   codeSent: false,
@@ -17,6 +19,8 @@ let codeState = {
   canResend: false,
   errorCode: null as string | null,
   retryAfter: 0,
+  isVerifying: false,
+  verifyErrorCode: null as string | null,
 };
 
 const setCodeState = (s: Partial<typeof codeState>) => {
@@ -33,6 +37,8 @@ const resetCodeState = () => {
     canResend: false,
     errorCode: null,
     retryAfter: 0,
+    isVerifying: false,
+    verifyErrorCode: null,
   };
 };
 
@@ -46,8 +52,12 @@ vi.mock('@/hooks/useWithdrawalCode', () => ({
     canResend: codeState.canResend,
     errorCode: codeState.errorCode,
     retryAfter: codeState.retryAfter,
+    isVerifying: codeState.isVerifying,
+    verifyErrorCode: codeState.verifyErrorCode,
     sendCode: mockSendCode,
     reset: mockCodeReset,
+    verify: mockVerify,
+    clearVerifyError: mockClearVerifyError,
   }),
 }));
 
@@ -118,6 +128,7 @@ describe('WithdrawConfirmModal', () => {
     vi.clearAllMocks();
     resetCodeState();
     resetWithdrawState();
+    mockVerify.mockResolvedValue(true);
   });
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -582,6 +593,117 @@ describe('WithdrawConfirmModal', () => {
       renderModal();
       await goToStep2(user);
       expect(screen.getByLabelText('인증코드')).toBeInTheDocument();
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('Step 2 — 인증 버튼 (verify)', () => {
+    beforeEach(() => {
+      setCodeState({ codeSent: true, secondsLeft: 299, expired: false });
+    });
+
+    it('코드 6자리 입력 후 [인증] 클릭 시 verify 가 입력 코드로 호출된다', async () => {
+      const user = userEvent.setup();
+      renderModal();
+      await goToStep2(user);
+      await user.type(screen.getByLabelText('인증코드'), '123456');
+      await user.click(screen.getByRole('button', { name: '인증' }));
+      expect(mockVerify).toHaveBeenCalledWith('123456');
+    });
+
+    it('verify 성공(true) 시 "✓ 인증되었어요." 가 노출된다', async () => {
+      mockVerify.mockResolvedValue(true);
+      const user = userEvent.setup();
+      renderModal();
+      await goToStep2(user);
+      await user.type(screen.getByLabelText('인증코드'), '123456');
+      await user.click(screen.getByRole('button', { name: '인증' }));
+      expect(await screen.findByText('✓ 인증되었어요.')).toBeInTheDocument();
+    });
+
+    it('verify 성공 시 코드 input 이 disabled 된다', async () => {
+      mockVerify.mockResolvedValue(true);
+      const user = userEvent.setup();
+      renderModal();
+      await goToStep2(user);
+      await user.type(screen.getByLabelText('인증코드'), '123456');
+      await user.click(screen.getByRole('button', { name: '인증' }));
+      await screen.findByText('✓ 인증되었어요.');
+      expect(screen.getByLabelText('인증코드')).toBeDisabled();
+    });
+
+    it('verify 실패(false) 시 verified 되지 않아 "✓ 인증되었어요." 가 노출되지 않는다', async () => {
+      mockVerify.mockResolvedValue(false);
+      const user = userEvent.setup();
+      renderModal();
+      await goToStep2(user);
+      await user.type(screen.getByLabelText('인증코드'), '123456');
+      await user.click(screen.getByRole('button', { name: '인증' }));
+      await waitFor(() => expect(mockVerify).toHaveBeenCalled());
+      expect(screen.queryByText('✓ 인증되었어요.')).not.toBeInTheDocument();
+    });
+
+    it('verify 실패 + verifyErrorCode=INVALID_VERIFICATION_CODE → "인증코드가 올바르지 않습니다." 인라인 에러', async () => {
+      mockVerify.mockResolvedValue(false);
+      setCodeState({
+        codeSent: true,
+        secondsLeft: 299,
+        expired: false,
+        verifyErrorCode: 'INVALID_VERIFICATION_CODE',
+      });
+      const user = userEvent.setup();
+      renderModal();
+      await goToStep2(user);
+      const alerts = screen.getAllByRole('alert');
+      const found = alerts.find((el) => el.textContent?.includes('인증코드가 올바르지 않습니다.'));
+      expect(found).toBeTruthy();
+    });
+
+    it('verifyErrorCode=VERIFICATION_CODE_EXPIRED → "인증코드가 만료되었어요. 다시 받아주세요." 인라인 에러', async () => {
+      setCodeState({
+        codeSent: true,
+        secondsLeft: 299,
+        expired: false,
+        verifyErrorCode: 'VERIFICATION_CODE_EXPIRED',
+      });
+      const user = userEvent.setup();
+      renderModal();
+      await goToStep2(user);
+      const alerts = screen.getAllByRole('alert');
+      const found = alerts.find((el) =>
+        el.textContent?.includes('인증코드가 만료되었어요. 다시 받아주세요.'),
+      );
+      expect(found).toBeTruthy();
+    });
+
+    it('코드 input 변경 시 verifyErrorCode 가 있으면 clearVerifyError 가 호출된다', async () => {
+      setCodeState({
+        codeSent: true,
+        secondsLeft: 299,
+        expired: false,
+        verifyErrorCode: 'INVALID_VERIFICATION_CODE',
+      });
+      const user = userEvent.setup();
+      renderModal();
+      await goToStep2(user);
+      await user.type(screen.getByLabelText('인증코드'), '1');
+      expect(mockClearVerifyError).toHaveBeenCalled();
+    });
+
+    it('isVerifying=true 시 [인증] 버튼 라벨이 "확인 중..." 이고 disabled 다', async () => {
+      setCodeState({
+        codeSent: true,
+        secondsLeft: 299,
+        expired: false,
+        isVerifying: true,
+      });
+      const user = userEvent.setup();
+      renderModal();
+      await goToStep2(user);
+      await user.type(screen.getByLabelText('인증코드'), '123456');
+      const button = screen.getByRole('button', { name: '확인 중...' });
+      expect(button).toBeInTheDocument();
+      expect(button).toBeDisabled();
     });
   });
 

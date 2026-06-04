@@ -18,6 +18,7 @@ import {
   changePassword,
   withdrawAccount,
   requestWithdrawalCode,
+  verifyWithdrawalCode,
   agreeTerms,
   requestProfileImageUpload,
   applyProfileImage,
@@ -404,6 +405,32 @@ describe('requestWithdrawalCode', () => {
     mockPost.mockRejectedValueOnce(new Error('too many requests'));
 
     await expect(requestWithdrawalCode()).rejects.toThrow('too many requests');
+  });
+});
+
+describe('verifyWithdrawalCode', () => {
+  it('POST /api/users/me/withdrawal-code/verify 를 verificationCode body 로 호출한다', async () => {
+    mockPost.mockResolvedValueOnce({ data: {} });
+
+    await verifyWithdrawalCode('123456');
+
+    expect(mockPost).toHaveBeenCalledWith('/api/users/me/withdrawal-code/verify', {
+      verificationCode: '123456',
+    });
+  });
+
+  it('반환값은 void (undefined) 이다', async () => {
+    mockPost.mockResolvedValueOnce({ data: {} });
+
+    const result = await verifyWithdrawalCode('123456');
+
+    expect(result).toBeUndefined();
+  });
+
+  it('axios 에러를 그대로 throw 한다', async () => {
+    mockPost.mockRejectedValueOnce(new Error('invalid verification code'));
+
+    await expect(verifyWithdrawalCode('000000')).rejects.toThrow('invalid verification code');
   });
 });
 

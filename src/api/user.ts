@@ -75,6 +75,11 @@ export const requestWithdrawalCode = async (): Promise<void> => {
   await instance.post('/api/users/me/withdrawal-code');
 };
 
+/** 탈퇴 확정 전 인증 코드만 dry-run 검증 (코드 소비 X). 실패 시 INVALID_VERIFICATION_CODE / VERIFICATION_CODE_EXPIRED. */
+export const verifyWithdrawalCode = async (code: string): Promise<void> => {
+  await instance.post('/api/users/me/withdrawal-code/verify', { verificationCode: code });
+};
+
 export const agreeTerms = async (): Promise<User> => {
   const res = await instance.post<ApiResponse<User>>('/api/users/me/terms-agreement');
   return res.data.data;
