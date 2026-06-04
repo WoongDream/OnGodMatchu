@@ -166,7 +166,6 @@ describe('ProfileAccount', () => {
       renderProfileAccount({ profile: { provider: 'LOCAL' } });
       expect(screen.queryByText('Google')).not.toBeInTheDocument();
       expect(screen.queryByText('Naver')).not.toBeInTheDocument();
-      expect(screen.queryByText('Kakao')).not.toBeInTheDocument();
     });
   });
 
@@ -191,12 +190,6 @@ describe('ProfileAccount', () => {
       renderProfileAccount({ profile: { provider: 'NAVER' } });
       expect(screen.getByText('Naver')).toBeInTheDocument();
       expect(screen.getByText('소셜 로그인 계정 (Naver)')).toBeInTheDocument();
-    });
-
-    it('provider="kakao" 이면 "Kakao" 배지와 서브텍스트가 렌더된다', () => {
-      renderProfileAccount({ profile: { provider: 'KAKAO' } });
-      expect(screen.getByText('Kakao')).toBeInTheDocument();
-      expect(screen.getByText('소셜 로그인 계정 (Kakao)')).toBeInTheDocument();
     });
   });
 

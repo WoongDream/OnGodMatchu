@@ -34,7 +34,6 @@ type OutletContext = {
 const PROVIDER_LABELS: Record<string, string> = {
   GOOGLE: 'Google',
   NAVER: 'Naver',
-  KAKAO: 'Kakao',
 };
 
 const ProfileAccount = memo(() => {

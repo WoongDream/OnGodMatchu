@@ -13,10 +13,6 @@ describe('buildOAuthAuthorizationUrl', () => {
     expect(buildOAuthAuthorizationUrl('naver')).toBe(`${baseUrl}/oauth2/authorization/naver`);
   });
 
-  it('builds Kakao authorization URL', () => {
-    expect(buildOAuthAuthorizationUrl('kakao')).toBe(`${baseUrl}/oauth2/authorization/kakao`);
-  });
-
   it('uses VITE_API_BASE_URL as base for all providers', () => {
     SUPPORTED_OAUTH_PROVIDERS.forEach((provider) => {
       expect(buildOAuthAuthorizationUrl(provider)).toMatch(/^https?:\/\//);

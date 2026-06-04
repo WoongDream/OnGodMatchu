@@ -5,8 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import SocialLoginButtons from './SocialLoginButtons';
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
-const expectedUrl = (provider: 'google' | 'naver' | 'kakao') =>
-  `${baseUrl}/oauth2/authorization/${provider}`;
+const expectedUrl = (provider: 'google' | 'naver') => `${baseUrl}/oauth2/authorization/${provider}`;
 
 const renderInRouter = () =>
   renderWithTheme(
@@ -37,11 +36,10 @@ describe('SocialLoginButtons', () => {
   });
 
   describe('rendering', () => {
-    it('renders all three social login buttons', () => {
+    it('renders all social login buttons', () => {
       renderInRouter();
       expect(screen.getByText('Google로 계속하기')).toBeInTheDocument();
       expect(screen.getByText('네이버로 계속하기')).toBeInTheDocument();
-      expect(screen.getByText('카카오로 계속하기')).toBeInTheDocument();
     });
 
     it('renders divider section with "또는" text', () => {
@@ -49,9 +47,9 @@ describe('SocialLoginButtons', () => {
       expect(screen.getByText('또는')).toBeInTheDocument();
     });
 
-    it('renders exactly three buttons', () => {
+    it('renders exactly two buttons', () => {
       const { container } = renderInRouter();
-      expect(container.querySelectorAll('button')).toHaveLength(3);
+      expect(container.querySelectorAll('button')).toHaveLength(2);
     });
   });
 
@@ -74,15 +72,6 @@ describe('SocialLoginButtons', () => {
       expect(window.location.href).toBe(expectedUrl('naver'));
     });
 
-    it('redirects to Kakao authorization URL on click', async () => {
-      const user = userEvent.setup();
-      renderInRouter();
-
-      await user.click(screen.getByText('카카오로 계속하기'));
-
-      expect(window.location.href).toBe(expectedUrl('kakao'));
-    });
-
     it('overwrites href with the latest provider when multiple buttons are clicked', async () => {
       const user = userEvent.setup();
       renderInRouter();
@@ -90,8 +79,8 @@ describe('SocialLoginButtons', () => {
       await user.click(screen.getByText('Google로 계속하기'));
       expect(window.location.href).toBe(expectedUrl('google'));
 
-      await user.click(screen.getByText('카카오로 계속하기'));
-      expect(window.location.href).toBe(expectedUrl('kakao'));
+      await user.click(screen.getByText('네이버로 계속하기'));
+      expect(window.location.href).toBe(expectedUrl('naver'));
     });
 
     it('does not change href when no button is clicked', () => {

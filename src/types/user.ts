@@ -4,7 +4,7 @@ export type UserStats = {
   createdQuizCount: number;
 };
 
-export type AuthProvider = 'LOCAL' | 'GOOGLE' | 'NAVER' | 'KAKAO';
+export type AuthProvider = 'LOCAL' | 'GOOGLE' | 'NAVER';
 
 export type User = {
   id: number;
