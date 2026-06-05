@@ -124,6 +124,56 @@ describe('ProfileModalView', () => {
     });
   });
 
+  describe('역할 배지 — summary.role 전달', () => {
+    it("summary.role='OWNER' 이면 'OWNER' 배지 텍스트가 노출된다", () => {
+      renderWithTheme(
+        <ProfileModalView
+          isOpen
+          onClose={noop}
+          summary={{ ...PUBLIC_SUMMARY, role: 'OWNER' }}
+          isLoading={false}
+          error={false}
+          onGoProfile={noop}
+        />,
+      );
+
+      expect(screen.getByText('OWNER')).toBeInTheDocument();
+      expect(screen.queryByText('ADMIN')).not.toBeInTheDocument();
+    });
+
+    it("summary.role='ADMIN' 이면 'ADMIN' 배지 텍스트가 노출된다", () => {
+      renderWithTheme(
+        <ProfileModalView
+          isOpen
+          onClose={noop}
+          summary={{ ...PUBLIC_SUMMARY, role: 'ADMIN' }}
+          isLoading={false}
+          error={false}
+          onGoProfile={noop}
+        />,
+      );
+
+      expect(screen.getByText('ADMIN')).toBeInTheDocument();
+      expect(screen.queryByText('OWNER')).not.toBeInTheDocument();
+    });
+
+    it('summary.role 이 없으면 역할 배지 텍스트가 미노출된다', () => {
+      renderWithTheme(
+        <ProfileModalView
+          isOpen
+          onClose={noop}
+          summary={PUBLIC_SUMMARY}
+          isLoading={false}
+          error={false}
+          onGoProfile={noop}
+        />,
+      );
+
+      expect(screen.queryByText('OWNER')).not.toBeInTheDocument();
+      expect(screen.queryByText('ADMIN')).not.toBeInTheDocument();
+    });
+  });
+
   describe('로딩 상태', () => {
     it('isLoading=true 면 "불러오는 중..." 이 표시된다', () => {
       renderWithTheme(

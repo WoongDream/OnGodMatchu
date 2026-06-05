@@ -178,3 +178,12 @@ export const AlertIcon = wrap(
     <circle cx="12" cy="16" r="1.1" fill="#ffffff" stroke="none" />
   </>,
 );
+
+export const CrownIcon = wrap(
+  'CrownIcon',
+  <path
+    d="M3.2 8.4l3.6 3.1L11.2 5.6a1 1 0 0 1 1.6 0l4.4 5.9 3.6-3.1a.6.6 0 0 1 .98.55l-1.62 8.1a1 1 0 0 1-.98.8H5.84a1 1 0 0 1-.98-.8L3.24 8.95a.6.6 0 0 1 .98-.55z"
+    fill="currentColor"
+    stroke="none"
+  />,
+);

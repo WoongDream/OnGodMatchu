@@ -18,12 +18,10 @@ import {
   rowValueStyle,
   rowSubtextStyle,
   rowAccentStyle,
-  valueWithBadgeStyle,
   rowActionStyle,
   dangerTitleStyle,
   dangerBodyStyle,
   dangerActionRowStyle,
-  providerBadgeStyle,
 } from './ProfileAccount.style';
 
 type OutletContext = {
@@ -88,12 +86,7 @@ const ProfileAccountView = memo(({ profile }: ViewProps) => {
         <div css={rowStyle}>
           <div css={rowMainStyle}>
             <span css={rowLabelStyle}>이메일</span>
-            <span css={[rowValueStyle, valueWithBadgeStyle]}>
-              {profile.email}
-              {!isLocalProvider && providerLabel && (
-                <span css={providerBadgeStyle}>{providerLabel}</span>
-              )}
-            </span>
+            <span css={rowValueStyle}>{profile.email}</span>
             <span css={rowSubtextStyle}>
               {isLocalProvider
                 ? '변경할 수 없어요'

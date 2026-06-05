@@ -17,5 +17,6 @@ export {
   TrashIcon,
   AlertIcon,
   PinIcon,
+  CrownIcon,
 } from './Icon';
 export type { IconProps, IconName } from './Icon.type';

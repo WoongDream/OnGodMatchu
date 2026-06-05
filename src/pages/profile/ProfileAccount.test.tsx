@@ -169,16 +169,11 @@ describe('ProfileAccount', () => {
     });
   });
 
-  describe('OAuth provider — 이메일 배지 & 서브텍스트', () => {
+  describe('OAuth provider — 이메일 서브텍스트', () => {
     it('provider="google" 이면 비밀번호 카드가 미렌더된다', () => {
       renderProfileAccount({ profile: { provider: 'GOOGLE' } });
       expect(screen.queryByText('비밀번호')).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: '비밀번호 변경' })).not.toBeInTheDocument();
-    });
-
-    it('provider="google" 이면 이메일 옆 "Google" 배지가 렌더된다', () => {
-      renderProfileAccount({ profile: { provider: 'GOOGLE' } });
-      expect(screen.getByText('Google')).toBeInTheDocument();
     });
 
     it('provider="google" 이면 서브텍스트가 "소셜 로그인 계정 (Google)" 이다', () => {
@@ -186,9 +181,8 @@ describe('ProfileAccount', () => {
       expect(screen.getByText('소셜 로그인 계정 (Google)')).toBeInTheDocument();
     });
 
-    it('provider="naver" 이면 "Naver" 배지와 서브텍스트가 렌더된다', () => {
+    it('provider="naver" 이면 서브텍스트가 "소셜 로그인 계정 (Naver)" 이다', () => {
       renderProfileAccount({ profile: { provider: 'NAVER' } });
-      expect(screen.getByText('Naver')).toBeInTheDocument();
       expect(screen.getByText('소셜 로그인 계정 (Naver)')).toBeInTheDocument();
     });
   });

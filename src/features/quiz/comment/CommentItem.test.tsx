@@ -96,6 +96,56 @@ describe('CommentItem', () => {
     });
   });
 
+  describe('탈퇴 작성자 (authorPublicId=null, 클릭 비활성)', () => {
+    it('닉네임 텍스트는 보이되 작성자 버튼이 아니다', () => {
+      const onAuthorClick = vi.fn();
+      setup({
+        comment: { authorPublicId: null, authorNickname: '탈퇴한 사용자' },
+        onAuthorClick,
+      });
+      expect(screen.getByText('탈퇴한 사용자')).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: '탈퇴한 사용자 프로필 보기' }),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '탈퇴한 사용자' })).not.toBeInTheDocument();
+    });
+
+    it('닉네임이 button 이 아닌 span 으로 렌더된다', () => {
+      const onAuthorClick = vi.fn();
+      setup({
+        comment: { authorPublicId: null, authorNickname: '탈퇴한 사용자' },
+        onAuthorClick,
+      });
+      const nickname = screen.getByText('탈퇴한 사용자');
+      expect(nickname.tagName).not.toBe('BUTTON');
+    });
+
+    it('닉네임을 클릭해도 onAuthorClick 가 호출되지 않는다', async () => {
+      const onAuthorClick = vi.fn();
+      setup({
+        comment: { authorPublicId: null, authorNickname: '탈퇴한 사용자' },
+        onAuthorClick,
+      });
+      await userEvent.click(screen.getByText('탈퇴한 사용자'));
+      expect(onAuthorClick).not.toHaveBeenCalled();
+    });
+
+    it('삭제 버튼(canDelete)이 있어도 작성자 버튼만 비활성이다', () => {
+      const onAuthorClick = vi.fn();
+      setup({
+        comment: { authorPublicId: null, authorNickname: '탈퇴한 사용자' },
+        canDelete: true,
+        onAuthorClick,
+      });
+      // 작성자 버튼은 없고
+      expect(
+        screen.queryByRole('button', { name: '탈퇴한 사용자 프로필 보기' }),
+      ).not.toBeInTheDocument();
+      // 삭제 버튼은 별개로 존재
+      expect(screen.getByRole('button', { name: '삭제' })).toBeInTheDocument();
+    });
+  });
+
   describe('삭제 버튼', () => {
     it('canDelete=true 이면 삭제 버튼이 보이고 클릭 시 onDelete(id) 호출된다', async () => {
       const onDelete = vi.fn();

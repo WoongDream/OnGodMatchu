@@ -81,13 +81,6 @@ export const rowAccentStyle = (theme: Theme) => css`
   color: ${theme.colors.accent.primary};
 `;
 
-export const valueWithBadgeStyle = (theme: Theme) => css`
-  display: flex;
-  align-items: center;
-  gap: ${theme.spacing.sm};
-  flex-wrap: wrap;
-`;
-
 export const rowActionStyle = (theme: Theme) => css`
   display: flex;
   align-items: center;
@@ -119,16 +112,4 @@ export const dangerActionRowStyle = (theme: Theme) => css`
       width: 100%;
     }
   }
-`;
-
-export const providerBadgeStyle = (theme: Theme) => css`
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px ${theme.spacing.sm};
-  border: 1px solid ${theme.colors.border.primary};
-  border-radius: ${theme.borderRadius.full};
-  background-color: ${theme.colors.bg.primary};
-  ${text({ size: 'xs', weight: 'medium' })({ theme })}
-  color: ${theme.colors.fg.primary};
 `;

@@ -60,4 +60,6 @@ export type PublicProfileSummary = {
   totalPlayCount: number;
   /** 만든 PUBLIC 퀴즈 받은 스타 합계 */
   totalStarCount: number;
+  /** 사용자 역할. OWNER/ADMIN 만 닉네임 위 배지로 표시, 없으면 USER 취급. */
+  role?: Role;
 };

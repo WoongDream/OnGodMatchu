@@ -46,6 +46,7 @@ const ProfileModalView = memo(
               bio={summary.bio ?? undefined}
               isProfilePublic={summary.isProfilePublic}
               stats={toAggregate(summary)}
+              role={summary.role}
             />
           )}
         </div>

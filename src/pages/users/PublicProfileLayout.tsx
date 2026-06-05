@@ -69,6 +69,7 @@ const PublicProfileLayout = memo(() => {
           bio={summary.bio ?? undefined}
           isProfilePublic={summary.isProfilePublic}
           stats={toAggregate(summary)}
+          role={summary.role}
         />
         <nav css={navStyle} aria-label="프로필 메뉴">
           <span css={groupLabelStyle}>퀴즈</span>

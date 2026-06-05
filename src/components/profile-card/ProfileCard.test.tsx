@@ -171,6 +171,39 @@ describe('ProfileCard', () => {
     });
   });
 
+  describe('RoleBadge — role prop', () => {
+    it("role='OWNER' 이면 'OWNER' 텍스트가 노출된다", () => {
+      renderWithTheme(<ProfileCard nickname="테스트유저" isProfilePublic={false} role="OWNER" />);
+      expect(screen.getByText('OWNER')).toBeInTheDocument();
+      expect(screen.queryByText('ADMIN')).not.toBeInTheDocument();
+    });
+
+    it("role='ADMIN' 이면 'ADMIN' 텍스트가 노출된다", () => {
+      renderWithTheme(<ProfileCard nickname="테스트유저" isProfilePublic={false} role="ADMIN" />);
+      expect(screen.getByText('ADMIN')).toBeInTheDocument();
+      expect(screen.queryByText('OWNER')).not.toBeInTheDocument();
+    });
+
+    it("role='USER' 이면 'OWNER'·'ADMIN' 텍스트가 미노출된다", () => {
+      renderWithTheme(<ProfileCard nickname="테스트유저" isProfilePublic={false} role="USER" />);
+      expect(screen.queryByText('OWNER')).not.toBeInTheDocument();
+      expect(screen.queryByText('ADMIN')).not.toBeInTheDocument();
+    });
+
+    it('role 미전달이면 배지 텍스트가 미노출된다', () => {
+      renderWithTheme(<ProfileCard nickname="테스트유저" isProfilePublic={false} />);
+      expect(screen.queryByText('OWNER')).not.toBeInTheDocument();
+      expect(screen.queryByText('ADMIN')).not.toBeInTheDocument();
+    });
+
+    it('role 이 있어도 닉네임과 공개 배지에 회귀가 없다', () => {
+      renderWithTheme(<ProfileCard nickname="테스트유저" isProfilePublic role="OWNER" />);
+      expect(screen.getByText('테스트유저')).toBeInTheDocument();
+      expect(screen.getByText('공개')).toBeInTheDocument();
+      expect(screen.getByText('OWNER')).toBeInTheDocument();
+    });
+  });
+
   describe('정답률 — avgSolveRate (formatRate)', () => {
     it('avgSolveRate=63.6 → Math.round → "64%"', () => {
       renderWithTheme(

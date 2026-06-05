@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import ProfileImage from '@/components/profile-image';
 import Badge from '@/components/badge';
+import RoleBadge from '@/components/role-badge';
 import { PlayIcon, QuizIcon } from '@/components/icon';
 import { formatCount } from '@/lib/format/count';
 import type { ProfileCardProps } from './ProfileCard.type';
@@ -23,10 +24,19 @@ const formatRate = (rate: number | null | undefined): string =>
   rate == null ? '—' : `${Math.round(rate)}%`;
 
 const ProfileCard = memo(
-  ({ nickname, imageUrl, bio, isProfilePublic, stats, variant = 'card' }: ProfileCardProps) => {
+  ({
+    nickname,
+    imageUrl,
+    bio,
+    isProfilePublic,
+    stats,
+    role,
+    variant = 'card',
+  }: ProfileCardProps) => {
     return (
       <section css={cardStyle(variant)}>
         <ProfileImage nickname={nickname} imageUrl={imageUrl} size="lg" />
+        <RoleBadge role={role} />
         <div css={headerRowStyle}>
           <span css={nicknameStyle}>{nickname}</span>
           <Badge variant={isProfilePublic ? 'info' : 'neutral'}>
