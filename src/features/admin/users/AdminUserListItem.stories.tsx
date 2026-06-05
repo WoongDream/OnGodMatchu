@@ -28,6 +28,7 @@ const baseUser: AdminUser = {
   suspendedUntil: null,
   provider: 'kakao',
   createdAt: '2024-03-15T08:30:00Z',
+  withdrawnAt: null,
 };
 
 export const Default: Story = {
@@ -70,9 +71,14 @@ export const OwnerWithImage: Story = {
 };
 
 export const Withdrawn: Story = {
-  name: '탈퇴 유저',
+  name: '탈퇴 유저 (알림 보내기 버튼 미노출)',
   args: {
-    user: { ...baseUser, nickname: '탈퇴유저', status: 'WITHDRAWN' },
+    user: {
+      ...baseUser,
+      nickname: 'deleted_394c6f93',
+      status: 'WITHDRAWN',
+      withdrawnAt: '2026-05-29T02:10:00Z',
+    },
   },
   render: (args) => (
     <div style={{ maxWidth: '720px' }}>

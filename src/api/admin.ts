@@ -38,6 +38,8 @@ export type AdminUser = {
   suspendedUntil: string | null;
   provider: string;
   createdAt: string;
+  /** 탈퇴 시각(ISO). 탈퇴 유저만 값, 그 외 null. */
+  withdrawnAt: string | null;
 };
 
 export type AdminUserQuery = {
@@ -85,6 +87,8 @@ export type AdminUserDetail = {
   suspendedUntil: string | null;
   provider: string;
   createdAt: string;
+  /** 탈퇴 시각(ISO). 탈퇴 유저만 값, 그 외 null. */
+  withdrawnAt: string | null;
   /** 본인이 푼 횟수. */
   solvedCount: number;
   /** 본인 평균 정답률(0~100). 시도 0이면 null. */

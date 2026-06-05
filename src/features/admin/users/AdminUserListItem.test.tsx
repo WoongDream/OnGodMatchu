@@ -14,6 +14,7 @@ const createUser = (overrides?: Partial<AdminUser>): AdminUser => ({
   suspendedUntil: null,
   provider: 'kakao',
   createdAt: '2024-03-15T08:30:00Z',
+  withdrawnAt: null,
   ...overrides,
 });
 
@@ -134,6 +135,73 @@ describe('AdminUserListItem', () => {
       expect(onNotify).toHaveBeenCalledTimes(1);
       expect(onNotify).toHaveBeenCalledWith(target);
       expect(onSelect).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('탈퇴 유저', () => {
+    it('status 가 WITHDRAWN 이면 「알림 보내기」 버튼이 렌더되지 않는다', () => {
+      renderWithTheme(
+        <AdminUserListItem
+          user={createUser({ status: 'WITHDRAWN', withdrawnAt: '2024-04-01T00:00:00Z' })}
+          onSelect={vi.fn()}
+          onNotify={vi.fn()}
+        />,
+      );
+      expect(screen.queryByText('알림 보내기')).toBeNull();
+    });
+
+    it('WITHDRAWN 유저는 원본 닉네임 대신 "탈퇴한 유저 정보 삭제됨" 이 표시된다', () => {
+      renderWithTheme(
+        <AdminUserListItem
+          user={createUser({
+            nickname: 'deleted_8f3a1c',
+            status: 'WITHDRAWN',
+            withdrawnAt: '2024-04-01T00:00:00Z',
+          })}
+          onSelect={vi.fn()}
+          onNotify={vi.fn()}
+        />,
+      );
+      expect(screen.getByText('탈퇴한 유저 정보 삭제됨')).toBeInTheDocument();
+      expect(screen.queryByText('deleted_8f3a1c')).toBeNull();
+    });
+
+    it('WITHDRAWN 유저는 imageUrl 이 있어도 "탈" 이니셜 fallback 아바타가 렌더된다', () => {
+      renderWithTheme(
+        <AdminUserListItem
+          user={createUser({
+            nickname: 'deleted_8f3a1c',
+            profileImageUrl: 'https://example.com/a.png',
+            status: 'WITHDRAWN',
+            withdrawnAt: '2024-04-01T00:00:00Z',
+          })}
+          onSelect={vi.fn()}
+          onNotify={vi.fn()}
+        />,
+      );
+      const avatar = screen.getByRole('img', { name: '탈퇴한 사용자 프로필 이미지' });
+      expect(avatar).toBeInTheDocument();
+      expect(avatar).toHaveTextContent('탈');
+    });
+
+    it('WITHDRAWN 유저도 행 클릭 시 onSelect(userId) 가 호출된다', async () => {
+      const user = userEvent.setup();
+      const onSelect = vi.fn();
+      renderWithTheme(
+        <AdminUserListItem
+          user={createUser({
+            userId: 'u-99',
+            nickname: 'deleted_8f3a1c',
+            status: 'WITHDRAWN',
+            withdrawnAt: '2024-04-01T00:00:00Z',
+          })}
+          onSelect={onSelect}
+          onNotify={vi.fn()}
+        />,
+      );
+      await user.click(screen.getByRole('button', { name: /탈퇴한 유저 정보 삭제됨/ }));
+      expect(onSelect).toHaveBeenCalledTimes(1);
+      expect(onSelect).toHaveBeenCalledWith('u-99');
     });
   });
 

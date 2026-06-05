@@ -74,6 +74,7 @@ const MOCK_USER: AdminUserDetail = {
   suspendedUntil: null,
   provider: 'GOOGLE',
   createdAt: '2025-01-10T09:00:00Z',
+  withdrawnAt: null,
   solvedCount: 12,
   avgSolveRate: 84.6,
   quizCount: 3,
@@ -150,6 +151,36 @@ describe('BoUserEditPage', () => {
       });
       renderPage();
       expect(screen.getByText('—')).toBeInTheDocument();
+    });
+  });
+
+  describe('가입 수단', () => {
+    it('provider 가 GOOGLE 이면 "가입 수단" 라벨과 "Google" 이 표시된다', () => {
+      // MOCK_USER.provider === 'GOOGLE'
+      renderPage();
+      expect(screen.getByText('가입 수단')).toBeInTheDocument();
+      expect(screen.getByText('Google')).toBeInTheDocument();
+    });
+
+    it('provider 가 LOCAL 이면 "이메일" 로 매핑되어 표시된다', () => {
+      mockUseAdminUserDetail.mockReturnValue({
+        ...DEFAULT_DETAIL_RETURN,
+        user: { ...MOCK_USER, provider: 'LOCAL' },
+      });
+      renderPage();
+      expect(screen.getByText('가입 수단')).toBeInTheDocument();
+      // '이메일' 은 이메일 행의 라벨 + LOCAL 매핑값 두 군데에 나타난다.
+      expect(screen.getAllByText('이메일')).toHaveLength(2);
+    });
+
+    it('매핑에 없는 provider 면 raw 문자열을 그대로 표시한다', () => {
+      mockUseAdminUserDetail.mockReturnValue({
+        ...DEFAULT_DETAIL_RETURN,
+        user: { ...MOCK_USER, provider: 'KAKAO' },
+      });
+      renderPage();
+      expect(screen.getByText('가입 수단')).toBeInTheDocument();
+      expect(screen.getByText('KAKAO')).toBeInTheDocument();
     });
   });
 
@@ -324,6 +355,53 @@ describe('BoUserEditPage', () => {
       expect(screen.getByRole('button', { name: '정지' })).toBeDisabled();
       expect(screen.getByRole('button', { name: '초기화' })).toBeDisabled();
       expect(screen.getByRole('button', { name: '변경사항 저장' })).toBeDisabled();
+    });
+
+    it('withdrawnAt 이 있으면 "탈퇴일" 라벨과 날짜가 표시된다', () => {
+      mockUseAdminUserDetail.mockReturnValue({
+        ...DEFAULT_DETAIL_RETURN,
+        user: { ...MOCK_USER, status: 'WITHDRAWN', withdrawnAt: '2026-05-29T10:20:30Z' },
+      });
+      renderPage();
+      expect(screen.getByText('탈퇴일')).toBeInTheDocument();
+      expect(screen.getByText('2026-05-29')).toBeInTheDocument();
+    });
+
+    it('닉네임/한줄소개/이메일 자리에 "탈퇴한 유저 정보 삭제됨" 3곳이 표시되고 원본 식별정보는 안 보인다', () => {
+      mockUseAdminUserDetail.mockReturnValue({
+        ...DEFAULT_DETAIL_RETURN,
+        user: {
+          ...MOCK_USER,
+          status: 'WITHDRAWN',
+          nickname: 'deleted_홍길동',
+          bio: 'deleted_자기소개',
+          email: 'deleted_hong@example.com',
+        },
+      });
+      renderPage();
+      // 닉네임 · 한 줄 소개 · 이메일 세 행 모두 마스킹 문구로 표시
+      expect(screen.getAllByText('탈퇴한 유저 정보 삭제됨')).toHaveLength(3);
+      // 원본 식별정보는 노출되지 않음
+      expect(screen.queryByText('deleted_홍길동')).not.toBeInTheDocument();
+      expect(screen.queryByText('deleted_자기소개')).not.toBeInTheDocument();
+      expect(screen.queryByText('deleted_hong@example.com')).not.toBeInTheDocument();
+      // 프로필 이미지 캡션은 "기본 이미지"
+      expect(screen.getByText('기본 이미지')).toBeInTheDocument();
+    });
+  });
+
+  describe('탈퇴일 미노출', () => {
+    it('비탈퇴(ACTIVE) 유저면 "탈퇴일" 텍스트가 없다', () => {
+      renderPage();
+      expect(screen.queryByText('탈퇴일')).not.toBeInTheDocument();
+    });
+
+    it('비탈퇴(ACTIVE) 유저는 원본 닉네임/이메일/한줄소개가 그대로 보이고 마스킹 문구는 없다', () => {
+      renderPage();
+      expect(screen.getByText('홍길동')).toBeInTheDocument();
+      expect(screen.getByText('hong@example.com')).toBeInTheDocument();
+      expect(screen.getByText('안녕하세요 자기소개입니다')).toBeInTheDocument();
+      expect(screen.queryByText('탈퇴한 유저 정보 삭제됨')).not.toBeInTheDocument();
     });
   });
 });

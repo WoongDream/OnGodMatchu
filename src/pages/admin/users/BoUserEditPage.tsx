@@ -16,6 +16,17 @@ import * as s from './BoUserEditPage.style';
 
 const ROLES: Role[] = ['USER', 'ADMIN', 'OWNER'];
 
+/** 가입 수단 표시 라벨. 탈퇴 후에도 보존되는 비식별 정보라 탈퇴 유저 식별 보조에 유용. */
+const PROVIDER_LABELS: Record<string, string> = {
+  LOCAL: '이메일',
+  GOOGLE: 'Google',
+  NAVER: 'Naver',
+};
+
+/** 탈퇴 유저는 식별정보(닉네임/한줄소개/이메일)가 파기돼 원본 대신 이 문구로 표시. 아바타는 "탈" 이니셜 기본 이미지. */
+const WITHDRAWN_INFO = '탈퇴한 유저 정보 삭제됨';
+const WITHDRAWN_AVATAR_NICKNAME = '탈퇴한 사용자';
+
 const defaultSuspendDate = (): string =>
   new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
@@ -160,9 +171,17 @@ const BoUserEditPage = memo(() => {
         <section css={s.cardStyle}>
           <div css={s.rowBoxStyle}>
             <div css={s.profileRowStyle}>
-              <ProfileImage nickname={user.nickname} imageUrl={user.profileImageUrl} size="lg" />
+              <ProfileImage
+                nickname={withdrawn ? WITHDRAWN_AVATAR_NICKNAME : user.nickname}
+                imageUrl={withdrawn ? null : user.profileImageUrl}
+                size="lg"
+              />
               <span css={s.mutedStyle}>
-                {resetImage ? '저장 시 기본 이미지로 변경' : '현재 이미지'}
+                {withdrawn
+                  ? '기본 이미지'
+                  : resetImage
+                    ? '저장 시 기본 이미지로 변경'
+                    : '현재 이미지'}
               </span>
             </div>
             <Button
@@ -178,7 +197,11 @@ const BoUserEditPage = memo(() => {
             <div>
               <p css={s.fieldLabelStyle}>닉네임</p>
               <p css={s.fieldValueStyle}>
-                {resetNickname ? '저장 시 새 닉네임 생성' : user.nickname}
+                {withdrawn
+                  ? WITHDRAWN_INFO
+                  : resetNickname
+                    ? '저장 시 새 닉네임 생성'
+                    : user.nickname}
               </p>
             </div>
             <Button
@@ -193,7 +216,9 @@ const BoUserEditPage = memo(() => {
           <div css={s.rowBoxStyle}>
             <div>
               <p css={s.fieldLabelStyle}>한 줄 소개</p>
-              <p css={s.fieldValueStyle}>{resetBio ? '저장 시 초기화' : user.bio || '(없음)'}</p>
+              <p css={s.fieldValueStyle}>
+                {withdrawn ? WITHDRAWN_INFO : resetBio ? '저장 시 초기화' : user.bio || '(없음)'}
+              </p>
             </div>
             <Button
               variant="secondary"
@@ -206,12 +231,22 @@ const BoUserEditPage = memo(() => {
 
           <div css={s.metaRowStyle}>
             <p css={s.fieldLabelStyle}>이메일</p>
-            <p css={s.fieldValueStyle}>{user.email}</p>
+            <p css={s.fieldValueStyle}>{withdrawn ? WITHDRAWN_INFO : user.email}</p>
+          </div>
+          <div css={s.metaRowStyle}>
+            <p css={s.fieldLabelStyle}>가입 수단</p>
+            <p css={s.fieldValueStyle}>{PROVIDER_LABELS[user.provider] ?? user.provider}</p>
           </div>
           <div css={s.metaRowStyle}>
             <p css={s.fieldLabelStyle}>가입일</p>
             <p css={s.fieldValueStyle}>{user.createdAt.slice(0, 10)}</p>
           </div>
+          {withdrawn && user.withdrawnAt ? (
+            <div css={s.metaRowStyle}>
+              <p css={s.fieldLabelStyle}>탈퇴일</p>
+              <p css={s.fieldValueStyle}>{user.withdrawnAt.slice(0, 10)}</p>
+            </div>
+          ) : null}
 
           <div css={s.statsRowStyle}>
             <div css={s.statBlockStyle}>

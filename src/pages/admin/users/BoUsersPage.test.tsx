@@ -89,6 +89,7 @@ const makeUser = (id: string, overrides: Partial<AdminUser> = {}): AdminUser => 
   suspendedUntil: null,
   provider: 'GOOGLE',
   createdAt: '2025-03-15T09:00:00Z',
+  withdrawnAt: null,
   ...overrides,
 });
 
@@ -243,6 +244,18 @@ describe('BoUsersPage', () => {
       fireEvent.click(screen.getByRole('button', { name: '알림 보내기' }));
       expect(mockNavigate).not.toHaveBeenCalled();
       expect(screen.getByText(/받는 사람 · 유저1/)).toBeInTheDocument();
+    });
+
+    it('탈퇴 유저 행에는 "알림 보내기" 버튼이 없다', () => {
+      mockUseAdminUsers.mockReturnValue({
+        ...DEFAULT_USERS_RETURN,
+        items: [makeUser('1', { status: 'WITHDRAWN', withdrawnAt: '2025-04-01T00:00:00Z' })],
+        totalElements: 1,
+      });
+      renderPage();
+      expect(screen.getByText('탈퇴한 유저 정보 삭제됨')).toBeInTheDocument();
+      expect(screen.queryByText('유저1')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '알림 보내기' })).not.toBeInTheDocument();
     });
   });
 

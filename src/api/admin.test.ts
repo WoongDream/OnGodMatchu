@@ -59,6 +59,7 @@ const makeAdminUser = (overrides: Partial<AdminUser> = {}): AdminUser => ({
   suspendedUntil: null,
   provider: 'LOCAL',
   createdAt: '2026-01-01T00:00:00.000Z',
+  withdrawnAt: null,
   ...overrides,
 });
 
@@ -265,6 +266,7 @@ const makeAdminUserDetail = (overrides: Partial<AdminUserDetail> = {}): AdminUse
   suspendedUntil: null,
   provider: 'LOCAL',
   createdAt: '2026-01-01T00:00:00.000Z',
+  withdrawnAt: null,
   solvedCount: 0,
   avgSolveRate: null,
   quizCount: 0,
@@ -405,6 +407,15 @@ describe('getAdminUserDetail', () => {
     const result = await getAdminUserDetail('x');
 
     expect(result).toEqual(detail);
+  });
+
+  it('탈퇴 유저의 withdrawnAt 을 그대로 반환한다 (패스스루)', async () => {
+    const detail = makeAdminUserDetail({ withdrawnAt: '2026-05-01T00:00:00.000Z' });
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: detail } });
+
+    const result = await getAdminUserDetail('u1');
+
+    expect(result.withdrawnAt).toBe('2026-05-01T00:00:00.000Z');
   });
 
   it('publicId 가 URL 에 반영된다', async () => {
