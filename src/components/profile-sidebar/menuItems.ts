@@ -3,6 +3,7 @@ export type MenuItemKey =
   | 'quizzes-made'
   | 'quizzes-played'
   | 'quizzes-starred'
+  | 'notifications'
   | 'account';
 
 export type MenuGroupId = 'quiz';
@@ -52,6 +53,7 @@ export const PROFILE_MENU_ITEMS: MenuItem[] = [
     myOnly: true,
     groupId: 'quiz',
   },
+  { key: 'notifications', label: '받은 알림', to: 'notifications', myOnly: true },
   { key: 'account', label: '계정', to: 'account', myOnly: true },
 ];
 

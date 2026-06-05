@@ -25,6 +25,7 @@ import ProfileQuizzesMade from './pages/profile/ProfileQuizzesMade';
 import ProfileQuizzesPlayed from './pages/profile/ProfileQuizzesPlayed';
 import ProfileQuizzesStarred from './pages/profile/ProfileQuizzesStarred';
 import ProfileAccount from './pages/profile/ProfileAccount';
+import ProfileNotifications from './pages/profile/ProfileNotifications';
 import PublicProfileLayout from './pages/users/PublicProfileLayout';
 import PublicQuizzesMade from './pages/users/PublicQuizzesMade';
 import PublicQuizzesPlayed from './pages/users/PublicQuizzesPlayed';
@@ -122,6 +123,7 @@ const App = () => {
                   <Route path="quizzes-made" element={<ProfileQuizzesMade />} />
                   <Route path="quizzes-played" element={<ProfileQuizzesPlayed />} />
                   <Route path="quizzes-starred" element={<ProfileQuizzesStarred />} />
+                  <Route path="notifications" element={<ProfileNotifications />} />
                   <Route path="account" element={<ProfileAccount />} />
                 </Route>
                 <Route path="/profile/:userId" element={<ProfileLayout />}>

@@ -43,6 +43,47 @@ describe('menuItems', () => {
     });
   });
 
+  describe('notifications 항목', () => {
+    it('PROFILE_MENU_ITEMS 에 notifications 항목이 존재한다', () => {
+      expect(PROFILE_MENU_ITEMS.some((i) => i.key === 'notifications')).toBe(true);
+    });
+
+    it('label 이 "받은 알림" 이다', () => {
+      expect(getItem('notifications').label).toBe('받은 알림');
+    });
+
+    it('to 가 "notifications" 이다', () => {
+      expect(getItem('notifications').to).toBe('notifications');
+    });
+
+    it('myOnly=true 이다', () => {
+      expect(getItem('notifications').myOnly).toBe(true);
+    });
+
+    it('groupId 가 없다 (그룹에 속하지 않는 단독 항목)', () => {
+      expect(getItem('notifications').groupId).toBeUndefined();
+    });
+
+    it("'계정'(account) 보다 앞에 위치한다", () => {
+      const notiIndex = PROFILE_MENU_ITEMS.findIndex((i) => i.key === 'notifications');
+      const accountIndex = PROFILE_MENU_ITEMS.findIndex((i) => i.key === 'account');
+      expect(notiIndex).toBeGreaterThanOrEqual(0);
+      expect(notiIndex).toBeLessThan(accountIndex);
+    });
+  });
+
+  describe('resolveTo / buildBaseTo — notifications 경로', () => {
+    it('userId 없을 때 /profile/notifications 로 해석된다', () => {
+      const base = buildBaseTo();
+      expect(resolveTo(base, getItem('notifications'))).toBe('/profile/notifications');
+    });
+
+    it('userId 지정 시 /profile/:userId/notifications 로 해석된다', () => {
+      const base = buildBaseTo(42);
+      expect(resolveTo(base, getItem('notifications'))).toBe('/profile/42/notifications');
+    });
+  });
+
   describe('resolveTo / buildBaseTo — quizzes-starred 경로', () => {
     it('userId 없을 때 /profile/quizzes-starred 로 해석된다', () => {
       const base = buildBaseTo();

@@ -84,6 +84,10 @@ vi.mock('./pages/profile/ProfileQuizzesStarred', () => ({
   default: () => <div data-testid="profile-quizzes-starred">Profile Quizzes Starred</div>,
 }));
 
+vi.mock('./pages/profile/ProfileNotifications', () => ({
+  default: () => <div data-testid="profile-notifications">Profile Notifications</div>,
+}));
+
 vi.mock('./pages/profile/ProfileAccount', () => ({
   default: () => <div data-testid="profile-account">Profile Account</div>,
 }));
@@ -430,18 +434,18 @@ describe('App', () => {
       expect(screen.getByTestId('navigate-to-/quiz')).toBeInTheDocument();
     });
 
-    it('has 42 routes total (1 layout + 19 top-level + 5 profile + 3 public profile + 3 users + 6 admin children + 5 announcements children)', () => {
+    it('has 43 routes total (1 layout + 19 top-level + 6 profile + 3 public profile + 3 users + 6 admin children + 5 announcements children)', () => {
       renderWithTheme(<App />);
       const routeElements = screen.getAllByTestId(/^route-/);
       // 1 (TermsAgreementGate 레이아웃) + 19 top-level (/, /quiz, /quiz/create, /quiz/:id,
       // /quiz/:id/play, /quiz/:id/result, /quiz/:id/edit, /login, /signup, /oauth2/callback,
       // /terms-agreement, /privacy, /terms, /inquiry, /profile, /profile/:userId,
       // /users/:publicId, /admin, /announcements)
-      // + 5 /profile 자식 (index, quizzes-made, quizzes-played, quizzes-starred, account)
+      // + 6 /profile 자식 (index, quizzes-made, quizzes-played, quizzes-starred, notifications, account)
       // + 3 /profile/:userId 자식 + 3 /users/:publicId 자식 (index, quizzes-made, quizzes-played)
       // + 6 /admin 자식 (index, notices, notices/new, notices/:id, users, users/:publicId)
-      // + 5 /announcements 자식 = 42
-      expect(routeElements).toHaveLength(42);
+      // + 5 /announcements 자식 = 43
+      expect(routeElements).toHaveLength(43);
     });
 
     it('renders /profile/quizzes-starred route (only under /profile)', () => {
@@ -452,6 +456,16 @@ describe('App', () => {
     it('renders ProfileQuizzesStarred component for the quizzes-starred route', () => {
       renderWithTheme(<App />);
       expect(screen.getByTestId('profile-quizzes-starred')).toBeInTheDocument();
+    });
+
+    it('renders /profile/notifications route (only under /profile)', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-notifications')).toBeInTheDocument();
+    });
+
+    it('renders ProfileNotifications component for the notifications route', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('profile-notifications')).toBeInTheDocument();
     });
 
     it('renders /profile route protected by ProtectedRoute', () => {

@@ -90,31 +90,60 @@ describe('NotificationModal', () => {
     });
   });
 
-  describe('버튼 분기 - 마지막일 때', () => {
-    it('「확인」/「문의하기」 버튼을 표시하고 다음 버튼은 없다', () => {
-      renderModal({ total: 3, index: 2 });
+  describe('버튼 분기 - 마지막일 때 (알림 종류별 규칙)', () => {
+    it('마지막이 INFO 면 「확인」만 표시하고 「문의하기」/다음 버튼은 없다', () => {
+      renderModal({ notification: makeNotification(), total: 3, index: 2 });
+      expect(screen.getByRole('button', { name: '확인' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '문의하기' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /다음/ })).not.toBeInTheDocument();
+    });
+
+    it('마지막이 WARNING 이면 「확인」/「문의하기」를 표시하고 다음 버튼은 없다', () => {
+      renderModal({
+        notification: makeNotification({ type: 'WARNING', typeLabel: '경고' }),
+        total: 3,
+        index: 2,
+      });
       expect(screen.getByRole('button', { name: '확인' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: '문의하기' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /다음/ })).not.toBeInTheDocument();
     });
 
-    it('total 이 1 이면(단일·마지막) 확인/문의하기를 표시한다', () => {
-      renderModal({ total: 1, index: 0 });
+    it('total 이 1(단일·마지막)이고 INFO 면 「확인」만 표시한다', () => {
+      renderModal({ notification: makeNotification(), total: 1, index: 0 });
+      expect(screen.getByRole('button', { name: '확인' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '문의하기' })).not.toBeInTheDocument();
+    });
+
+    it('total 이 1(단일·마지막)이고 WARNING 이면 「확인」/「문의하기」를 표시한다', () => {
+      renderModal({
+        notification: makeNotification({ type: 'WARNING', typeLabel: '경고' }),
+        total: 1,
+        index: 0,
+      });
       expect(screen.getByRole('button', { name: '확인' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: '문의하기' })).toBeInTheDocument();
     });
 
-    it('확인 클릭 시 onConfirm 을 호출한다', async () => {
+    it('확인 클릭 시 onConfirm 을 호출한다 (INFO)', async () => {
       const user = userEvent.setup();
-      const { onConfirm, onInquiry } = renderModal({ total: 1, index: 0 });
+      const { onConfirm, onInquiry } = renderModal({
+        notification: makeNotification(),
+        total: 1,
+        index: 0,
+      });
       await user.click(screen.getByRole('button', { name: '확인' }));
       expect(onConfirm).toHaveBeenCalledTimes(1);
       expect(onInquiry).not.toHaveBeenCalled();
     });
 
-    it('문의하기 클릭 시 onInquiry 를 호출한다', async () => {
+    it('문의하기 클릭 시 onInquiry 를 호출한다 (WARNING)', async () => {
       const user = userEvent.setup();
-      const { onInquiry, onConfirm } = renderModal({ total: 1, index: 0 });
+      const { onInquiry, onConfirm } = renderModal({
+        notification: makeNotification({ type: 'WARNING', typeLabel: '경고' }),
+        total: 1,
+        index: 0,
+      });
       await user.click(screen.getByRole('button', { name: '문의하기' }));
       expect(onInquiry).toHaveBeenCalledTimes(1);
       expect(onConfirm).not.toHaveBeenCalled();

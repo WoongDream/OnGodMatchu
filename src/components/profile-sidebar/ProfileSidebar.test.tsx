@@ -56,6 +56,11 @@ describe('ProfileSidebar', () => {
       fireEvent.click(screen.getByRole('button', { name: /퀴즈/ }));
       expect(screen.getByText('스타 준')).toBeInTheDocument();
     });
+
+    it('myOnly 메뉴 「받은 알림」이 노출된다', () => {
+      renderSidebar({ isMe: true });
+      expect(screen.getByText('받은 알림')).toBeInTheDocument();
+    });
   });
 
   describe('isMe=false 일 때', () => {
@@ -64,6 +69,11 @@ describe('ProfileSidebar', () => {
       expect(screen.getByText('내 정보')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /퀴즈/ })).toBeInTheDocument();
       expect(screen.queryByText('계정')).not.toBeInTheDocument();
+    });
+
+    it('myOnly 메뉴 「받은 알림」이 숨겨진다', () => {
+      renderSidebar({ isMe: false });
+      expect(screen.queryByText('받은 알림')).not.toBeInTheDocument();
     });
 
     it('퀴즈 그룹을 펼쳐도 myOnly 자식 「스타 준」은 숨겨진다', () => {

@@ -2,6 +2,8 @@ import { memo } from 'react';
 import { createPortal } from 'react-dom';
 import Button from '@/components/button/Button';
 import type { UserNotification } from '@/types';
+import NotificationActions from './NotificationActions';
+import NotificationTypeBadge from './NotificationTypeBadge';
 import {
   cardStyle,
   contentStyle,
@@ -11,7 +13,6 @@ import {
   metaWrapStyle,
   overlayStyle,
   titleStyle,
-  typeBadgeStyle,
 } from './NotificationModal.style';
 
 type Props = {
@@ -39,30 +40,25 @@ const NotificationModal = memo(
             </span>
           ) : null}
           <div css={cardStyle} role="alertdialog" aria-modal="true" aria-label={notification.title}>
-            <span css={(theme) => typeBadgeStyle(theme, notification.type)}>
-              {notification.typeLabel}
-            </span>
+            <NotificationTypeBadge type={notification.type} label={notification.typeLabel} />
             <h2 css={titleStyle}>{notification.title}</h2>
             <p css={contentStyle}>{notification.content}</p>
             <p css={metaStyle}>
               {notification.senderLabel} · {notification.createdAt.slice(0, 10)}
             </p>
-            <div css={footerStyle}>
-              {isLast ? (
-                <>
-                  <Button variant="primary" fullWidth onClick={onConfirm}>
-                    확인
-                  </Button>
-                  <Button variant="secondary" fullWidth onClick={onInquiry}>
-                    문의하기
-                  </Button>
-                </>
-              ) : (
+            {isLast ? (
+              <NotificationActions
+                type={notification.type}
+                onConfirm={onConfirm}
+                onInquiry={onInquiry}
+              />
+            ) : (
+              <div css={footerStyle}>
                 <Button variant="primary" fullWidth onClick={onNext}>
                   다음 ({remaining}개 남음)
                 </Button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
