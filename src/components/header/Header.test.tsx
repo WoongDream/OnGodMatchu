@@ -312,6 +312,60 @@ describe('Header', () => {
       renderHeader();
       expect(screen.getByRole('link', { name: 'BO' })).toBeInTheDocument();
     });
+
+    it('정지되지 않은 ADMIN 의 BO 탭은 비활성(span)이 아니라 링크다 (aria-disabled 없음)', () => {
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        isLoggedIn: true,
+        user: { ...MOCK_USER, role: 'ADMIN', status: 'ACTIVE' },
+        status: 'ready',
+      });
+
+      renderHeader();
+      const boLink = screen.getByRole('link', { name: 'BO' });
+      expect(boLink).toHaveAttribute('href', '/admin');
+      expect(boLink).not.toHaveAttribute('aria-disabled');
+    });
+  });
+
+  describe('백오피스(BO) 탭 — 정지(SUSPENDED) ADMIN', () => {
+    it('정지된 ADMIN 은 "BO" 가 보이되 링크가 아닌 비활성 span(aria-disabled) 으로 노출된다', () => {
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        isLoggedIn: true,
+        user: { ...MOCK_USER, role: 'ADMIN', status: 'SUSPENDED' },
+        status: 'ready',
+      });
+
+      renderHeader();
+      // BO 텍스트는 보이지만 링크(<a>)가 아니다
+      expect(screen.queryByRole('link', { name: 'BO' })).not.toBeInTheDocument();
+      const boSpan = screen.getByText('BO');
+      expect(boSpan.tagName).toBe('SPAN');
+      expect(boSpan).toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('정지된 OWNER 도 BO 가 비활성 span 으로 노출된다', () => {
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        isLoggedIn: true,
+        user: { ...MOCK_USER, role: 'OWNER', status: 'SUSPENDED' },
+        status: 'ready',
+      });
+
+      renderHeader();
+      expect(screen.queryByRole('link', { name: 'BO' })).not.toBeInTheDocument();
+      const boSpan = screen.getByText('BO');
+      expect(boSpan).toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('정지(SUSPENDED) 라도 role 이 없는 일반 user 면 BO 자체가 노출되지 않는다', () => {
+      (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        isLoggedIn: true,
+        user: { ...MOCK_USER, status: 'SUSPENDED' },
+        status: 'ready',
+      });
+
+      renderHeader();
+      expect(screen.queryByText('BO')).not.toBeInTheDocument();
+    });
   });
 
   describe('memoization', () => {

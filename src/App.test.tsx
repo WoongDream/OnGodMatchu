@@ -136,6 +136,22 @@ vi.mock('./pages/admin/notices/BoNoticeEditPage', () => ({
   default: () => <div data-testid="bo-notice-edit-page">BO Notice Edit Page</div>,
 }));
 
+vi.mock('./pages/admin/users/BoUsersPage', () => ({
+  default: () => <div data-testid="bo-users-page">BO Users Page</div>,
+}));
+
+vi.mock('./pages/admin/users/BoUserEditPage', () => ({
+  default: () => <div data-testid="bo-user-edit-page">BO User Edit Page</div>,
+}));
+
+vi.mock('./pages/inquiry/InquiryPage', () => ({
+  default: () => <div data-testid="inquiry-page">Inquiry Page</div>,
+}));
+
+vi.mock('@/features/notification/NotificationQueue', () => ({
+  default: () => <div data-testid="notification-queue">Notification Queue</div>,
+}));
+
 vi.mock('@/hooks/useBootstrapAuth', () => ({
   default: () => undefined,
 }));
@@ -242,6 +258,14 @@ describe('App', () => {
       renderWithTheme(<App />);
       const appShell = getAppShell();
       expect(within(appShell).getByTestId('footer')).toBeInTheDocument();
+    });
+
+    it('mounts NotificationQueue inside AppShell (outside PageContent)', () => {
+      renderWithTheme(<App />);
+      const appShell = getAppShell();
+      expect(within(appShell).getByTestId('notification-queue')).toBeInTheDocument();
+      // routes 안(페이지 컨텐츠)이 아니라 셸 레벨에 마운트됨
+      expect(within(getPageContent()).queryByTestId('notification-queue')).not.toBeInTheDocument();
     });
 
     it('renders Footer outside of PageContent (sibling of routes)', () => {
@@ -356,6 +380,38 @@ describe('App', () => {
       expect(within(adminRoute).getByTestId('route-notices/:id')).toBeInTheDocument();
     });
 
+    it('renders admin users child routes (users / users/:publicId)', () => {
+      renderWithTheme(<App />);
+      const adminRoute = screen.getByTestId('route-/admin');
+      expect(within(adminRoute).getByTestId('route-users')).toBeInTheDocument();
+      expect(within(adminRoute).getByTestId('route-users/:publicId')).toBeInTheDocument();
+    });
+
+    it('renders BoUsersPage / BoUserEditPage under /admin', () => {
+      renderWithTheme(<App />);
+      const adminRoute = screen.getByTestId('route-/admin');
+      expect(within(adminRoute).getByTestId('bo-users-page')).toBeInTheDocument();
+      expect(within(adminRoute).getByTestId('bo-user-edit-page')).toBeInTheDocument();
+    });
+
+    it('redirects /admin index to users (Navigate to="users")', () => {
+      renderWithTheme(<App />);
+      const adminRoute = screen.getByTestId('route-/admin');
+      expect(within(adminRoute).getByTestId('navigate-to-users')).toBeInTheDocument();
+    });
+
+    it('renders route for "/inquiry"', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-/inquiry')).toBeInTheDocument();
+    });
+
+    it('renders InquiryPage for the /inquiry route (not wrapped by ProtectedRoute)', () => {
+      renderWithTheme(<App />);
+      const route = screen.getByTestId('route-/inquiry');
+      expect(within(route).getByTestId('inquiry-page')).toBeInTheDocument();
+      expect(within(route).queryByTestId('navigate-to-login')).not.toBeInTheDocument();
+    });
+
     it('renders AdminLayout for the /admin route', () => {
       renderWithTheme(<App />);
       const adminRoute = screen.getByTestId('route-/admin');
@@ -374,18 +430,18 @@ describe('App', () => {
       expect(screen.getByTestId('navigate-to-/quiz')).toBeInTheDocument();
     });
 
-    it('has 39 routes total (1 layout + 18 top-level + 8 nested profile + 3 public profile + 4 admin children + 5 announcements children)', () => {
+    it('has 42 routes total (1 layout + 19 top-level + 5 profile + 3 public profile + 3 users + 6 admin children + 5 announcements children)', () => {
       renderWithTheme(<App />);
       const routeElements = screen.getAllByTestId(/^route-/);
-      // 1 (TermsAgreementGate 레이아웃) + 18 top-level (/, /quiz, /quiz/create, /quiz/:id,
+      // 1 (TermsAgreementGate 레이아웃) + 19 top-level (/, /quiz, /quiz/create, /quiz/:id,
       // /quiz/:id/play, /quiz/:id/result, /quiz/:id/edit, /login, /signup, /oauth2/callback,
-      // /terms-agreement, /privacy, /terms, /profile, /profile/:userId, /users/:publicId, /admin,
-      // /announcements)
+      // /terms-agreement, /privacy, /terms, /inquiry, /profile, /profile/:userId,
+      // /users/:publicId, /admin, /announcements)
       // + 5 /profile 자식 (index, quizzes-made, quizzes-played, quizzes-starred, account)
       // + 3 /profile/:userId 자식 + 3 /users/:publicId 자식 (index, quizzes-made, quizzes-played)
-      // + 4 /admin 자식 (index, notices, notices/new, notices/:id)
-      // + 5 /announcements 자식 = 39
-      expect(routeElements).toHaveLength(39);
+      // + 6 /admin 자식 (index, notices, notices/new, notices/:id, users, users/:publicId)
+      // + 5 /announcements 자식 = 42
+      expect(routeElements).toHaveLength(42);
     });
 
     it('renders /profile/quizzes-starred route (only under /profile)', () => {

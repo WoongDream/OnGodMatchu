@@ -16,6 +16,9 @@ vi.mock('react-router-dom', () => ({
       'data-to': to,
       'data-replace': String(replace ?? false),
     }),
+  // SuspensionInline 이 정지 시 <Link to="/inquiry"> 를 렌더하므로 Link 를 anchor 로 stub
+  Link: ({ to, children }: { to: string; children: React.ReactNode }) =>
+    React.createElement('a', { href: to }, children),
   useOutletContext: mockUseOutletContext,
 }));
 
@@ -474,6 +477,54 @@ describe('ProfileInfo', () => {
       // 이미지 버튼들 — isProcessing=false 이므로 enabled
       expect(screen.getByRole('button', { name: '이미지 업로드' })).not.toBeDisabled();
       expect(screen.getByRole('button', { name: '기본 이미지로' })).not.toBeDisabled();
+    });
+  });
+
+  describe('정지(SUSPENDED) 상태', () => {
+    const SUSPENDED_PROFILE: User = {
+      ...MOCK_PROFILE,
+      status: 'SUSPENDED',
+      suspendedUntil: '2099-01-01T00:00:00Z',
+    };
+
+    it('"내 정보" 헤딩 옆에 정지 안내(SuspensionInline) 의 "문의하기" 링크가 노출된다', () => {
+      renderProfileInfo({ profile: SUSPENDED_PROFILE });
+      expect(screen.getByRole('heading', { name: '내 정보' })).toBeInTheDocument();
+      const inquiryLink = screen.getByRole('link', { name: '문의하기' });
+      expect(inquiryLink).toBeInTheDocument();
+      expect(inquiryLink).toHaveAttribute('href', '/inquiry');
+    });
+
+    it('닉네임 input / bio textarea 가 disabled 된다', () => {
+      renderProfileInfo({ profile: SUSPENDED_PROFILE });
+      expect(screen.getByPlaceholderText('닉네임')).toBeDisabled();
+      expect(screen.getByPlaceholderText('자신을 소개해주세요')).toBeDisabled();
+    });
+
+    it('이미지 업로드 / 기본 이미지로 버튼이 disabled 된다', () => {
+      renderProfileInfo({ profile: SUSPENDED_PROFILE });
+      expect(screen.getByRole('button', { name: '이미지 업로드' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: '기본 이미지로' })).toBeDisabled();
+    });
+
+    it('저장 버튼이 disabled 된다 (변경 가능 여부와 무관)', () => {
+      // bio 변경으로 isDirty=true 를 만들어도 suspended 면 비활성 유지
+      renderProfileInfo({ profile: SUSPENDED_PROFILE });
+      fireEvent.change(screen.getByPlaceholderText('자신을 소개해주세요'), {
+        target: { value: '새 소개' },
+      });
+      expect(screen.getByRole('button', { name: '저장' })).toBeDisabled();
+    });
+
+    it('공개 설정 토글이 disabled 된다', () => {
+      renderProfileInfo({ profile: SUSPENDED_PROFILE });
+      expect(screen.getByRole('switch', { name: '프로필 공개' })).toBeDisabled();
+    });
+
+    it('정지가 아니면(status=ACTIVE) "문의하기" 링크가 노출되지 않는다 (회귀)', () => {
+      renderProfileInfo({ profile: { ...MOCK_PROFILE, status: 'ACTIVE' } });
+      expect(screen.queryByRole('link', { name: '문의하기' })).not.toBeInTheDocument();
+      expect(screen.getByPlaceholderText('닉네임')).not.toBeDisabled();
     });
   });
 
