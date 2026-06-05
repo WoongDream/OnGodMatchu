@@ -108,7 +108,8 @@ const NotificationComposeModal = memo(
         ) : null}
 
         <div css={recipientStyle}>
-          받는 사람 · {recipient.nickname} · {recipient.email}
+          받는 사람 · {recipient.nickname}
+          {recipient.email ? ` · ${recipient.email}` : ''}
         </div>
 
         <p css={fieldLabelStyle}>유형</p>

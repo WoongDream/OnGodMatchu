@@ -1,13 +1,11 @@
 import { memo } from 'react';
-import { wrapperStyle, titleStyle, descStyle } from './InquiryPage.style';
+import { Navigate } from 'react-router-dom';
 
-/** 문의하기 화면 — 추후 개발 예정. 알림 modal "문의하기" 버튼의 도착지(stub). */
-const InquiryPage = memo(() => (
-  <div css={wrapperStyle}>
-    <h1 css={titleStyle}>문의하기</h1>
-    <p css={descStyle}>문의 기능은 준비 중이에요. 곧 만나요!</p>
-  </div>
-));
+/**
+ * 레거시 진입점(`/inquiry`) — 실제 문의하기 화면은 프로필 LNB 탭(`/profile/inquiries`)으로 이동했다.
+ * 알림 모달·정지 안내의 "문의하기" 버튼이 가리키던 경로라 리다이렉트로 호환 유지.
+ */
+const InquiryPage = memo(() => <Navigate to="/profile/inquiries" replace />);
 
 InquiryPage.displayName = 'InquiryPage';
 export default InquiryPage;

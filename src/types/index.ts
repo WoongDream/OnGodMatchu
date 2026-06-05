@@ -31,3 +31,12 @@ export type {
 export type { Comment, CommentPage } from './comment';
 export type { Rotation, NormalizedCrop, ImageTransform } from './image';
 export type { NotificationType, UserNotification, NotificationDraft } from './notification';
+export type {
+  InquiryStatus,
+  InquiryFilter,
+  InquiryAuthor,
+  InquiryListItem,
+  BoInquiryListItem,
+  BoInquiry,
+  InquiryStats,
+} from './inquiry';

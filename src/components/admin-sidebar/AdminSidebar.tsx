@@ -19,7 +19,7 @@ const MENUS: Menu[] = [
   { key: 'comments', label: '댓글 관리' },
   { key: 'banned-words', label: '금지어 관리' },
   { key: 'nicknames', label: '닉네임 관리' },
-  { key: 'inquiries', label: '문의사항 관리' },
+  { key: 'inquiries', label: '문의사항 관리', to: '/admin/inquiries' },
 ];
 
 const AdminSidebar = memo(() => (

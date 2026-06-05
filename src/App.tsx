@@ -26,6 +26,7 @@ import ProfileQuizzesPlayed from './pages/profile/ProfileQuizzesPlayed';
 import ProfileQuizzesStarred from './pages/profile/ProfileQuizzesStarred';
 import ProfileAccount from './pages/profile/ProfileAccount';
 import ProfileNotifications from './pages/profile/ProfileNotifications';
+import ProfileInquiries from './pages/profile/ProfileInquiries';
 import PublicProfileLayout from './pages/users/PublicProfileLayout';
 import PublicQuizzesMade from './pages/users/PublicQuizzesMade';
 import PublicQuizzesPlayed from './pages/users/PublicQuizzesPlayed';
@@ -43,6 +44,8 @@ import BoNoticeListPage from './pages/admin/notices/BoNoticeListPage';
 import BoNoticeEditPage from './pages/admin/notices/BoNoticeEditPage';
 import BoUsersPage from './pages/admin/users/BoUsersPage';
 import BoUserEditPage from './pages/admin/users/BoUserEditPage';
+import BoInquiriesPage from './pages/admin/inquiries/BoInquiriesPage';
+import BoInquiryDetailPage from './pages/admin/inquiries/BoInquiryDetailPage';
 import InquiryPage from './pages/inquiry/InquiryPage';
 import NotificationQueue from '@/features/notification/NotificationQueue';
 
@@ -124,6 +127,7 @@ const App = () => {
                   <Route path="quizzes-played" element={<ProfileQuizzesPlayed />} />
                   <Route path="quizzes-starred" element={<ProfileQuizzesStarred />} />
                   <Route path="notifications" element={<ProfileNotifications />} />
+                  <Route path="inquiries" element={<ProfileInquiries />} />
                   <Route path="account" element={<ProfileAccount />} />
                 </Route>
                 <Route path="/profile/:userId" element={<ProfileLayout />}>
@@ -171,6 +175,8 @@ const App = () => {
                   />
                   <Route path="users" element={<BoUsersPage />} />
                   <Route path="users/:publicId" element={<BoUserEditPage />} />
+                  <Route path="inquiries" element={<BoInquiriesPage />} />
+                  <Route path="inquiries/:id" element={<BoInquiryDetailPage />} />
                 </Route>
                 <Route path="/announcements" element={<AnnouncementsLayout />}>
                   <Route index element={<Navigate to="notices" replace />} />
