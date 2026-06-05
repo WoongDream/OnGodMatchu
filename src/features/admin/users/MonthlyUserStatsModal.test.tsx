@@ -43,9 +43,9 @@ describe('MonthlyUserStatsModal', () => {
       expect(screen.getByText('최근 6개월 누적 가입 유저 추이')).toBeInTheDocument();
     });
 
-    it('useMonthlyUserStats 가 (isOpen, 6) 으로 호출된다', () => {
+    it('useMonthlyUserStats 가 (isOpen, 24) 로 호출된다 (차트 최근 6 + 리스트 전체)', () => {
       renderWithTheme(<MonthlyUserStatsModal isOpen onClose={vi.fn()} />);
-      expect(mockUseMonthlyUserStats).toHaveBeenCalledWith(true, 6);
+      expect(mockUseMonthlyUserStats).toHaveBeenCalledWith(true, 24);
     });
   });
 

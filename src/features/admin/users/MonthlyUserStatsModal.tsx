@@ -29,16 +29,18 @@ const listLabel = (yearMonth: string): string =>
 const formatK = (n: number): string => (n >= 1000 ? `${(n / 1000).toFixed(2)}K` : String(n));
 
 const MonthlyUserStatsModal = memo(({ isOpen, onClose }: Props) => {
-  const { stats, isLoading } = useMonthlyUserStats(isOpen, 6);
+  // 차트는 최근 6개월, 하단 리스트는 전체 기간(스크롤). BE months 상한은 24.
+  const { stats, isLoading } = useMonthlyUserStats(isOpen, 24);
   const ordered = useMemo<MonthlyUserStat[]>(() => stats ?? [], [stats]);
+  const chartData = useMemo(() => ordered.slice(-6), [ordered]);
 
   const { min, max } = useMemo(() => {
-    if (ordered.length === 0) {
+    if (chartData.length === 0) {
       return { min: 0, max: 1 };
     }
-    const values = ordered.map((s) => s.cumulative);
+    const values = chartData.map((s) => s.cumulative);
     return { min: Math.min(...values), max: Math.max(...values) };
-  }, [ordered]);
+  }, [chartData]);
 
   const barHeight = (value: number): number => {
     if (max === min) {
@@ -47,7 +49,12 @@ const MonthlyUserStatsModal = memo(({ isOpen, onClose }: Props) => {
     return 30 + ((value - min) / (max - min)) * 70;
   };
 
-  const reversed = useMemo(() => [...ordered].reverse(), [ordered]);
+  // 리스트는 첫 활동(누적>0) 월부터 현재까지 — 서비스 시작 전 0 월 노이즈 제거, 기록이 쌓이면 자연히 스크롤.
+  const listMonths = useMemo(() => {
+    const firstActive = ordered.findIndex((s) => s.cumulative > 0);
+    return firstActive === -1 ? ordered.slice(-1) : ordered.slice(firstActive);
+  }, [ordered]);
+  const reversed = useMemo(() => [...listMonths].reverse(), [listMonths]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="월별 유저 수" size="lg">
@@ -58,8 +65,8 @@ const MonthlyUserStatsModal = memo(({ isOpen, onClose }: Props) => {
       ) : (
         <>
           <div css={chartStyle}>
-            {ordered.map((s, i) => {
-              const isCurrent = i === ordered.length - 1;
+            {chartData.map((s, i) => {
+              const isCurrent = i === chartData.length - 1;
               return (
                 <div key={s.yearMonth} css={barColumnStyle}>
                   <span css={barValueStyle}>{formatK(s.cumulative)}</span>

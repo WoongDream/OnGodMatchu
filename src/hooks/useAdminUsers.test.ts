@@ -130,7 +130,7 @@ describe('useAdminUsers', () => {
         (props: { status: 'ACTIVE' | 'SUSPENDED' }) => useAdminUsers(props),
         {
           wrapper,
-          initialProps: { status: 'ACTIVE' as const },
+          initialProps: { status: 'ACTIVE' } as { status: 'ACTIVE' | 'SUSPENDED' },
         },
       );
 

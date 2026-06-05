@@ -57,6 +57,7 @@ export const barLabelStyle = (theme: Theme, isCurrent: boolean) => css`
 export const listStyle = (theme: Theme) => css`
   max-height: 40rem;
   overflow-y: auto;
+  margin-bottom: ${theme.spacing.xl};
   border: 1px solid ${theme.colors.border.secondary};
   border-radius: ${theme.borderRadius.md};
 `;
