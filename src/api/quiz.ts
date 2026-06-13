@@ -135,6 +135,7 @@ export type QuizListSort = 'plays' | 'latest';
 
 export const getQuizzes = async (params?: {
   category?: string;
+  q?: string;
   page?: number;
   size?: number;
   sort?: QuizListSort;
@@ -145,6 +146,10 @@ export const getQuizzes = async (params?: {
   };
   if (params?.category) {
     query.category = params.category;
+  }
+  const keyword = params?.q?.trim();
+  if (keyword) {
+    query.q = keyword;
   }
   if (params?.sort === 'latest') {
     query.sort = 'createdAt,desc';

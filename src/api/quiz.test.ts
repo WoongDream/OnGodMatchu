@@ -11,6 +11,7 @@ vi.mock('./instance', () => ({
 
 import instance from './instance';
 import {
+  getQuizzes,
   getMyQuizzes,
   getUserQuizzes,
   getQuizDetail,
@@ -60,6 +61,88 @@ const makePage = (content: unknown[]) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+});
+
+describe('getQuizzes', () => {
+  it('GET /api/quizzes 를 page/size 기본값(0, 20)으로 호출한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makePage([]) } });
+    await getQuizzes();
+    expect(mockGet).toHaveBeenCalledWith('/api/quizzes', {
+      params: { page: 0, size: 20 },
+    });
+  });
+
+  it('category 를 지정하면 쿼리에 포함한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makePage([]) } });
+    await getQuizzes({ category: 'culture' });
+    expect(mockGet).toHaveBeenCalledWith('/api/quizzes', {
+      params: { page: 0, size: 20, category: 'culture' },
+    });
+  });
+
+  it("sort='latest' 는 쿼리에 createdAt,desc 로 변환해 전달한다", async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makePage([]) } });
+    await getQuizzes({ sort: 'latest' });
+    expect(mockGet).toHaveBeenCalledWith('/api/quizzes', {
+      params: { page: 0, size: 20, sort: 'createdAt,desc' },
+    });
+  });
+
+  it("sort='plays' 는 쿼리에서 제외한다 (latest 분기만 매핑)", async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makePage([]) } });
+    await getQuizzes({ sort: 'plays' });
+    expect(mockGet).toHaveBeenCalledWith('/api/quizzes', {
+      params: { page: 0, size: 20 },
+    });
+  });
+
+  it('q 를 지정하면 쿼리에 q 로 포함한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makePage([]) } });
+    await getQuizzes({ q: '리액트' });
+    expect(mockGet).toHaveBeenCalledWith('/api/quizzes', {
+      params: { page: 0, size: 20, q: '리액트' },
+    });
+  });
+
+  it('q 앞뒤 공백은 trim 해서 전송한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makePage([]) } });
+    await getQuizzes({ q: '  리액트  ' });
+    expect(mockGet).toHaveBeenCalledWith('/api/quizzes', {
+      params: { page: 0, size: 20, q: '리액트' },
+    });
+  });
+
+  it('q 가 빈 문자열이면 쿼리에서 제외한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makePage([]) } });
+    await getQuizzes({ q: '' });
+    expect(mockGet).toHaveBeenCalledWith('/api/quizzes', {
+      params: { page: 0, size: 20 },
+    });
+  });
+
+  it('q 가 공백뿐이면 쿼리에서 제외한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makePage([]) } });
+    await getQuizzes({ q: '   ' });
+    expect(mockGet).toHaveBeenCalledWith('/api/quizzes', {
+      params: { page: 0, size: 20 },
+    });
+  });
+
+  it('category·q·sort·page·size 를 모두 함께 전달한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makePage([]) } });
+    await getQuizzes({ category: 'culture', q: ' 퀴즈 ', sort: 'latest', page: 2, size: 5 });
+    expect(mockGet).toHaveBeenCalledWith('/api/quizzes', {
+      params: { page: 2, size: 5, category: 'culture', q: '퀴즈', sort: 'createdAt,desc' },
+    });
+  });
+
+  it('ApiResponse 의 data(Page<Quiz>) 를 언랩해 반환한다', async () => {
+    const page = makePage([makeRawItem({ id: 9 })]);
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: page } });
+    const res = await getQuizzes();
+    expect(res).toBe(page);
+    expect(res.content[0].id).toBe(9);
+  });
 });
 
 describe('getMyQuizzes', () => {
