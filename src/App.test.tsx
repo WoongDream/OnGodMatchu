@@ -144,6 +144,14 @@ vi.mock('./pages/admin/notices/BoNoticeEditPage', () => ({
   default: () => <div data-testid="bo-notice-edit-page">BO Notice Edit Page</div>,
 }));
 
+vi.mock('./pages/admin/nicknames/BoNicknamesPage', () => ({
+  default: () => <div data-testid="bo-nicknames-page">BO Nicknames Page</div>,
+}));
+
+vi.mock('./pages/admin/nicknames/BoNicknameEditPage', () => ({
+  default: () => <div data-testid="bo-nickname-edit-page">BO Nickname Edit Page</div>,
+}));
+
 vi.mock('./pages/admin/users/BoUsersPage', () => ({
   default: () => <div data-testid="bo-users-page">BO Users Page</div>,
 }));
@@ -446,7 +454,7 @@ describe('App', () => {
       expect(screen.getByTestId('navigate-to-/quiz')).toBeInTheDocument();
     });
 
-    it('has 46 routes total (1 layout + 19 top-level + 7 profile + 3 public profile + 3 users + 8 admin children + 5 announcements children)', () => {
+    it('has 49 routes total (1 layout + 19 top-level + 7 profile + 3 public profile + 3 users + 11 admin children + 5 announcements children)', () => {
       renderWithTheme(<App />);
       const routeElements = screen.getAllByTestId(/^route-/);
       // 1 (TermsAgreementGate 레이아웃) + 19 top-level (/, /quiz, /quiz/create, /quiz/:id,
@@ -455,9 +463,10 @@ describe('App', () => {
       // /users/:publicId, /admin, /announcements)
       // + 7 /profile 자식 (index, quizzes-made, quizzes-played, quizzes-starred, notifications, inquiries, account)
       // + 3 /profile/:userId 자식 + 3 /users/:publicId 자식 (index, quizzes-made, quizzes-played)
-      // + 8 /admin 자식 (index, notices, notices/new, notices/:id, users, users/:publicId, inquiries, inquiries/:id)
-      // + 5 /announcements 자식 = 46
-      expect(routeElements).toHaveLength(46);
+      // + 11 /admin 자식 (index, notices, notices/new, notices/:id, nicknames, nicknames/new,
+      //   nicknames/:id, users, users/:publicId, inquiries, inquiries/:id)
+      // + 5 /announcements 자식 = 49
+      expect(routeElements).toHaveLength(49);
     });
 
     it('renders /profile/quizzes-starred route (only under /profile)', () => {

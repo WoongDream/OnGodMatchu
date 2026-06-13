@@ -28,6 +28,13 @@ export type {
   ReleaseNoteTag,
   ParsedReleaseNoteMeta,
 } from './notice';
+export type {
+  NicknameRuleType,
+  NicknameMatchType,
+  NicknameRuleFilter,
+  ForbiddenNickname,
+  NicknameRuleStats,
+} from './nickname';
 export type { Comment, CommentPage } from './comment';
 export type { Rotation, NormalizedCrop, ImageTransform } from './image';
 export type { NotificationType, UserNotification, NotificationDraft } from './notification';

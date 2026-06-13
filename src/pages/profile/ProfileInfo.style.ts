@@ -139,7 +139,8 @@ export const errorTextStyle = (theme: Theme) => css`
 `;
 
 export const statusTextStyle =
-  (status: 'available' | 'taken' | 'invalid' | 'checking' | 'error') => (theme: Theme) => css`
+  (status: 'available' | 'taken' | 'invalid' | 'checking' | 'forbidden' | 'error') =>
+  (theme: Theme) => css`
     ${text({ size: 'xs', weight: 'regular' })({ theme })}
     color: ${status === 'available'
       ? theme.colors.status.success

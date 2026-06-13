@@ -300,7 +300,13 @@ const ProfileInfoForm = memo(({ profile }: FormProps) => {
           {nicknameCheck.message && (
             <span
               css={statusTextStyle(
-                nicknameCheck.status as 'available' | 'taken' | 'invalid' | 'checking' | 'error',
+                nicknameCheck.status as
+                  | 'available'
+                  | 'taken'
+                  | 'invalid'
+                  | 'checking'
+                  | 'forbidden'
+                  | 'error',
               )}
             >
               {nicknameCheck.message}

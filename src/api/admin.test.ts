@@ -13,6 +13,8 @@ import type {
   NoticeStats,
   NotificationDraft,
   UserNotification,
+  ForbiddenNickname,
+  NicknameRuleStats,
 } from '@/types';
 
 vi.mock('./instance', () => ({
@@ -43,6 +45,13 @@ import {
   updateAdminUser,
   sendUserNotification,
   getAdminUserHistories,
+  getBoNicknames,
+  getBoNicknameStats,
+  getBoNickname,
+  createNicknameRule,
+  updateNicknameRule,
+  deleteNicknameRule,
+  mapNicknameError,
 } from './admin';
 
 const mockGet = vi.mocked(instance.get);
@@ -849,6 +858,273 @@ describe('deleteNotice', () => {
   });
 });
 
+// ── 닉네임 관리 ──────────────────────────────────────────────────────────────
+
+const makeForbiddenNickname = (overrides: Partial<ForbiddenNickname> = {}): ForbiddenNickname => ({
+  id: 1,
+  value: '관리자',
+  normalizedValue: '관리자',
+  type: 'FORBIDDEN',
+  matchType: 'EXACT',
+  reason: '운영 예약어',
+  createdAt: '2026-01-01T00:00:00.000Z',
+  ...overrides,
+});
+
+const makeNicknamePage = (content: ForbiddenNickname[]) => ({
+  content,
+  totalElements: content.length,
+  totalPages: 1,
+  number: 0,
+  size: 20,
+  first: true,
+  last: true,
+  empty: content.length === 0,
+});
+
+const makeNicknameStats = (overrides: Partial<NicknameRuleStats> = {}): NicknameRuleStats => ({
+  total: 10,
+  forbidden: 6,
+  reserved: 4,
+  ...overrides,
+});
+
+describe('getBoNicknames', () => {
+  it('GET /api/admin/nicknames 를 params 와 함께 호출한다', async () => {
+    const page = makeNicknamePage([makeForbiddenNickname()]);
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: page } });
+
+    const query = { filter: 'FORBIDDEN' as const, query: '검색', page: 1, size: 10 };
+    await getBoNicknames(query);
+
+    expect(mockGet).toHaveBeenCalledWith('/api/admin/nicknames', { params: query });
+  });
+
+  it('query 없이 호출하면 params 가 undefined 이다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makeNicknamePage([]) } });
+
+    await getBoNicknames();
+
+    expect(mockGet).toHaveBeenCalledWith('/api/admin/nicknames', { params: undefined });
+  });
+
+  it('ApiResponse 에서 Page 를 언랩해 반환한다', async () => {
+    const page = makeNicknamePage([
+      makeForbiddenNickname({ id: 1 }),
+      makeForbiddenNickname({ id: 2 }),
+    ]);
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: page } });
+
+    const result = await getBoNicknames();
+
+    expect(result).toEqual(page);
+    expect(result.content).toHaveLength(2);
+  });
+
+  it('빈 결과도 그대로 반환한다', async () => {
+    const page = makeNicknamePage([]);
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: page } });
+
+    const result = await getBoNicknames();
+
+    expect(result.content).toEqual([]);
+    expect(result.empty).toBe(true);
+  });
+
+  it('axios 에러를 그대로 throw 한다', async () => {
+    mockGet.mockRejectedValueOnce(new Error('forbidden'));
+
+    await expect(getBoNicknames()).rejects.toThrow('forbidden');
+  });
+});
+
+describe('getBoNicknameStats', () => {
+  it('GET /api/admin/nicknames/stats 를 호출한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makeNicknameStats() } });
+
+    await getBoNicknameStats();
+
+    expect(mockGet).toHaveBeenCalledWith('/api/admin/nicknames/stats');
+  });
+
+  it('언랩된 NicknameRuleStats 를 반환한다', async () => {
+    const stats = makeNicknameStats({ total: 3, forbidden: 2, reserved: 1 });
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: stats } });
+
+    const result = await getBoNicknameStats();
+
+    expect(result).toEqual(stats);
+  });
+
+  it('axios 에러를 그대로 throw 한다', async () => {
+    mockGet.mockRejectedValueOnce(new Error('forbidden'));
+
+    await expect(getBoNicknameStats()).rejects.toThrow('forbidden');
+  });
+});
+
+describe('getBoNickname', () => {
+  it('GET /api/admin/nicknames/:id 를 호출한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makeForbiddenNickname() } });
+
+    await getBoNickname(42);
+
+    expect(mockGet).toHaveBeenCalledWith('/api/admin/nicknames/42');
+  });
+
+  it('언랩된 ForbiddenNickname 를 반환한다', async () => {
+    const rule = makeForbiddenNickname({ id: 7, value: '단건' });
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: rule } });
+
+    const result = await getBoNickname(7);
+
+    expect(result).toEqual(rule);
+  });
+
+  it('id 가 URL 에 반영된다', async () => {
+    mockGet.mockResolvedValue({ data: { success: true, data: makeForbiddenNickname() } });
+
+    await getBoNickname(1);
+    await getBoNickname(99);
+
+    expect(mockGet).toHaveBeenNthCalledWith(1, '/api/admin/nicknames/1');
+    expect(mockGet).toHaveBeenNthCalledWith(2, '/api/admin/nicknames/99');
+  });
+
+  it('axios 에러를 그대로 throw 한다', async () => {
+    mockGet.mockRejectedValueOnce(new Error('not found'));
+
+    await expect(getBoNickname(1)).rejects.toThrow('not found');
+  });
+});
+
+describe('createNicknameRule', () => {
+  it('POST /api/admin/nicknames 를 payload 와 함께 호출한다', async () => {
+    mockPost.mockResolvedValueOnce({ data: { success: true, data: makeForbiddenNickname() } });
+
+    const payload = {
+      value: '비속어',
+      type: 'FORBIDDEN' as const,
+      matchType: 'CONTAINS' as const,
+      reason: '욕설',
+    };
+    await createNicknameRule(payload);
+
+    expect(mockPost).toHaveBeenCalledWith('/api/admin/nicknames', payload);
+  });
+
+  it('언랩된 ForbiddenNickname 를 반환한다', async () => {
+    const rule = makeForbiddenNickname({ id: 11, type: 'RESERVED' });
+    mockPost.mockResolvedValueOnce({ data: { success: true, data: rule } });
+
+    const result = await createNicknameRule({
+      value: 'admin',
+      type: 'RESERVED',
+      matchType: 'EXACT',
+      reason: null,
+    });
+
+    expect(result).toEqual(rule);
+  });
+
+  it('axios 에러를 그대로 throw 한다', async () => {
+    mockPost.mockRejectedValueOnce(new Error('duplicate'));
+
+    await expect(
+      createNicknameRule({ value: 'x', type: 'FORBIDDEN', matchType: 'EXACT' }),
+    ).rejects.toThrow('duplicate');
+  });
+});
+
+describe('updateNicknameRule', () => {
+  it('PATCH /api/admin/nicknames/:id 를 payload 와 함께 호출한다', async () => {
+    mockPatch.mockResolvedValueOnce({ data: { success: true, data: makeForbiddenNickname() } });
+
+    const payload = {
+      value: '수정값',
+      type: 'FORBIDDEN' as const,
+      matchType: 'PREFIX' as const,
+      reason: '사유',
+    };
+    await updateNicknameRule(5, payload);
+
+    expect(mockPatch).toHaveBeenCalledWith('/api/admin/nicknames/5', payload);
+  });
+
+  it('언랩된 ForbiddenNickname 를 반환한다', async () => {
+    const rule = makeForbiddenNickname({ id: 5, value: '수정됨' });
+    mockPatch.mockResolvedValueOnce({ data: { success: true, data: rule } });
+
+    const result = await updateNicknameRule(5, {
+      value: '수정됨',
+      type: 'FORBIDDEN',
+      matchType: 'EXACT',
+    });
+
+    expect(result).toEqual(rule);
+  });
+
+  it('id 가 URL 에 반영된다', async () => {
+    mockPatch.mockResolvedValue({ data: { success: true, data: makeForbiddenNickname() } });
+
+    await updateNicknameRule(1, { value: 'a', type: 'FORBIDDEN', matchType: 'EXACT' });
+    await updateNicknameRule(2, { value: 'b', type: 'RESERVED', matchType: 'PREFIX' });
+
+    expect(mockPatch).toHaveBeenNthCalledWith(1, '/api/admin/nicknames/1', {
+      value: 'a',
+      type: 'FORBIDDEN',
+      matchType: 'EXACT',
+    });
+    expect(mockPatch).toHaveBeenNthCalledWith(2, '/api/admin/nicknames/2', {
+      value: 'b',
+      type: 'RESERVED',
+      matchType: 'PREFIX',
+    });
+  });
+
+  it('axios 에러를 그대로 throw 한다', async () => {
+    mockPatch.mockRejectedValueOnce(new Error('not found'));
+
+    await expect(
+      updateNicknameRule(1, { value: 'x', type: 'FORBIDDEN', matchType: 'EXACT' }),
+    ).rejects.toThrow('not found');
+  });
+});
+
+describe('deleteNicknameRule', () => {
+  it('DELETE /api/admin/nicknames/:id 를 호출한다', async () => {
+    mockDelete.mockResolvedValueOnce({ data: { success: true, data: null } });
+
+    await deleteNicknameRule(8);
+
+    expect(mockDelete).toHaveBeenCalledWith('/api/admin/nicknames/8');
+  });
+
+  it('void 를 반환한다 (응답 본문 무시)', async () => {
+    mockDelete.mockResolvedValueOnce({ data: { success: true, data: null } });
+
+    const result = await deleteNicknameRule(8);
+
+    expect(result).toBeUndefined();
+  });
+
+  it('id 가 URL 에 반영된다', async () => {
+    mockDelete.mockResolvedValue({ data: { success: true, data: null } });
+
+    await deleteNicknameRule(1);
+    await deleteNicknameRule(2);
+
+    expect(mockDelete).toHaveBeenNthCalledWith(1, '/api/admin/nicknames/1');
+    expect(mockDelete).toHaveBeenNthCalledWith(2, '/api/admin/nicknames/2');
+  });
+
+  it('axios 에러를 그대로 throw 한다', async () => {
+    mockDelete.mockRejectedValueOnce(new Error('forbidden'));
+
+    await expect(deleteNicknameRule(1)).rejects.toThrow('forbidden');
+  });
+});
+
 const makeAdminAxiosError = (
   status?: number,
   code?: string,
@@ -917,6 +1193,67 @@ describe('mapAdminError', () => {
 
     it('문자열 에러 → UNKNOWN', () => {
       expect(mapAdminError('boom')).toBe('UNKNOWN');
+    });
+  });
+});
+
+describe('mapNicknameError', () => {
+  describe('code 기반 매핑', () => {
+    it('FORBIDDEN_NICKNAME_DUPLICATE → DUPLICATE', () => {
+      expect(mapNicknameError(makeAdminAxiosError(400, 'FORBIDDEN_NICKNAME_DUPLICATE'))).toBe(
+        'DUPLICATE',
+      );
+    });
+
+    it('INVALID_INPUT → INVALID', () => {
+      expect(mapNicknameError(makeAdminAxiosError(400, 'INVALID_INPUT'))).toBe('INVALID');
+    });
+
+    it('FORBIDDEN_NICKNAME_NOT_FOUND → NOT_FOUND', () => {
+      expect(mapNicknameError(makeAdminAxiosError(400, 'FORBIDDEN_NICKNAME_NOT_FOUND'))).toBe(
+        'NOT_FOUND',
+      );
+    });
+  });
+
+  describe('status 기반 매핑 (code 없음)', () => {
+    it('status 409 → DUPLICATE', () => {
+      expect(mapNicknameError(makeAdminAxiosError(409))).toBe('DUPLICATE');
+    });
+
+    it('status 404 → NOT_FOUND', () => {
+      expect(mapNicknameError(makeAdminAxiosError(404))).toBe('NOT_FOUND');
+    });
+
+    it('status 403 → FORBIDDEN', () => {
+      expect(mapNicknameError(makeAdminAxiosError(403))).toBe('FORBIDDEN');
+    });
+  });
+
+  describe('우선순위', () => {
+    it('status 404 라도 code FORBIDDEN_NICKNAME_DUPLICATE 가 우선되어 DUPLICATE', () => {
+      // 중복 검사가 가장 먼저 걸린다
+      expect(mapNicknameError(makeAdminAxiosError(404, 'FORBIDDEN_NICKNAME_DUPLICATE'))).toBe(
+        'DUPLICATE',
+      );
+    });
+  });
+
+  describe('UNKNOWN fallback', () => {
+    it('알 수 없는 code/status → UNKNOWN', () => {
+      expect(mapNicknameError(makeAdminAxiosError(500, 'SOMETHING_ELSE'))).toBe('UNKNOWN');
+    });
+
+    it('status 500 + code 없음 → UNKNOWN', () => {
+      expect(mapNicknameError(makeAdminAxiosError(500))).toBe('UNKNOWN');
+    });
+
+    it('response 없는 에러 → UNKNOWN', () => {
+      expect(mapNicknameError({})).toBe('UNKNOWN');
+    });
+
+    it('문자열 에러 → UNKNOWN', () => {
+      expect(mapNicknameError('boom')).toBe('UNKNOWN');
     });
   });
 });

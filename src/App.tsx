@@ -46,6 +46,8 @@ import BoUsersPage from './pages/admin/users/BoUsersPage';
 import BoUserEditPage from './pages/admin/users/BoUserEditPage';
 import BoInquiriesPage from './pages/admin/inquiries/BoInquiriesPage';
 import BoInquiryDetailPage from './pages/admin/inquiries/BoInquiryDetailPage';
+import BoNicknamesPage from './pages/admin/nicknames/BoNicknamesPage';
+import BoNicknameEditPage from './pages/admin/nicknames/BoNicknameEditPage';
 import InquiryPage from './pages/inquiry/InquiryPage';
 import NotificationQueue from '@/features/notification/NotificationQueue';
 
@@ -175,6 +177,9 @@ const App = () => {
                   />
                   <Route path="users" element={<BoUsersPage />} />
                   <Route path="users/:publicId" element={<BoUserEditPage />} />
+                  <Route path="nicknames" element={<BoNicknamesPage />} />
+                  <Route path="nicknames/new" element={<BoNicknameEditPage />} />
+                  <Route path="nicknames/:id" element={<BoNicknameEditPage />} />
                   <Route path="inquiries" element={<BoInquiriesPage />} />
                   <Route path="inquiries/:id" element={<BoInquiryDetailPage />} />
                 </Route>

@@ -18,7 +18,7 @@ const MENUS: Menu[] = [
   { key: 'categories', label: '카테고리 관리' },
   { key: 'comments', label: '댓글 관리' },
   { key: 'banned-words', label: '금지어 관리' },
-  { key: 'nicknames', label: '닉네임 관리' },
+  { key: 'nicknames', label: '닉네임 관리', to: '/admin/nicknames' },
   { key: 'inquiries', label: '문의사항 관리', to: '/admin/inquiries' },
 ];
 

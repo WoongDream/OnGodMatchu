@@ -40,7 +40,9 @@ export const signup = async (payload: SignupPayload): Promise<TokenResponse> => 
 
 export type NicknameAvailability = {
   available: boolean;
-  reason?: 'taken' | 'format';
+  reason?: 'taken' | 'format' | 'forbidden';
+  /** reason === 'forbidden' 일 때 매칭된 차단 패턴(예: '병신'). 안내 문구에 노출. */
+  matched?: string | null;
 };
 
 export const checkNicknameAvailability = async (

@@ -270,6 +270,23 @@ describe('ProfileInfo', () => {
       fireEvent.change(screen.getByPlaceholderText('닉네임'), { target: { value: 'takenname' } });
       expect(screen.getByRole('button', { name: '저장' })).toBeDisabled();
     });
+
+    it('닉네임 변경 + status=forbidden 이면 금지 메시지 노출 + 저장 버튼 disabled, 저장 시도해도 update 미호출', async () => {
+      mockNicknameCheck.mockReturnValue({
+        status: 'forbidden',
+        message: '사용할 수 없는 닉네임입니다. ‘병신’ 은(는) 쓸 수 없어요.',
+      });
+      renderProfileInfo();
+      fireEvent.change(screen.getByPlaceholderText('닉네임'), { target: { value: '병신' } });
+      // (1) 금지 메시지 렌더
+      expect(screen.getByText(/사용할 수 없는/)).toBeInTheDocument();
+      // (2) 저장 버튼 disabled (forbidden 은 canSave 불허)
+      const saveButton = screen.getByRole('button', { name: '저장' });
+      expect(saveButton).toBeDisabled();
+      // (3) 저장 시도해도 update 미호출
+      fireEvent.click(saveButton);
+      await waitFor(() => expect(mockUpdate).not.toHaveBeenCalled());
+    });
   });
 
   describe('저장 버튼 클릭', () => {

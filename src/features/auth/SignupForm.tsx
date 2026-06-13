@@ -30,7 +30,7 @@ const toneOf = (status: NicknameStatus): 'positive' | 'negative' | 'neutral' => 
   if (status === 'available') {
     return 'positive';
   }
-  if (status === 'taken' || status === 'invalid' || status === 'error') {
+  if (status === 'taken' || status === 'invalid' || status === 'forbidden' || status === 'error') {
     return 'negative';
   }
   return 'neutral';
