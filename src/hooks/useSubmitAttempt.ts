@@ -12,7 +12,11 @@ const ERROR_MESSAGES: Record<AttemptErrorCode, string> = {
 };
 
 export type UseSubmitAttemptReturn = {
-  submit: (quizId: number, answers: AttemptAnswerInput[]) => Promise<AttemptResponse | null>;
+  submit: (
+    quizId: number,
+    answers: AttemptAnswerInput[],
+    timeLimitSec?: number | null,
+  ) => Promise<AttemptResponse | null>;
   isSubmitting: boolean;
   error: string | null;
   errorCode: AttemptErrorCode | null;
@@ -30,11 +34,15 @@ const useSubmitAttempt = (): UseSubmitAttemptReturn => {
   }, []);
 
   const submit = useCallback(
-    async (quizId: number, answers: AttemptAnswerInput[]): Promise<AttemptResponse | null> => {
+    async (
+      quizId: number,
+      answers: AttemptAnswerInput[],
+      timeLimitSec?: number | null,
+    ): Promise<AttemptResponse | null> => {
       setIsSubmitting(true);
       clearError();
       try {
-        return await submitAttempt(quizId, answers);
+        return await submitAttempt(quizId, answers, timeLimitSec);
       } catch (err) {
         const code = axios.isAxiosError(err) ? mapAttemptError(err) : 'NETWORK';
         setErrorCode(code);

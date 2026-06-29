@@ -49,6 +49,14 @@ export const PlayIcon = wrap(
   <path d="M8.5 5.2c0-1.1 1.2-1.78 2.14-1.2l8.3 5.06a1.4 1.4 0 0 1 0 2.4l-8.3 5.06c-.94.58-2.14-.1-2.14-1.2V5.2Z" />,
 );
 
+export const PinIcon = wrap(
+  'PinIcon',
+  <>
+    <path d="M12 17v5" />
+    <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" />
+  </>,
+);
+
 export const StarIcon = wrap(
   'StarIcon',
   <path d="M12 1.4c.42 0 .8.24.98.62l2.1 4.45 4.78.7c.94.14 1.32 1.3.64 1.97l-3.46 3.4.82 4.83c.16.95-.83 1.67-1.66 1.22L12 16.3l-4.2 2.3c-.83.45-1.82-.27-1.66-1.22l.82-4.84-3.46-3.4c-.68-.66-.3-1.82.64-1.96l4.78-.7 2.1-4.45c.18-.38.56-.62.98-.62Z" />,
@@ -169,4 +177,13 @@ export const AlertIcon = wrap(
     <path d="M12 7.5v5" stroke="#ffffff" strokeWidth={2} />
     <circle cx="12" cy="16" r="1.1" fill="#ffffff" stroke="none" />
   </>,
+);
+
+export const CrownIcon = wrap(
+  'CrownIcon',
+  <path
+    d="M3.2 8.4l3.6 3.1L11.2 5.6a1 1 0 0 1 1.6 0l4.4 5.9 3.6-3.1a.6.6 0 0 1 .98.55l-1.62 8.1a1 1 0 0 1-.98.8H5.84a1 1 0 0 1-.98-.8L3.24 8.95a.6.6 0 0 1 .98-.55z"
+    fill="currentColor"
+    stroke="none"
+  />,
 );

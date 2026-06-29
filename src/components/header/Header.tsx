@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import useAuthStore from '@/store/authStore';
+import { hasRole, isSuspended } from '@/lib/auth/role';
 import ProfileImage from '@/components/profile-image';
 import VisitorBlock from '@/components/visitor-block';
 import useVisitorSummary from '@/hooks/useVisitorSummary';
@@ -12,6 +13,7 @@ import {
   logoStyle,
   tabsStyle,
   tabStyle,
+  disabledTabStyle,
   navActionsStyle,
   loginPillStyle,
   profileButtonStyle,
@@ -37,6 +39,8 @@ const Header = memo(() => {
   };
 
   const isQuizActive = location.pathname === '/' || location.pathname.startsWith('/quiz');
+  const showBackOffice = hasRole(user, 'ADMIN');
+  const boSuspended = isSuspended(user);
 
   return (
     <header css={wrapperStyle}>
@@ -58,6 +62,16 @@ const Header = memo(() => {
           <NavLink to="/announcements" css={tabStyle}>
             공지
           </NavLink>
+          {showBackOffice &&
+            (boSuspended ? (
+              <span css={[tabStyle, disabledTabStyle]} aria-disabled="true">
+                BO
+              </span>
+            ) : (
+              <NavLink to="/admin" css={tabStyle}>
+                BO
+              </NavLink>
+            ))}
         </nav>
         <div css={navActionsStyle}>
           {status === 'bootstrapping' ? (

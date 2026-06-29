@@ -10,6 +10,9 @@ import type { ImageTransform } from '@/types';
 import useNicknameCheck from '@/hooks/useNicknameCheck';
 import useProfileImage from '@/hooks/useProfileImage';
 import useUpdateProfile from '@/hooks/useUpdateProfile';
+import { isSuspended } from '@/lib/auth/role';
+import SuspensionInline from '@/features/suspension/SuspensionInline';
+import { disabledSurfaceStyle } from '@/features/suspension/style';
 import {
   BIO_MAX_LENGTH,
   PROFILE_IMAGE_MAX_BYTES,
@@ -73,6 +76,9 @@ const ProfileInfoForm = memo(({ profile }: FormProps) => {
     error: imageError,
     clearError: clearImageError,
   } = useProfileImage();
+
+  const suspended = isSuspended(profile);
+  const suspendedUntil = profile.suspendedUntil;
 
   const [nickname, setNickname] = useState(profile.nickname);
   const [bio, setBio] = useState(profile.bio ?? '');
@@ -195,15 +201,18 @@ const ProfileInfoForm = memo(({ profile }: FormProps) => {
 
   return (
     <div css={wrapperStyle}>
-      <h2>내 정보</h2>
+      <div css={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <h2 css={{ margin: 0 }}>내 정보</h2>
+        {suspended ? <SuspensionInline until={suspendedUntil} /> : null}
+      </div>
 
-      <section css={cardStyle} aria-label="이미지">
+      <section css={[cardStyle, suspended && disabledSurfaceStyle]} aria-label="이미지">
         <h3 css={cardHeadingStyle}>이미지</h3>
         <div css={imageRowStyle}>
           <button
             type="button"
             onClick={handleEditExisting}
-            disabled={isImageProcessing || !profile.originalProfileImageUrl}
+            disabled={isImageProcessing || !profile.originalProfileImageUrl || suspended}
             aria-label="프로필 이미지 편집"
             css={{
               border: 'none',
@@ -238,14 +247,14 @@ const ProfileInfoForm = memo(({ profile }: FormProps) => {
               <Button
                 variant="primary"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isImageProcessing}
+                disabled={isImageProcessing || suspended}
               >
                 {isUploading ? '처리 중...' : '이미지 업로드'}
               </Button>
               <Button
                 variant="secondary"
                 onClick={handleRegenerateDefault}
-                disabled={isImageProcessing}
+                disabled={isImageProcessing || suspended}
               >
                 {isRegenerating ? '처리 중...' : '기본 이미지로'}
               </Button>
@@ -275,18 +284,29 @@ const ProfileInfoForm = memo(({ profile }: FormProps) => {
         />
       )}
 
-      <section css={cardStyle} aria-label="기본 정보">
+      <section css={[cardStyle, suspended && disabledSurfaceStyle]} aria-label="기본 정보">
         <h3 css={cardHeadingStyle}>기본 정보</h3>
         <div css={fieldStyle}>
           <div css={labelRowStyle}>
             <span css={labelStyle}>닉네임</span>
             <span css={counterStyle}>2-10자</span>
           </div>
-          <Input value={nickname} onChange={setNickname} placeholder="닉네임" />
+          <Input
+            value={nickname}
+            onChange={setNickname}
+            placeholder="닉네임"
+            disabled={suspended}
+          />
           {nicknameCheck.message && (
             <span
               css={statusTextStyle(
-                nicknameCheck.status as 'available' | 'taken' | 'invalid' | 'checking' | 'error',
+                nicknameCheck.status as
+                  | 'available'
+                  | 'taken'
+                  | 'invalid'
+                  | 'checking'
+                  | 'forbidden'
+                  | 'error',
               )}
             >
               {nicknameCheck.message}
@@ -305,6 +325,7 @@ const ProfileInfoForm = memo(({ profile }: FormProps) => {
             value={bio}
             onChange={(e) => setBio(e.target.value.slice(0, BIO_MAX_LENGTH))}
             placeholder="자신을 소개해주세요"
+            disabled={suspended}
           />
         </div>
         {error && (
@@ -314,13 +335,13 @@ const ProfileInfoForm = memo(({ profile }: FormProps) => {
           </span>
         )}
         <div css={saveRowStyle}>
-          <Button onClick={handleSave} disabled={!canSave}>
+          <Button onClick={handleSave} disabled={!canSave || suspended}>
             {isSaving ? '저장 중...' : '저장'}
           </Button>
         </div>
       </section>
 
-      <section css={cardStyle} aria-label="공개 설정">
+      <section css={[cardStyle, suspended && disabledSurfaceStyle]} aria-label="공개 설정">
         <h3 css={cardHeadingStyle}>공개 설정</h3>
         <div css={visibilityRowStyle}>
           <div css={visibilityTextStyle}>
@@ -332,7 +353,7 @@ const ProfileInfoForm = memo(({ profile }: FormProps) => {
           <Toggle
             checked={profile.isProfilePublic}
             onChange={handleToggleVisibility}
-            disabled={isToggling}
+            disabled={isToggling || suspended}
             ariaLabel="프로필 공개"
           />
         </div>

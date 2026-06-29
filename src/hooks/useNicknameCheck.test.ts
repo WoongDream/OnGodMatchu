@@ -100,6 +100,31 @@ describe('useNicknameCheck', () => {
       await waitFor(() => expect(result.current.status).toBe('invalid'));
     });
 
+    it('디바운스 완료 + reason "forbidden" + matched → forbidden (matched 포함 안내)', async () => {
+      mockCheck.mockResolvedValue({ available: false, reason: 'forbidden', matched: '병신' });
+      const { result } = renderHook(() => useNicknameCheck('hong'), { wrapper });
+
+      await act(async () => {
+        vi.advanceTimersByTime(NICKNAME_DEBOUNCE_MS);
+      });
+
+      await waitFor(() => expect(result.current.status).toBe('forbidden'));
+      expect(result.current.message).toContain('사용할 수 없는 닉네임입니다.');
+      expect(result.current.message).toContain('병신');
+    });
+
+    it('디바운스 완료 + reason "forbidden" + matched null → forbidden (기본 안내)', async () => {
+      mockCheck.mockResolvedValue({ available: false, reason: 'forbidden', matched: null });
+      const { result } = renderHook(() => useNicknameCheck('hong'), { wrapper });
+
+      await act(async () => {
+        vi.advanceTimersByTime(NICKNAME_DEBOUNCE_MS);
+      });
+
+      await waitFor(() => expect(result.current.status).toBe('forbidden'));
+      expect(result.current.message).toBe('사용할 수 없는 닉네임입니다.');
+    });
+
     it('네트워크 에러 시 error', async () => {
       mockCheck.mockRejectedValue(new Error('boom'));
       const { result } = renderHook(() => useNicknameCheck('hong'), { wrapper });

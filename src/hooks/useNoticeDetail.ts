@@ -8,10 +8,10 @@ export type UseNoticeDetailReturn = {
   error: unknown;
 };
 
-const useNoticeDetail = (slug: string | undefined): UseNoticeDetailReturn => {
-  const key = slug ? (['notice', 'announcements', slug] as const) : null;
-  const { data, error, isLoading } = useSWR(key, ([, , noticeSlug]) =>
-    getAnnouncementDetail(noticeSlug as string),
+const useNoticeDetail = (id: number | undefined): UseNoticeDetailReturn => {
+  const key = id != null ? (['notice', 'announcements', id] as const) : null;
+  const { data, error, isLoading } = useSWR(key, ([, , noticeId]) =>
+    getAnnouncementDetail(noticeId as number),
   );
 
   return { notice: data, isLoading, error };

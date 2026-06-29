@@ -53,6 +53,15 @@ vi.mock('@/hooks/useMyQuizzes', () => ({
   default: mockUseMyQuizzes,
 }));
 
+// ── useAuthStore mock — selector form: useAuthStore((s) => s.user) ────────────
+// 컴포넌트는 isSuspended(user) 로 정지 분기를 결정한다 (user.status==='SUSPENDED').
+const mockAuthUser = vi.hoisted(() => ({ current: null as { status?: string } | null }));
+
+vi.mock('@/store/authStore', () => ({
+  default: (selector: (s: { user: unknown }) => unknown) =>
+    selector({ user: mockAuthUser.current }),
+}));
+
 // ── child components mock ────────────────────────────────────────────────────
 vi.mock('@/components/my-quiz-stats', () => ({
   default: ({ stats, isLoading }: { stats?: object; isLoading: boolean }) =>
@@ -192,6 +201,7 @@ describe('ProfileQuizzesMade', () => {
     vi.clearAllMocks();
     mockUseMyQuizzesAggregate.mockReturnValue(DEFAULT_AGGREGATE_RETURN);
     mockUseMyQuizzes.mockReturnValue(DEFAULT_QUIZ_RETURN);
+    mockAuthUser.current = null;
   });
 
   describe('접근 제어', () => {
@@ -467,6 +477,41 @@ describe('ProfileQuizzesMade', () => {
         );
       });
       expect(mockToastSuccess).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('정지(SUSPENDED) 상태', () => {
+    const suspend = () => {
+      mockAuthUser.current = { status: 'SUSPENDED' };
+    };
+
+    it('헤더에 제목과 정지 안내(SuspensionInline) 의 "문의하기" 링크가 함께 노출된다', () => {
+      suspend();
+      renderPage();
+      expect(screen.getByRole('heading', { name: '내가 만든 퀴즈' })).toBeInTheDocument();
+      const inquiryLink = screen.getByRole('link', { name: '문의하기' });
+      expect(inquiryLink).toBeInTheDocument();
+      expect(inquiryLink).toHaveAttribute('href', '/inquiry');
+    });
+
+    it('정지 시 헤더의 "+ 새 퀴즈" 버튼이 숨겨진다', () => {
+      suspend();
+      renderPage();
+      expect(screen.queryByRole('button', { name: '+ 새 퀴즈' })).not.toBeInTheDocument();
+    });
+
+    it('정지가 아니면(status=ACTIVE) "+ 새 퀴즈" 버튼이 노출되고 "문의하기" 링크는 없다 (회귀)', () => {
+      mockAuthUser.current = { status: 'ACTIVE' };
+      renderPage();
+      expect(screen.getByRole('button', { name: '+ 새 퀴즈' })).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: '문의하기' })).not.toBeInTheDocument();
+    });
+
+    it('정지 상태에서도 조작 영역(필터 chip / 정렬 dropdown)은 렌더된다 (비활성 래퍼로 감쌈)', () => {
+      suspend();
+      renderPage();
+      expect(screen.getAllByRole('tab')).toHaveLength(3);
+      expect(screen.getByRole('combobox', { name: '정렬 기준' })).toBeInTheDocument();
     });
   });
 });

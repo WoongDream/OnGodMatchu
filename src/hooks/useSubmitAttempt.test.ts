@@ -91,7 +91,42 @@ describe('useSubmitAttempt', () => {
         await result.current.submit(1, MOCK_ANSWERS);
       });
 
-      expect(mockSubmitAttempt).toHaveBeenCalledWith(1, MOCK_ANSWERS);
+      const [calledQuizId, calledAnswers] = mockSubmitAttempt.mock.calls[0];
+      expect(calledQuizId).toBe(1);
+      expect(calledAnswers).toEqual(MOCK_ANSWERS);
+    });
+
+    it('timeLimitSec 인자를 submitAttempt 로 그대로 전달한다', async () => {
+      mockSubmitAttempt.mockResolvedValue(MOCK_RESPONSE);
+      const { result } = renderHook(() => useSubmitAttempt());
+
+      await act(async () => {
+        await result.current.submit(1, MOCK_ANSWERS, 10);
+      });
+
+      expect(mockSubmitAttempt).toHaveBeenCalledWith(1, MOCK_ANSWERS, 10);
+    });
+
+    it('timeLimitSec=null 도 submitAttempt 로 그대로 전달한다', async () => {
+      mockSubmitAttempt.mockResolvedValue(MOCK_RESPONSE);
+      const { result } = renderHook(() => useSubmitAttempt());
+
+      await act(async () => {
+        await result.current.submit(1, MOCK_ANSWERS, null);
+      });
+
+      expect(mockSubmitAttempt).toHaveBeenCalledWith(1, MOCK_ANSWERS, null);
+    });
+
+    it('timeLimitSec 을 생략하면 submitAttempt 의 세 번째 인자가 undefined 다', async () => {
+      mockSubmitAttempt.mockResolvedValue(MOCK_RESPONSE);
+      const { result } = renderHook(() => useSubmitAttempt());
+
+      await act(async () => {
+        await result.current.submit(1, MOCK_ANSWERS);
+      });
+
+      expect(mockSubmitAttempt).toHaveBeenCalledWith(1, MOCK_ANSWERS, undefined);
     });
 
     it('AttemptResponse 를 반환한다', async () => {

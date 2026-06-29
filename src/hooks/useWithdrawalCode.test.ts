@@ -7,11 +7,13 @@ import useWithdrawalCode, {
 } from './useWithdrawalCode';
 
 const mockRequestWithdrawalCode = vi.hoisted(() => vi.fn());
+const mockVerifyWithdrawalCode = vi.hoisted(() => vi.fn());
 const mockMapUserError = vi.hoisted(() => vi.fn());
 const mockGetRetryAfter = vi.hoisted(() => vi.fn());
 
 vi.mock('@/api/user', () => ({
   requestWithdrawalCode: mockRequestWithdrawalCode,
+  verifyWithdrawalCode: mockVerifyWithdrawalCode,
   mapUserError: mockMapUserError,
   getRetryAfter: mockGetRetryAfter,
 }));
@@ -523,6 +525,210 @@ describe('useWithdrawalCode', () => {
         await sendPromise;
       });
       expect(result.current.isSending).toBe(false);
+    });
+  });
+
+  describe('verify', () => {
+    it('초기 상태에서 isVerifying 은 false, verifyErrorCode 는 null', () => {
+      const { result } = renderHook(() => useWithdrawalCode());
+      expect(result.current.isVerifying).toBe(false);
+      expect(result.current.verifyErrorCode).toBeNull();
+    });
+
+    it('성공 시 verifyWithdrawalCode 를 입력 코드로 호출하고 true 를 반환한다', async () => {
+      mockVerifyWithdrawalCode.mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useWithdrawalCode());
+      let returned: boolean | undefined;
+      await act(async () => {
+        returned = await result.current.verify('123456');
+      });
+
+      expect(mockVerifyWithdrawalCode).toHaveBeenCalledTimes(1);
+      expect(mockVerifyWithdrawalCode).toHaveBeenCalledWith('123456');
+      expect(returned).toBe(true);
+    });
+
+    it('성공 시 verifyErrorCode 는 null 로 유지된다', async () => {
+      mockVerifyWithdrawalCode.mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useWithdrawalCode());
+      await act(async () => {
+        await result.current.verify('123456');
+      });
+      expect(result.current.verifyErrorCode).toBeNull();
+    });
+
+    it('실패(INVALID_VERIFICATION_CODE) 시 false 반환, verifyErrorCode=INVALID_VERIFICATION_CODE', async () => {
+      const axiosErr = makeAxiosError(400);
+      mockVerifyWithdrawalCode.mockRejectedValueOnce(axiosErr);
+      mockMapUserError.mockReturnValueOnce('INVALID_VERIFICATION_CODE');
+
+      const { result } = renderHook(() => useWithdrawalCode());
+      let returned: boolean | undefined;
+      await act(async () => {
+        returned = await result.current.verify('000000');
+      });
+
+      expect(returned).toBe(false);
+      expect(result.current.verifyErrorCode).toBe('INVALID_VERIFICATION_CODE');
+    });
+
+    it('실패(VERIFICATION_CODE_EXPIRED) 시 verifyErrorCode=VERIFICATION_CODE_EXPIRED', async () => {
+      const axiosErr = makeAxiosError(410);
+      mockVerifyWithdrawalCode.mockRejectedValueOnce(axiosErr);
+      mockMapUserError.mockReturnValueOnce('VERIFICATION_CODE_EXPIRED');
+
+      const { result } = renderHook(() => useWithdrawalCode());
+      await act(async () => {
+        await result.current.verify('123456');
+      });
+      expect(result.current.verifyErrorCode).toBe('VERIFICATION_CODE_EXPIRED');
+    });
+
+    it('실패(RATE_LIMITED) 시 verifyErrorCode=RATE_LIMITED', async () => {
+      const axiosErr = makeAxiosError(429);
+      mockVerifyWithdrawalCode.mockRejectedValueOnce(axiosErr);
+      mockMapUserError.mockReturnValueOnce('RATE_LIMITED');
+
+      const { result } = renderHook(() => useWithdrawalCode());
+      await act(async () => {
+        await result.current.verify('123456');
+      });
+      expect(result.current.verifyErrorCode).toBe('RATE_LIMITED');
+    });
+
+    it('실패(UNAUTHORIZED) 시 verifyErrorCode=UNAUTHORIZED', async () => {
+      const axiosErr = makeAxiosError(401);
+      mockVerifyWithdrawalCode.mockRejectedValueOnce(axiosErr);
+      mockMapUserError.mockReturnValueOnce('UNAUTHORIZED');
+
+      const { result } = renderHook(() => useWithdrawalCode());
+      await act(async () => {
+        await result.current.verify('123456');
+      });
+      expect(result.current.verifyErrorCode).toBe('UNAUTHORIZED');
+    });
+
+    it('axios 외 에러는 verifyErrorCode=NETWORK', async () => {
+      mockVerifyWithdrawalCode.mockRejectedValueOnce(new Error('네트워크 단절'));
+
+      const { result } = renderHook(() => useWithdrawalCode());
+      let returned: boolean | undefined;
+      await act(async () => {
+        returned = await result.current.verify('123456');
+      });
+      expect(returned).toBe(false);
+      expect(result.current.verifyErrorCode).toBe('NETWORK');
+    });
+
+    it('axios 에러이지만 매핑되지 않는 코드면 verifyErrorCode=NETWORK', async () => {
+      const axiosErr = makeAxiosError(500);
+      mockVerifyWithdrawalCode.mockRejectedValueOnce(axiosErr);
+      mockMapUserError.mockReturnValueOnce('NETWORK');
+
+      const { result } = renderHook(() => useWithdrawalCode());
+      await act(async () => {
+        await result.current.verify('123456');
+      });
+      expect(result.current.verifyErrorCode).toBe('NETWORK');
+    });
+
+    it('verify 호출 직후 isVerifying 이 true 가 되고 끝나면 false 가 된다', async () => {
+      let resolveApi!: () => void;
+      const pending = new Promise<void>((res) => {
+        resolveApi = res;
+      });
+      mockVerifyWithdrawalCode.mockReturnValueOnce(pending);
+
+      const { result } = renderHook(() => useWithdrawalCode());
+
+      let verifyPromise: Promise<boolean>;
+      act(() => {
+        verifyPromise = result.current.verify('123456');
+      });
+      expect(result.current.isVerifying).toBe(true);
+
+      await act(async () => {
+        resolveApi();
+        await verifyPromise;
+      });
+      expect(result.current.isVerifying).toBe(false);
+    });
+
+    it('verify 시작 시 이전 verifyErrorCode 가 초기화된다', async () => {
+      const axiosErr = makeAxiosError(400);
+      mockVerifyWithdrawalCode.mockRejectedValueOnce(axiosErr);
+      mockMapUserError.mockReturnValueOnce('INVALID_VERIFICATION_CODE');
+
+      const { result } = renderHook(() => useWithdrawalCode());
+      await act(async () => {
+        await result.current.verify('000000');
+      });
+      expect(result.current.verifyErrorCode).toBe('INVALID_VERIFICATION_CODE');
+
+      mockVerifyWithdrawalCode.mockResolvedValueOnce(undefined);
+      await act(async () => {
+        await result.current.verify('123456');
+      });
+      expect(result.current.verifyErrorCode).toBeNull();
+    });
+  });
+
+  describe('clearVerifyError', () => {
+    it('clearVerifyError 는 verifyErrorCode 를 null 로 초기화한다', async () => {
+      const axiosErr = makeAxiosError(400);
+      mockVerifyWithdrawalCode.mockRejectedValueOnce(axiosErr);
+      mockMapUserError.mockReturnValueOnce('INVALID_VERIFICATION_CODE');
+
+      const { result } = renderHook(() => useWithdrawalCode());
+      await act(async () => {
+        await result.current.verify('000000');
+      });
+      expect(result.current.verifyErrorCode).toBe('INVALID_VERIFICATION_CODE');
+
+      act(() => {
+        result.current.clearVerifyError();
+      });
+      expect(result.current.verifyErrorCode).toBeNull();
+    });
+  });
+
+  describe('sendCode / reset 와 verify 상태 연동', () => {
+    it('sendCode 시작 시 verifyErrorCode 가 초기화된다', async () => {
+      const axiosErr = makeAxiosError(400);
+      mockVerifyWithdrawalCode.mockRejectedValueOnce(axiosErr);
+      mockMapUserError.mockReturnValueOnce('INVALID_VERIFICATION_CODE');
+
+      const { result } = renderHook(() => useWithdrawalCode());
+      await act(async () => {
+        await result.current.verify('000000');
+      });
+      expect(result.current.verifyErrorCode).toBe('INVALID_VERIFICATION_CODE');
+
+      mockRequestWithdrawalCode.mockResolvedValueOnce(undefined);
+      await act(async () => {
+        await result.current.sendCode();
+      });
+      expect(result.current.verifyErrorCode).toBeNull();
+    });
+
+    it('reset 은 isVerifying / verifyErrorCode 를 초기화한다', async () => {
+      const axiosErr = makeAxiosError(400);
+      mockVerifyWithdrawalCode.mockRejectedValueOnce(axiosErr);
+      mockMapUserError.mockReturnValueOnce('INVALID_VERIFICATION_CODE');
+
+      const { result } = renderHook(() => useWithdrawalCode());
+      await act(async () => {
+        await result.current.verify('000000');
+      });
+      expect(result.current.verifyErrorCode).toBe('INVALID_VERIFICATION_CODE');
+
+      act(() => {
+        result.current.reset();
+      });
+      expect(result.current.isVerifying).toBe(false);
+      expect(result.current.verifyErrorCode).toBeNull();
     });
   });
 });

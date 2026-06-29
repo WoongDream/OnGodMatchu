@@ -18,12 +18,14 @@ import {
   changePassword,
   withdrawAccount,
   requestWithdrawalCode,
+  verifyWithdrawalCode,
   agreeTerms,
   requestProfileImageUpload,
   applyProfileImage,
   removeProfileImage,
   regenerateDefaultProfileImage,
   getMyProfileStats,
+  getPublicProfileSummary,
   mapUserError,
   getRetryAfter,
   USER_ERROR_MESSAGES,
@@ -324,6 +326,53 @@ describe('getMyProfileStats', () => {
   });
 });
 
+describe('getPublicProfileSummary', () => {
+  const SUMMARY = {
+    userId: 'u1',
+    nickname: '지호',
+    profileImageUrl: '',
+    bio: '소개',
+    isProfilePublic: true,
+    solvedCount: 209,
+    avgSolveRate: 71,
+    quizCount: 27,
+    totalPlayCount: 23104,
+    totalStarCount: 1840,
+  };
+
+  it('GET /api/users/:publicId/profile/summary 를 호출한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: SUMMARY } });
+
+    await getPublicProfileSummary('u1');
+
+    expect(mockGet).toHaveBeenCalledWith('/api/users/u1/profile/summary');
+  });
+
+  it('ApiResponse 에서 data.data 를 언랩해 반환한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: SUMMARY } });
+
+    const result = await getPublicProfileSummary('u1');
+
+    expect(result).toEqual(SUMMARY);
+  });
+
+  it('publicId 가 다르면 각각 다른 URL 로 호출한다', async () => {
+    mockGet.mockResolvedValue({ data: { success: true, data: SUMMARY } });
+
+    await getPublicProfileSummary('abc');
+    await getPublicProfileSummary('xyz');
+
+    expect(mockGet).toHaveBeenNthCalledWith(1, '/api/users/abc/profile/summary');
+    expect(mockGet).toHaveBeenNthCalledWith(2, '/api/users/xyz/profile/summary');
+  });
+
+  it('axios 에러를 그대로 throw 한다', async () => {
+    mockGet.mockRejectedValueOnce(new Error('forbidden'));
+
+    await expect(getPublicProfileSummary('u1')).rejects.toThrow('forbidden');
+  });
+});
+
 describe('requestWithdrawalCode', () => {
   it('POST /api/users/me/withdrawal-code 를 호출한다', async () => {
     mockPost.mockResolvedValueOnce({ data: {} });
@@ -356,6 +405,32 @@ describe('requestWithdrawalCode', () => {
     mockPost.mockRejectedValueOnce(new Error('too many requests'));
 
     await expect(requestWithdrawalCode()).rejects.toThrow('too many requests');
+  });
+});
+
+describe('verifyWithdrawalCode', () => {
+  it('POST /api/users/me/withdrawal-code/verify 를 verificationCode body 로 호출한다', async () => {
+    mockPost.mockResolvedValueOnce({ data: {} });
+
+    await verifyWithdrawalCode('123456');
+
+    expect(mockPost).toHaveBeenCalledWith('/api/users/me/withdrawal-code/verify', {
+      verificationCode: '123456',
+    });
+  });
+
+  it('반환값은 void (undefined) 이다', async () => {
+    mockPost.mockResolvedValueOnce({ data: {} });
+
+    const result = await verifyWithdrawalCode('123456');
+
+    expect(result).toBeUndefined();
+  });
+
+  it('axios 에러를 그대로 throw 한다', async () => {
+    mockPost.mockRejectedValueOnce(new Error('invalid verification code'));
+
+    await expect(verifyWithdrawalCode('000000')).rejects.toThrow('invalid verification code');
   });
 });
 

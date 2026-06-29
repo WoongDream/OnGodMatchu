@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { AnnouncementIcon } from '@/components/icon';
+import { AnnouncementIcon, PinIcon } from '@/components/icon';
 import useNoticesInfinite from '@/hooks/useNoticesInfinite';
 import {
   pageStyle,
@@ -10,6 +10,8 @@ import {
   subtitleStyle,
   listStyle,
   rowStyle,
+  rowTitleWrapStyle,
+  pinIconStyle,
   rowTitleStyle,
   rowDateStyle,
   loadingStyle,
@@ -61,10 +63,17 @@ const AnnouncementsList = memo(() => {
       ) : (
         <ul css={listStyle}>
           {items.map((item) => (
-            <li key={item.slug}>
-              <Link to={`/announcements/notices/${encodeURIComponent(item.slug)}`} css={rowStyle}>
-                <span css={rowTitleStyle}>{item.title}</span>
-                <span css={rowDateStyle}>{formatDate(item.publishedAt)}</span>
+            <li key={item.id}>
+              <Link to={`/announcements/notices/${item.id}`} css={rowStyle}>
+                <span css={rowTitleWrapStyle}>
+                  {item.pinned && (
+                    <span css={pinIconStyle}>
+                      <PinIcon size={14} aria-label="고정" />
+                    </span>
+                  )}
+                  <span css={rowTitleStyle}>{item.title}</span>
+                </span>
+                <span css={rowDateStyle}>{formatDate(item.updatedAt ?? item.publishedAt)}</span>
               </Link>
             </li>
           ))}

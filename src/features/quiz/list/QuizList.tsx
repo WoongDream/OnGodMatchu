@@ -9,9 +9,11 @@ import { wrapperStyle, emptyMessageStyle } from './QuizList.style';
 
 type QuizListProps = {
   quizzes: Quiz[];
+  /** 스타 토글 성공 후 호출 — nextStarred 는 토글 결과 상태. 스타 준 목록에서 취소 시 카드 제거 등에 사용 */
+  onStarToggled?: (quizId: number, nextStarred: boolean) => void;
 };
 
-const QuizList = memo(({ quizzes }: QuizListProps) => {
+const QuizList = memo(({ quizzes, onStarToggled }: QuizListProps) => {
   const navigate = useNavigate();
   const { isLoggedIn } = useAuthStore();
   const { toggle, pendingQuizId } = useToggleStar();
@@ -26,7 +28,9 @@ const QuizList = memo(({ quizzes }: QuizListProps) => {
       setIsLoginPromptOpen(true);
       return;
     }
-    void toggle(quizId, isStarred).catch(() => {});
+    void toggle(quizId, isStarred)
+      .then(() => onStarToggled?.(quizId, !isStarred))
+      .catch(() => {});
   };
 
   if (quizzes.length === 0) {

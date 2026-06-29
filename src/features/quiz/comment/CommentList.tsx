@@ -9,10 +9,12 @@ type CommentListProps = {
   currentUserNickname: string | null;
   onDelete: (commentId: number) => void;
   isMutating?: boolean;
+  /** 글쓴이 프로필 클릭 시 (publicId 전달) — 프로필 모달 오픈용 */
+  onAuthorClick?: (publicId: string) => void;
 };
 
 const CommentList = memo(
-  ({ comments, currentUserNickname, onDelete, isMutating }: CommentListProps) => {
+  ({ comments, currentUserNickname, onDelete, isMutating, onAuthorClick }: CommentListProps) => {
     if (comments.length === 0) {
       return <p css={emptyStyle}>첫 번째 댓글을 남겨보세요.</p>;
     }
@@ -26,6 +28,7 @@ const CommentList = memo(
             canDelete={!!currentUserNickname && currentUserNickname === c.authorNickname}
             onDelete={onDelete}
             isMutating={isMutating}
+            onAuthorClick={onAuthorClick}
           />
         ))}
       </ul>

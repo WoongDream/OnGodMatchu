@@ -150,3 +150,10 @@ export const authPlaceholderStyle = (theme: Theme) => css`
   background-color: ${theme.colors.border.primary};
   animation: ${authPlaceholderPulse} 1.2s ease-in-out infinite;
 `;
+
+/** 정지된 ADMIN 의 BO 탭 — 보이되 비활성. */
+export const disabledTabStyle = css`
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+`;

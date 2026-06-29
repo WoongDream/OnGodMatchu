@@ -1,5 +1,5 @@
 import instance from './instance';
-import type { User, MyQuizzesAggregate, ImageTransform } from '@/types';
+import type { User, MyQuizzesAggregate, PublicProfileSummary, ImageTransform } from '@/types';
 
 type ApiResponse<T> = {
   success: boolean;
@@ -75,6 +75,11 @@ export const requestWithdrawalCode = async (): Promise<void> => {
   await instance.post('/api/users/me/withdrawal-code');
 };
 
+/** 탈퇴 확정 전 인증 코드만 dry-run 검증 (코드 소비 X). 실패 시 INVALID_VERIFICATION_CODE / VERIFICATION_CODE_EXPIRED. */
+export const verifyWithdrawalCode = async (code: string): Promise<void> => {
+  await instance.post('/api/users/me/withdrawal-code/verify', { verificationCode: code });
+};
+
 export const agreeTerms = async (): Promise<User> => {
   const res = await instance.post<ApiResponse<User>>('/api/users/me/terms-agreement');
   return res.data.data;
@@ -119,6 +124,14 @@ export const regenerateDefaultProfileImage = async (): Promise<User> => {
 
 export const getMyProfileStats = async (): Promise<MyQuizzesAggregate> => {
   const res = await instance.get<ApiResponse<MyQuizzesAggregate>>('/api/users/me/profile/stats');
+  return res.data.data;
+};
+
+/** 타 유저 프로필 요약 (프로필 모달 / 공개 프로필 화면). 비로그인도 호출 가능. */
+export const getPublicProfileSummary = async (publicId: string): Promise<PublicProfileSummary> => {
+  const res = await instance.get<ApiResponse<PublicProfileSummary>>(
+    `/api/users/${publicId}/profile/summary`,
+  );
   return res.data.data;
 };
 

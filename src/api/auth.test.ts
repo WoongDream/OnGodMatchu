@@ -185,6 +185,19 @@ describe('checkNicknameAvailability', () => {
     expect(result).toEqual({ available: false, reason: 'taken' });
   });
 
+  it('금지 닉네임이면 { available: false, reason: forbidden, matched } 를 반환한다', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: { success: true, data: { available: false, reason: 'forbidden', matched: '병신' } },
+    });
+
+    const result = await checkNicknameAvailability('badNick');
+
+    expect(result).toEqual({ available: false, reason: 'forbidden', matched: '병신' });
+    expect(mockGet).toHaveBeenCalledWith('/api/auth/check-nickname', {
+      params: { nickname: 'badNick' },
+    });
+  });
+
   it('에러 시 그대로 throw 한다', async () => {
     mockGet.mockRejectedValueOnce(new Error('network'));
 
