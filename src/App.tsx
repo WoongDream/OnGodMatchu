@@ -23,7 +23,13 @@ import ProfileLayout from './pages/profile/ProfileLayout';
 import ProfileInfo from './pages/profile/ProfileInfo';
 import ProfileQuizzesMade from './pages/profile/ProfileQuizzesMade';
 import ProfileQuizzesPlayed from './pages/profile/ProfileQuizzesPlayed';
+import ProfileQuizzesStarred from './pages/profile/ProfileQuizzesStarred';
 import ProfileAccount from './pages/profile/ProfileAccount';
+import ProfileNotifications from './pages/profile/ProfileNotifications';
+import ProfileInquiries from './pages/profile/ProfileInquiries';
+import PublicProfileLayout from './pages/users/PublicProfileLayout';
+import PublicQuizzesMade from './pages/users/PublicQuizzesMade';
+import PublicQuizzesPlayed from './pages/users/PublicQuizzesPlayed';
 import AnnouncementsLayout from './pages/announcements/AnnouncementsLayout';
 import AnnouncementsList from './pages/announcements/AnnouncementsList';
 import AnnouncementDetail from './pages/announcements/AnnouncementDetail';
@@ -31,7 +37,19 @@ import ReleaseNotesList from './pages/announcements/ReleaseNotesList';
 import ReleaseNoteDetail from './pages/announcements/ReleaseNoteDetail';
 import ProtectedRoute from '@/components/protected-route/ProtectedRoute';
 import GuestOnlyRoute from '@/components/guest-only-route/GuestOnlyRoute';
+import RoleRoute from '@/components/role-route/RoleRoute';
 import TermsAgreementGate from '@/components/terms-agreement-gate';
+import AdminLayout from './pages/admin/AdminLayout';
+import BoNoticeListPage from './pages/admin/notices/BoNoticeListPage';
+import BoNoticeEditPage from './pages/admin/notices/BoNoticeEditPage';
+import BoUsersPage from './pages/admin/users/BoUsersPage';
+import BoUserEditPage from './pages/admin/users/BoUserEditPage';
+import BoInquiriesPage from './pages/admin/inquiries/BoInquiriesPage';
+import BoInquiryDetailPage from './pages/admin/inquiries/BoInquiryDetailPage';
+import BoNicknamesPage from './pages/admin/nicknames/BoNicknamesPage';
+import BoNicknameEditPage from './pages/admin/nicknames/BoNicknameEditPage';
+import InquiryPage from './pages/inquiry/InquiryPage';
+import NotificationQueue from '@/features/notification/NotificationQueue';
 
 const RouteTracker = (): null => {
   usePageViewTracker();
@@ -97,6 +115,7 @@ const App = () => {
                 />
                 <Route path="/privacy" element={<PrivacyPage />} />
                 <Route path="/terms" element={<TermsPage />} />
+                <Route path="/inquiry" element={<InquiryPage />} />
                 <Route
                   path="/profile"
                   element={
@@ -108,6 +127,9 @@ const App = () => {
                   <Route index element={<ProfileInfo />} />
                   <Route path="quizzes-made" element={<ProfileQuizzesMade />} />
                   <Route path="quizzes-played" element={<ProfileQuizzesPlayed />} />
+                  <Route path="quizzes-starred" element={<ProfileQuizzesStarred />} />
+                  <Route path="notifications" element={<ProfileNotifications />} />
+                  <Route path="inquiries" element={<ProfileInquiries />} />
                   <Route path="account" element={<ProfileAccount />} />
                 </Route>
                 <Route path="/profile/:userId" element={<ProfileLayout />}>
@@ -115,10 +137,56 @@ const App = () => {
                   <Route path="quizzes-made" element={<ProfileQuizzesMade />} />
                   <Route path="quizzes-played" element={<ProfileQuizzesPlayed />} />
                 </Route>
+                <Route path="/users/:publicId" element={<PublicProfileLayout />}>
+                  <Route index element={<Navigate to="quizzes-made" replace />} />
+                  <Route path="quizzes-made" element={<PublicQuizzesMade />} />
+                  <Route path="quizzes-played" element={<PublicQuizzesPlayed />} />
+                </Route>
+                <Route
+                  path="/admin"
+                  element={
+                    <RoleRoute min="ADMIN">
+                      <AdminLayout />
+                    </RoleRoute>
+                  }
+                >
+                  <Route index element={<Navigate to="users" replace />} />
+                  <Route
+                    path="notices"
+                    element={
+                      <RoleRoute min="OWNER">
+                        <BoNoticeListPage />
+                      </RoleRoute>
+                    }
+                  />
+                  <Route
+                    path="notices/new"
+                    element={
+                      <RoleRoute min="OWNER">
+                        <BoNoticeEditPage />
+                      </RoleRoute>
+                    }
+                  />
+                  <Route
+                    path="notices/:id"
+                    element={
+                      <RoleRoute min="OWNER">
+                        <BoNoticeEditPage />
+                      </RoleRoute>
+                    }
+                  />
+                  <Route path="users" element={<BoUsersPage />} />
+                  <Route path="users/:publicId" element={<BoUserEditPage />} />
+                  <Route path="nicknames" element={<BoNicknamesPage />} />
+                  <Route path="nicknames/new" element={<BoNicknameEditPage />} />
+                  <Route path="nicknames/:id" element={<BoNicknameEditPage />} />
+                  <Route path="inquiries" element={<BoInquiriesPage />} />
+                  <Route path="inquiries/:id" element={<BoInquiryDetailPage />} />
+                </Route>
                 <Route path="/announcements" element={<AnnouncementsLayout />}>
                   <Route index element={<Navigate to="notices" replace />} />
                   <Route path="notices" element={<AnnouncementsList />} />
-                  <Route path="notices/:slug" element={<AnnouncementDetail />} />
+                  <Route path="notices/:id" element={<AnnouncementDetail />} />
                   <Route path="release-notes" element={<ReleaseNotesList />} />
                   <Route path="release-notes/:version" element={<ReleaseNoteDetail />} />
                 </Route>
@@ -127,6 +195,7 @@ const App = () => {
           </main>
           <Footer />
           <ToastContainer />
+          <NotificationQueue />
         </div>
       </BrowserRouter>
     </ThemeProvider>

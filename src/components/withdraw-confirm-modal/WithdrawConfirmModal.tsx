@@ -3,6 +3,7 @@ import Modal from '@/components/modal';
 import Button from '@/components/button';
 import useWithdrawAccount from '@/hooks/useWithdrawAccount';
 import useWithdrawalCode from '@/hooks/useWithdrawalCode';
+import { USER_ERROR_MESSAGES } from '@/api/user';
 import {
   guideTextStyle,
   progressTrackStyle,
@@ -91,24 +92,29 @@ const WithdrawConfirmModal = memo(({ isOpen, onClose, createdQuizCount, email }:
     }
   }, [errorCode]);
 
-  const codeError =
+  const verifyError = code.verifyErrorCode ? USER_ERROR_MESSAGES[code.verifyErrorCode] : null;
+  const submitCodeError =
     errorCode === 'INVALID_VERIFICATION_CODE' || errorCode === 'VERIFICATION_CODE_EXPIRED'
       ? error
       : null;
+  const codeError = verifyError ?? submitCodeError;
   const confirmError = errorCode === 'INVALID_WITHDRAWAL_CONFIRMATION' ? error : null;
   const generalError =
-    error && !codeError && !confirmError && errorCode !== 'RATE_LIMITED' ? error : null;
+    error && !submitCodeError && !confirmError && errorCode !== 'RATE_LIMITED' ? error : null;
 
   const codeFilled = verificationCode.trim().length === CODE_LENGTH;
-  const canVerify = code.codeSent && !verified && !code.expired && codeFilled;
+  const canVerify = code.codeSent && !verified && !code.expired && codeFilled && !code.isVerifying;
   const confirmMatched = confirmText === CONFIRM_TEXT;
   const canSubmit = verified && confirmMatched && !isSubmitting;
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (!canVerify) {
       return;
     }
-    setVerified(true);
+    const ok = await code.verify(verificationCode.trim());
+    if (ok) {
+      setVerified(true);
+    }
   };
 
   const handleNext = () => {
@@ -264,9 +270,12 @@ const WithdrawConfirmModal = memo(({ isOpen, onClose, createdQuizCount, email }:
                   autoComplete="one-time-code"
                   css={codeInputStyle(!!codeError || code.expired)}
                   value={verificationCode}
-                  onChange={(e) =>
-                    setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, CODE_LENGTH))
-                  }
+                  onChange={(e) => {
+                    setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, CODE_LENGTH));
+                    if (code.verifyErrorCode) {
+                      code.clearVerifyError();
+                    }
+                  }}
                   placeholder="이메일로 받은 코드 입력"
                   aria-label="인증코드"
                   disabled={verified}
@@ -295,7 +304,7 @@ const WithdrawConfirmModal = memo(({ isOpen, onClose, createdQuizCount, email }:
                 {!verified && (
                   <div css={verifyButtonRowStyle}>
                     <Button onClick={handleVerify} disabled={!canVerify}>
-                      인증
+                      {code.isVerifying ? '확인 중...' : '인증'}
                     </Button>
                     <Button
                       variant="secondary"

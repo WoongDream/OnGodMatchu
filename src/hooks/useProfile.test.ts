@@ -33,7 +33,7 @@ const MOCK_OTHER: User = {
   id: 42,
   email: 'other@example.com',
   nickname: '타인',
-  provider: 'KAKAO',
+  provider: 'NAVER',
   profileImageUrl: null,
   isProfilePublic: true,
   createdAt: '2025-02-01T00:00:00Z',

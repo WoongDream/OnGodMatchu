@@ -56,14 +56,14 @@ const QuizPlayPage = memo(() => {
         questionId: q.id,
         userAnswer: latest[q.id] ?? '',
       }));
-      const result = await submit(quizId, payload);
+      const result = await submit(quizId, payload, timeLimitSec);
       if (result) {
         navigate(`/quiz/${quizId}/result`, {
           state: { result, questions },
         });
       }
     },
-    [questions, submit, quizId, navigate],
+    [questions, submit, quizId, navigate, timeLimitSec],
   );
 
   const currentQuestion = questions[currentIndex];

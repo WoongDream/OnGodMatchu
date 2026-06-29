@@ -24,6 +24,8 @@ export type Quiz = {
   id: number;
   publicId?: string;
   authorNickname: string;
+  /** 작성자 publicId — 프로필 모달/공개 프로필 진입용 (상세 응답에만 존재) */
+  authorPublicId?: string;
   authorProfileImageUrl?: string | null;
   title: string;
   description: string;

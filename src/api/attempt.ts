@@ -27,22 +27,36 @@ export type AttemptErrorCode =
 export type AttemptsQuery = {
   page?: number;
   size?: number;
+  /** 퀴즈 제목 부분일치 검색 */
+  title?: string;
 };
 
 export const submitAttempt = async (
   quizId: number,
   answers: AttemptAnswerInput[],
+  timeLimitSec?: number | null,
 ): Promise<AttemptResponse> => {
-  const res = await instance.post<ApiResponse<AttemptResponse>>(`/api/quizzes/${quizId}/attempts`, {
-    answers,
-  });
+  const body: { answers: AttemptAnswerInput[]; timeLimitSec?: number } = { answers };
+  if (timeLimitSec != null) {
+    body.timeLimitSec = timeLimitSec;
+  }
+  const res = await instance.post<ApiResponse<AttemptResponse>>(
+    `/api/quizzes/${quizId}/attempts`,
+    body,
+  );
   return res.data.data;
 };
 
-const buildPageParams = (q: AttemptsQuery = {}): Record<string, number> => ({
-  page: q.page ?? 0,
-  size: q.size ?? 20,
-});
+const buildPageParams = (q: AttemptsQuery = {}): Record<string, number | string> => {
+  const params: Record<string, number | string> = {
+    page: q.page ?? 0,
+    size: q.size ?? 20,
+  };
+  if (q.title && q.title.trim() !== '') {
+    params.title = q.title.trim();
+  }
+  return params;
+};
 
 export const getMyAttempts = async (q?: AttemptsQuery): Promise<Page<AttemptListItem>> => {
   const res = await instance.get<ApiResponse<Page<AttemptListItem>>>('/api/users/me/attempts', {

@@ -27,6 +27,15 @@ vi.mock('@/hooks/useCreateQuiz', () => ({
   default: () => mockUseCreateQuiz(),
 }));
 
+// ── useAuthStore mock — selector form: useAuthStore((s) => s.user) ────────────
+// 정지(SUSPENDED) 면 폼 대신 SuspensionNotice 를 렌더한다.
+const mockAuthUser = vi.hoisted(() => ({ current: null as { status?: string } | null }));
+
+vi.mock('@/store/authStore', () => ({
+  default: (selector: (s: { user: unknown }) => unknown) =>
+    selector({ user: mockAuthUser.current }),
+}));
+
 const renderPage = () =>
   renderWithTheme(
     <MemoryRouter>
@@ -60,6 +69,7 @@ describe('QuizCreatePage', () => {
       error: null,
       errorCode: null,
     });
+    mockAuthUser.current = null;
   });
 
   describe('초기 진입 (STEP 1 / info)', () => {
@@ -271,6 +281,30 @@ describe('QuizCreatePage', () => {
       renderPage();
       await user.click(screen.getByRole('button', { name: '취소' }));
       expect(mockNavigate).toHaveBeenCalledWith(-1);
+    });
+  });
+
+  describe('정지(SUSPENDED) 상태', () => {
+    it('정지된 계정이면 QuizForm 대신 SuspensionNotice(안내 메시지) 를 렌더한다', () => {
+      mockAuthUser.current = { status: 'SUSPENDED' };
+      renderPage();
+
+      // SuspensionNotice — role=alert + 전용 메시지
+      expect(screen.getByRole('alert')).toHaveTextContent('정지된 계정은 퀴즈를 만들 수 없어요.');
+      // 폼(Stepper / 입력) 은 렌더되지 않는다
+      expect(
+        screen.queryByRole('navigation', { name: '퀴즈 만들기 진행' }),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByPlaceholderText('퀴즈 제목을 입력하세요')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '문제 목록 ›' })).not.toBeInTheDocument();
+    });
+
+    it('정지가 아니면(status=ACTIVE) 폼이 정상 렌더된다 (회귀)', () => {
+      mockAuthUser.current = { status: 'ACTIVE' };
+      renderPage();
+
+      expect(screen.getByRole('navigation', { name: '퀴즈 만들기 진행' })).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('퀴즈 제목을 입력하세요')).toBeInTheDocument();
     });
   });
 });

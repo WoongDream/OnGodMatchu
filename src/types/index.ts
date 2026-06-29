@@ -1,4 +1,4 @@
-export type { User, UserStats } from './user';
+export type { User, UserStats, PublicProfileSummary, Role, UserStatus, AuthProvider } from './user';
 export type {
   Category,
   Quiz,
@@ -17,6 +17,33 @@ export type {
 } from './attempt';
 export type { OAuthProvider } from './oauth';
 export { SUPPORTED_OAUTH_PROVIDERS } from './oauth';
-export type { NoticeListItem, NoticeDetail, ReleaseNoteTag, ParsedReleaseNoteMeta } from './notice';
+export type {
+  NoticeListItem,
+  NoticeDetail,
+  NoticeStatus,
+  NoticeFilter,
+  BoNoticeListItem,
+  BoNotice,
+  NoticeStats,
+  ReleaseNoteTag,
+  ParsedReleaseNoteMeta,
+} from './notice';
+export type {
+  NicknameRuleType,
+  NicknameMatchType,
+  NicknameRuleFilter,
+  ForbiddenNickname,
+  NicknameRuleStats,
+} from './nickname';
 export type { Comment, CommentPage } from './comment';
 export type { Rotation, NormalizedCrop, ImageTransform } from './image';
+export type { NotificationType, UserNotification, NotificationDraft } from './notification';
+export type {
+  InquiryStatus,
+  InquiryFilter,
+  InquiryAuthor,
+  InquiryListItem,
+  BoInquiryListItem,
+  BoInquiry,
+  InquiryStats,
+} from './inquiry';

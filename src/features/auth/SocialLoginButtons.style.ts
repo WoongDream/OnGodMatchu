@@ -49,7 +49,6 @@ const providerColors: Record<OAuthProvider, { background: string; color: string;
   {
     google: { background: '#ffffff', color: '#374151', border: '' },
     naver: { background: '#03C75A', color: '#ffffff', border: '#03C75A' },
-    kakao: { background: '#FEE500', color: '#191919', border: '#FEE500' },
   };
 
 export const socialButtonStyle = (provider: OAuthProvider) => (theme: Theme) => {

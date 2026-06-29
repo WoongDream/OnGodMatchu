@@ -45,11 +45,18 @@ const Modal = memo(
       const raf = window.requestAnimationFrame(focusFirst);
 
       const previousOverflow = document.body.style.overflow;
+      const previousPaddingRight = document.body.style.paddingRight;
+      // 스크롤바가 사라지며 배경이 우측으로 밀리는 현상 방지 — 사라진 스크롤바 폭만큼 보정.
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
       document.body.style.overflow = 'hidden';
+      if (scrollbarWidth > 0) {
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
+      }
 
       return () => {
         window.cancelAnimationFrame(raf);
         document.body.style.overflow = previousOverflow;
+        document.body.style.paddingRight = previousPaddingRight;
         previouslyFocused.current?.focus?.();
       };
     }, [isOpen]);

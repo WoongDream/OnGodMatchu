@@ -4,7 +4,14 @@ import { checkNicknameAvailability } from '@/api/auth';
 import { matchesNicknamePolicy, normalizeNickname } from '@/lib/nickname';
 import useDebouncedValue from './useDebouncedValue';
 
-export type NicknameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid' | 'error';
+export type NicknameStatus =
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'taken'
+  | 'invalid'
+  | 'forbidden'
+  | 'error';
 
 export type UseNicknameCheckReturn = {
   status: NicknameStatus;
@@ -24,8 +31,13 @@ const MESSAGES: Record<NicknameStatus, string | undefined> = {
   available: '사용 가능한 닉네임입니다.',
   taken: '이미 사용 중인 닉네임입니다.',
   invalid: '닉네임은 2~10자, 한글·영문·숫자·_ 만 사용할 수 있습니다.',
+  forbidden: '사용할 수 없는 닉네임입니다.',
   error: '닉네임 확인에 실패했습니다.',
 };
+
+/** 금지/예약 닉네임 — 무엇 때문에 막혔는지(matched) 함께 안내. */
+const forbiddenMessage = (matched: string | null | undefined): string =>
+  matched ? `사용할 수 없는 닉네임입니다. ‘${matched}’ 은(는) 쓸 수 없어요.` : MESSAGES.forbidden!;
 
 const useNicknameCheck = (
   raw: string,
@@ -83,10 +95,15 @@ const useNicknameCheck = (
     if (data.reason === 'format') {
       return 'invalid';
     }
+    if (data.reason === 'forbidden') {
+      return 'forbidden';
+    }
     return 'error';
   }, [enabled, isEmpty, isExcluded, isPolicyOk, isSettled, error, isLoading, data]);
 
-  return { status, message: MESSAGES[status] };
+  const message = status === 'forbidden' ? forbiddenMessage(data?.matched) : MESSAGES[status];
+
+  return { status, message };
 };
 
 export default useNicknameCheck;

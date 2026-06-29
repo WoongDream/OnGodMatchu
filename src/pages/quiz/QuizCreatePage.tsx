@@ -8,6 +8,9 @@ import QuizForm, {
   type QuizFormSubmitData,
 } from '@/features/quiz/create/QuizForm';
 import useCreateQuiz from '@/hooks/useCreateQuiz';
+import useAuthStore from '@/store/authStore';
+import { isSuspended } from '@/lib/auth/role';
+import SuspensionNotice from '@/features/suspension/SuspensionNotice';
 
 const INITIAL_VALUES: QuizFormInitialValues = {
   title: '',
@@ -22,6 +25,8 @@ const QuizCreatePage = () => {
   const navigate = useNavigate();
   const { mutate } = useSWRConfig();
   const { submit, isSubmitting, error } = useCreateQuiz();
+  const user = useAuthStore((s) => s.user);
+  const suspended = isSuspended(user);
 
   const handleSubmit = useCallback(
     async (data: QuizFormSubmitData) => {
@@ -47,6 +52,17 @@ const QuizCreatePage = () => {
   const handleCancel = useCallback(() => {
     navigate(-1);
   }, [navigate]);
+
+  if (suspended) {
+    return (
+      <div css={pageWrapperStyle('lg')}>
+        <SuspensionNotice
+          until={user?.suspendedUntil}
+          message="정지된 계정은 퀴즈를 만들 수 없어요."
+        />
+      </div>
+    );
+  }
 
   return (
     <div css={pageWrapperStyle('lg')}>

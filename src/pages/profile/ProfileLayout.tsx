@@ -57,6 +57,7 @@ const ProfileLayout = memo(() => {
           bio={profile.bio}
           isProfilePublic={profile.isProfilePublic}
           stats={isMe ? myAggregate : undefined}
+          role={profile.role}
         />
         <div css={desktopOnlyStyle}>
           <ProfileSidebar isMe={isMe} userId={userId} stats={profile.stats} />

@@ -34,6 +34,40 @@ export const timeStyle = (theme: Theme) => css`
   color: ${theme.colors.fg.tertiary};
 `;
 
+export const avatarButtonStyle = (theme: Theme) => css`
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  display: block;
+
+  &:focus-visible {
+    outline: 2px solid ${theme.colors.accent.primary};
+    outline-offset: 2px;
+  }
+`;
+
+export const nicknameButtonStyle = (theme: Theme) => css`
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: ${theme.fontSize.sm};
+  font-weight: ${theme.fontWeight.semibold};
+  color: ${theme.colors.fg.primary};
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+  &:focus-visible {
+    outline: 2px solid ${theme.colors.accent.primary};
+    outline-offset: 2px;
+  }
+`;
+
 export const contentStyle = (theme: Theme) => css`
   font-size: ${theme.fontSize.sm};
   color: ${theme.colors.fg.primary};

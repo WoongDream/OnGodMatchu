@@ -7,6 +7,13 @@ export const wrapperStyle = (theme: Theme) => css`
   gap: ${theme.spacing.lg};
 `;
 
+/** 정지 시 비활성화되는 조작 영역 (필터/목록/더보기) 묶음. */
+export const interactiveAreaStyle = (theme: Theme) => css`
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing.lg};
+`;
+
 export const headerRowStyle = (theme: Theme) => css`
   display: flex;
   align-items: center;

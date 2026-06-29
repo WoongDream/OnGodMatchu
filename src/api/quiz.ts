@@ -135,6 +135,7 @@ export type QuizListSort = 'plays' | 'latest';
 
 export const getQuizzes = async (params?: {
   category?: string;
+  q?: string;
   page?: number;
   size?: number;
   sort?: QuizListSort;
@@ -146,10 +147,30 @@ export const getQuizzes = async (params?: {
   if (params?.category) {
     query.category = params.category;
   }
+  const keyword = params?.q?.trim();
+  if (keyword) {
+    query.q = keyword;
+  }
   if (params?.sort === 'latest') {
     query.sort = 'createdAt,desc';
   }
   const res = await instance.get<ApiResponse<Page<Quiz>>>('/api/quizzes', { params: query });
+  return res.data.data;
+};
+
+export const getMyStarredQuizzes = async (params?: {
+  page?: number;
+  size?: number;
+  title?: string;
+}): Promise<Page<Quiz>> => {
+  const query: Record<string, string | number> = {
+    page: params?.page ?? 0,
+    size: params?.size ?? 20,
+  };
+  if (params?.title && params.title.trim() !== '') {
+    query.title = params.title.trim();
+  }
+  const res = await instance.get<ApiResponse<Page<Quiz>>>('/api/users/me/stars', { params: query });
   return res.data.data;
 };
 

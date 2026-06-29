@@ -12,11 +12,17 @@ export const overlayStyle = css`
   padding: 1rem;
 `;
 
-export const dialogStyle = (size: 'sm' | 'md') => (theme: Theme) => css`
+const MAX_WIDTH: Record<'sm' | 'md' | 'lg', string> = {
+  sm: '24rem',
+  md: '30rem',
+  lg: '60rem',
+};
+
+export const dialogStyle = (size: 'sm' | 'md' | 'lg') => (theme: Theme) => css`
   background-color: ${theme.colors.bg.primary};
   border-radius: ${theme.borderRadius.lg};
   width: 100%;
-  max-width: ${size === 'sm' ? '24rem' : '30rem'};
+  max-width: ${MAX_WIDTH[size]};
   max-height: calc(100vh - 2rem);
   display: flex;
   flex-direction: column;

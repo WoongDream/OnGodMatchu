@@ -30,3 +30,6 @@ dist-ssr
 storybook-static
 
 TODO.md
+
+# quiz-autogen 산출물 (이미지/토큰 부산물 — 로컬 전용)
+tools/quiz-autogen/staging/

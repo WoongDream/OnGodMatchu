@@ -11,6 +11,23 @@ const mockClearError = vi.hoisted(() => vi.fn());
 const mockSendCode = vi.hoisted(() => vi.fn());
 const mockClearVerificationError = vi.hoisted(() => vi.fn());
 
+type NicknameCheckResult = { status: string; message: string | undefined };
+
+// 기본 동작: 빈 값이면 idle, 그 외에는 available. 개별 테스트에서 덮어쓸 수 있도록 mutable.
+const defaultNicknameCheck = (raw: string): NicknameCheckResult =>
+  raw.trim() === ''
+    ? { status: 'idle', message: undefined }
+    : { status: 'available', message: '사용 가능한 닉네임입니다.' };
+
+const mockNicknameCheck = vi.hoisted(() =>
+  vi.fn(
+    (raw: string): NicknameCheckResult =>
+      raw.trim() === ''
+        ? { status: 'idle', message: undefined }
+        : { status: 'available', message: '사용 가능한 닉네임입니다.' },
+  ),
+);
+
 let signupState = {
   isSubmitting: false,
   error: null as string | null,
@@ -69,10 +86,7 @@ vi.mock('@/hooks/useVerificationCode', () => ({
 }));
 
 vi.mock('@/hooks/useNicknameCheck', () => ({
-  default: (raw: string) =>
-    raw.trim() === ''
-      ? { status: 'idle', message: undefined }
-      : { status: 'available', message: '사용 가능한 닉네임입니다.' },
+  default: (raw: string) => mockNicknameCheck(raw),
 }));
 
 vi.mock('./SocialLoginButtons', () => ({
@@ -238,6 +252,8 @@ describe('SignupForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetState();
+    // clearAllMocks 가 vi.fn 의 구현까지 지우므로 기본 닉네임 동작을 매번 복구한다.
+    mockNicknameCheck.mockImplementation(defaultNicknameCheck);
   });
 
   describe('1단계: 이메일 입력만 노출', () => {
@@ -385,6 +401,26 @@ describe('SignupForm', () => {
       await enterCodeAndVerify(user);
       await user.type(screen.getByLabelText('비밀번호'), 'short');
       await user.type(screen.getByLabelText('닉네임'), 'nick');
+      expect(screen.getByRole('button', { name: '가입하기' })).toBeDisabled();
+    });
+
+    it('닉네임이 forbidden 이면 금칙어 메시지가 노출되고 가입 버튼이 비활성', async () => {
+      mockNicknameCheck.mockImplementation((raw: string) =>
+        raw.trim() === ''
+          ? { status: 'idle', message: undefined }
+          : {
+              status: 'forbidden',
+              message: '사용할 수 없는 닉네임입니다. ‘병신’ 은(는) 쓸 수 없어요.',
+            },
+      );
+      const user = userEvent.setup();
+      renderWithTheme(<SignupForm />);
+      await enterCodeAndVerify(user);
+      await user.type(screen.getByLabelText('비밀번호'), STRONG_PASSWORD);
+      await user.type(screen.getByLabelText('닉네임'), '병신');
+      await fillRequiredTerms(user);
+
+      expect(screen.getByText(/사용할 수 없는/)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: '가입하기' })).toBeDisabled();
     });
 

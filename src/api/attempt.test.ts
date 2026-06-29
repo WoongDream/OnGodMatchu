@@ -35,9 +35,16 @@ const makeAttemptListItem = (overrides: Partial<AttemptListItem> = {}): AttemptL
   quizCategoryLabel: '문화',
   quizThumbnailKey: null,
   quizThumbnailUrl: null,
+  playCount: 100,
+  starCount: 10,
+  commentCount: 5,
+  shareCount: 2,
   score: 4,
   totalQuestions: 5,
   percent: 80,
+  topPercentile: null,
+  timeLimitSec: null,
+  attemptCount: 1,
   completedAt: '2026-05-07T10:00:00+09:00',
   ...overrides,
 });
@@ -142,6 +149,39 @@ describe('submitAttempt', () => {
     expect(mockPost).toHaveBeenCalledWith('/api/quizzes/5/attempts', { answers: manyAnswers });
   });
 
+  it('timeLimitSec 가 주어지면 본문에 포함한다', async () => {
+    const response = makeAttemptResponse();
+    mockPost.mockResolvedValueOnce({ data: { success: true, data: response } });
+
+    await submitAttempt(42, answers, 10);
+
+    expect(mockPost).toHaveBeenCalledWith('/api/quizzes/42/attempts', {
+      answers,
+      timeLimitSec: 10,
+    });
+  });
+
+  it('timeLimitSec 미지정 시 본문에 timeLimitSec 키가 없다', async () => {
+    const response = makeAttemptResponse();
+    mockPost.mockResolvedValueOnce({ data: { success: true, data: response } });
+
+    await submitAttempt(42, answers);
+
+    const [, body] = mockPost.mock.calls[0] as [string, Record<string, unknown>];
+    expect(body).not.toHaveProperty('timeLimitSec');
+    expect(body).toEqual({ answers });
+  });
+
+  it('timeLimitSec=null 이면 본문에 timeLimitSec 키가 없다', async () => {
+    const response = makeAttemptResponse();
+    mockPost.mockResolvedValueOnce({ data: { success: true, data: response } });
+
+    await submitAttempt(42, answers, null);
+
+    const [, body] = mockPost.mock.calls[0] as [string, Record<string, unknown>];
+    expect(body).not.toHaveProperty('timeLimitSec');
+  });
+
   it('axios 에러를 그대로 throw 한다', async () => {
     mockPost.mockRejectedValueOnce(new Error('network error'));
 
@@ -234,6 +274,36 @@ describe('getMyAttempts', () => {
     expect(result.empty).toBe(true);
   });
 
+  it('title 이 주어지면 params 에 포함한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makePage([]) } });
+
+    await getMyAttempts({ title: '역사' });
+
+    expect(mockGet).toHaveBeenCalledWith('/api/users/me/attempts', {
+      params: { page: 0, size: 20, title: '역사' },
+    });
+  });
+
+  it('title 이 공백이면 params 에서 제외한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makePage([]) } });
+
+    await getMyAttempts({ title: '   ' });
+
+    const [, config] = mockGet.mock.calls[0] as [string, { params: Record<string, unknown> }];
+    expect(config.params).not.toHaveProperty('title');
+    expect(config.params).toEqual({ page: 0, size: 20 });
+  });
+
+  it('title 양끝 공백을 trim 하여 전달한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makePage([]) } });
+
+    await getMyAttempts({ title: '  과학  ' });
+
+    expect(mockGet).toHaveBeenCalledWith('/api/users/me/attempts', {
+      params: { page: 0, size: 20, title: '과학' },
+    });
+  });
+
   it('axios 에러를 그대로 throw 한다', async () => {
     mockGet.mockRejectedValueOnce(new Error('unauthorized'));
 
@@ -304,6 +374,25 @@ describe('getUserAttempts', () => {
     const result = await getUserAttempts(publicId);
 
     expect(result).toEqual(page);
+  });
+
+  it('title 이 주어지면 params 에 포함한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makePage([]) } });
+
+    await getUserAttempts(publicId, { title: '음악' });
+
+    expect(mockGet).toHaveBeenCalledWith(`/api/users/${publicId}/attempts`, {
+      params: { page: 0, size: 20, title: '음악' },
+    });
+  });
+
+  it('title 이 공백이면 params 에서 제외한다', async () => {
+    mockGet.mockResolvedValueOnce({ data: { success: true, data: makePage([]) } });
+
+    await getUserAttempts(publicId, { title: '' });
+
+    const [, config] = mockGet.mock.calls[0] as [string, { params: Record<string, unknown> }];
+    expect(config.params).not.toHaveProperty('title');
   });
 
   it('axios 에러를 그대로 throw 한다', async () => {

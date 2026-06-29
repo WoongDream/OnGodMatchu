@@ -80,8 +80,32 @@ vi.mock('./pages/profile/ProfileQuizzesPlayed', () => ({
   default: () => <div data-testid="profile-quizzes-played">Profile Quizzes Played</div>,
 }));
 
+vi.mock('./pages/profile/ProfileQuizzesStarred', () => ({
+  default: () => <div data-testid="profile-quizzes-starred">Profile Quizzes Starred</div>,
+}));
+
+vi.mock('./pages/profile/ProfileNotifications', () => ({
+  default: () => <div data-testid="profile-notifications">Profile Notifications</div>,
+}));
+
+vi.mock('./pages/profile/ProfileInquiries', () => ({
+  default: () => <div data-testid="profile-inquiries">Profile Inquiries</div>,
+}));
+
 vi.mock('./pages/profile/ProfileAccount', () => ({
   default: () => <div data-testid="profile-account">Profile Account</div>,
+}));
+
+vi.mock('./pages/users/PublicProfileLayout', () => ({
+  default: () => <div data-testid="public-profile-layout">Public Profile Layout</div>,
+}));
+
+vi.mock('./pages/users/PublicQuizzesMade', () => ({
+  default: () => <div data-testid="public-quizzes-made">Public Quizzes Made</div>,
+}));
+
+vi.mock('./pages/users/PublicQuizzesPlayed', () => ({
+  default: () => <div data-testid="public-quizzes-played">Public Quizzes Played</div>,
 }));
 
 vi.mock('./pages/auth/TermsAgreementPage', () => ({
@@ -106,6 +130,50 @@ vi.mock('./pages/announcements/ReleaseNotesList', () => ({
 
 vi.mock('./pages/announcements/ReleaseNoteDetail', () => ({
   default: () => <div data-testid="release-note-detail">Release Note Detail</div>,
+}));
+
+vi.mock('./pages/admin/AdminLayout', () => ({
+  default: () => <div data-testid="admin-layout">Admin Layout</div>,
+}));
+
+vi.mock('./pages/admin/notices/BoNoticeListPage', () => ({
+  default: () => <div data-testid="bo-notice-list-page">BO Notice List Page</div>,
+}));
+
+vi.mock('./pages/admin/notices/BoNoticeEditPage', () => ({
+  default: () => <div data-testid="bo-notice-edit-page">BO Notice Edit Page</div>,
+}));
+
+vi.mock('./pages/admin/nicknames/BoNicknamesPage', () => ({
+  default: () => <div data-testid="bo-nicknames-page">BO Nicknames Page</div>,
+}));
+
+vi.mock('./pages/admin/nicknames/BoNicknameEditPage', () => ({
+  default: () => <div data-testid="bo-nickname-edit-page">BO Nickname Edit Page</div>,
+}));
+
+vi.mock('./pages/admin/users/BoUsersPage', () => ({
+  default: () => <div data-testid="bo-users-page">BO Users Page</div>,
+}));
+
+vi.mock('./pages/admin/users/BoUserEditPage', () => ({
+  default: () => <div data-testid="bo-user-edit-page">BO User Edit Page</div>,
+}));
+
+vi.mock('./pages/admin/inquiries/BoInquiriesPage', () => ({
+  default: () => <div data-testid="bo-inquiries-page">BO Inquiries Page</div>,
+}));
+
+vi.mock('./pages/admin/inquiries/BoInquiryDetailPage', () => ({
+  default: () => <div data-testid="bo-inquiry-detail-page">BO Inquiry Detail Page</div>,
+}));
+
+vi.mock('./pages/inquiry/InquiryPage', () => ({
+  default: () => <div data-testid="inquiry-page">Inquiry Page</div>,
+}));
+
+vi.mock('@/features/notification/NotificationQueue', () => ({
+  default: () => <div data-testid="notification-queue">Notification Queue</div>,
 }));
 
 vi.mock('@/hooks/useBootstrapAuth', () => ({
@@ -166,6 +234,12 @@ vi.mock('@/components/guest-only-route/GuestOnlyRoute', () => ({
   default: ({ children }: any) => <>{children}</>,
 }));
 
+// RoleRoute 도 실제 구현은 useLocation 을 호출하므로 (mock 된 BrowserRouter 에는 Router 컨텍스트가 없음)
+// passthrough 로 mock 해 admin 라우트 트리 렌더 시 invariant 가 터지지 않게 한다.
+vi.mock('@/components/role-route/RoleRoute', () => ({
+  default: ({ children }: any) => <>{children}</>,
+}));
+
 vi.mock('@/components/terms-agreement-gate', () => ({
   default: () => null,
 }));
@@ -208,6 +282,14 @@ describe('App', () => {
       renderWithTheme(<App />);
       const appShell = getAppShell();
       expect(within(appShell).getByTestId('footer')).toBeInTheDocument();
+    });
+
+    it('mounts NotificationQueue inside AppShell (outside PageContent)', () => {
+      renderWithTheme(<App />);
+      const appShell = getAppShell();
+      expect(within(appShell).getByTestId('notification-queue')).toBeInTheDocument();
+      // routes 안(페이지 컨텐츠)이 아니라 셸 레벨에 마운트됨
+      expect(within(getPageContent()).queryByTestId('notification-queue')).not.toBeInTheDocument();
     });
 
     it('renders Footer outside of PageContent (sibling of routes)', () => {
@@ -303,10 +385,68 @@ describe('App', () => {
 
     it('renders announcements child routes (notices / release-notes / details)', () => {
       renderWithTheme(<App />);
-      expect(screen.getByTestId('route-notices')).toBeInTheDocument();
-      expect(screen.getByTestId('route-notices/:slug')).toBeInTheDocument();
+      expect(screen.getAllByTestId('route-notices').length).toBeGreaterThan(0);
+      expect(screen.getAllByTestId('route-notices/:id').length).toBeGreaterThan(0);
       expect(screen.getByTestId('route-release-notes')).toBeInTheDocument();
       expect(screen.getByTestId('route-release-notes/:version')).toBeInTheDocument();
+    });
+
+    it('renders route for "/admin" (layout)', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-/admin')).toBeInTheDocument();
+    });
+
+    it('renders admin child routes (notices / notices/new / notices/:id)', () => {
+      renderWithTheme(<App />);
+      const adminRoute = screen.getByTestId('route-/admin');
+      expect(within(adminRoute).getByTestId('route-notices')).toBeInTheDocument();
+      expect(within(adminRoute).getByTestId('route-notices/new')).toBeInTheDocument();
+      expect(within(adminRoute).getByTestId('route-notices/:id')).toBeInTheDocument();
+    });
+
+    it('renders admin users child routes (users / users/:publicId)', () => {
+      renderWithTheme(<App />);
+      const adminRoute = screen.getByTestId('route-/admin');
+      expect(within(adminRoute).getByTestId('route-users')).toBeInTheDocument();
+      expect(within(adminRoute).getByTestId('route-users/:publicId')).toBeInTheDocument();
+    });
+
+    it('renders BoUsersPage / BoUserEditPage under /admin', () => {
+      renderWithTheme(<App />);
+      const adminRoute = screen.getByTestId('route-/admin');
+      expect(within(adminRoute).getByTestId('bo-users-page')).toBeInTheDocument();
+      expect(within(adminRoute).getByTestId('bo-user-edit-page')).toBeInTheDocument();
+    });
+
+    it('redirects /admin index to users (Navigate to="users")', () => {
+      renderWithTheme(<App />);
+      const adminRoute = screen.getByTestId('route-/admin');
+      expect(within(adminRoute).getByTestId('navigate-to-users')).toBeInTheDocument();
+    });
+
+    it('renders route for "/inquiry"', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-/inquiry')).toBeInTheDocument();
+    });
+
+    it('renders InquiryPage for the /inquiry route (not wrapped by ProtectedRoute)', () => {
+      renderWithTheme(<App />);
+      const route = screen.getByTestId('route-/inquiry');
+      expect(within(route).getByTestId('inquiry-page')).toBeInTheDocument();
+      expect(within(route).queryByTestId('navigate-to-login')).not.toBeInTheDocument();
+    });
+
+    it('renders AdminLayout for the /admin route', () => {
+      renderWithTheme(<App />);
+      const adminRoute = screen.getByTestId('route-/admin');
+      expect(within(adminRoute).getByTestId('admin-layout')).toBeInTheDocument();
+    });
+
+    it('renders BoNoticeListPage / BoNoticeEditPage under /admin', () => {
+      renderWithTheme(<App />);
+      const adminRoute = screen.getByTestId('route-/admin');
+      expect(within(adminRoute).getByTestId('bo-notice-list-page')).toBeInTheDocument();
+      expect(within(adminRoute).getAllByTestId('bo-notice-edit-page').length).toBeGreaterThan(0);
     });
 
     it('renders / → /quiz redirect (Navigate)', () => {
@@ -314,14 +454,39 @@ describe('App', () => {
       expect(screen.getByTestId('navigate-to-/quiz')).toBeInTheDocument();
     });
 
-    it('has 29 routes total (1 layout + 16 top-level + 7 nested profile + 5 announcements children)', () => {
+    it('has 49 routes total (1 layout + 19 top-level + 7 profile + 3 public profile + 3 users + 11 admin children + 5 announcements children)', () => {
       renderWithTheme(<App />);
       const routeElements = screen.getAllByTestId(/^route-/);
-      // 1 (TermsAgreementGate 레이아웃) + 16 top-level (/, /quiz, /quiz/create, /quiz/:id,
+      // 1 (TermsAgreementGate 레이아웃) + 19 top-level (/, /quiz, /quiz/create, /quiz/:id,
       // /quiz/:id/play, /quiz/:id/result, /quiz/:id/edit, /login, /signup, /oauth2/callback,
-      // /terms-agreement, /privacy, /terms, /profile, /profile/:userId, /announcements)
-      // + 4 /profile 자식 + 3 /profile/:userId 자식 + 5 /announcements 자식 = 29
-      expect(routeElements).toHaveLength(29);
+      // /terms-agreement, /privacy, /terms, /inquiry, /profile, /profile/:userId,
+      // /users/:publicId, /admin, /announcements)
+      // + 7 /profile 자식 (index, quizzes-made, quizzes-played, quizzes-starred, notifications, inquiries, account)
+      // + 3 /profile/:userId 자식 + 3 /users/:publicId 자식 (index, quizzes-made, quizzes-played)
+      // + 11 /admin 자식 (index, notices, notices/new, notices/:id, nicknames, nicknames/new,
+      //   nicknames/:id, users, users/:publicId, inquiries, inquiries/:id)
+      // + 5 /announcements 자식 = 49
+      expect(routeElements).toHaveLength(49);
+    });
+
+    it('renders /profile/quizzes-starred route (only under /profile)', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-quizzes-starred')).toBeInTheDocument();
+    });
+
+    it('renders ProfileQuizzesStarred component for the quizzes-starred route', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('profile-quizzes-starred')).toBeInTheDocument();
+    });
+
+    it('renders /profile/notifications route (only under /profile)', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-notifications')).toBeInTheDocument();
+    });
+
+    it('renders ProfileNotifications component for the notifications route', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('profile-notifications')).toBeInTheDocument();
     });
 
     it('renders /profile route protected by ProtectedRoute', () => {
@@ -332,6 +497,36 @@ describe('App', () => {
     it('renders /profile/:userId public route', () => {
       renderWithTheme(<App />);
       expect(screen.getByTestId('route-/profile/:userId')).toBeInTheDocument();
+    });
+
+    it('renders /users/:publicId public route', () => {
+      renderWithTheme(<App />);
+      expect(screen.getByTestId('route-/users/:publicId')).toBeInTheDocument();
+    });
+
+    it('renders PublicProfileLayout for the /users/:publicId route', () => {
+      renderWithTheme(<App />);
+      const route = screen.getByTestId('route-/users/:publicId');
+      expect(within(route).getByTestId('public-profile-layout')).toBeInTheDocument();
+    });
+
+    it('renders /users/:publicId/quizzes-made (PublicQuizzesMade)', () => {
+      renderWithTheme(<App />);
+      const route = screen.getByTestId('route-/users/:publicId');
+      expect(within(route).getByTestId('public-quizzes-made')).toBeInTheDocument();
+    });
+
+    it('renders /users/:publicId/quizzes-played (PublicQuizzesPlayed)', () => {
+      renderWithTheme(<App />);
+      const route = screen.getByTestId('route-/users/:publicId');
+      expect(within(route).getByTestId('public-quizzes-played')).toBeInTheDocument();
+    });
+
+    it('does not wrap /users/:publicId with ProtectedRoute', () => {
+      renderWithTheme(<App />);
+      const route = screen.getByTestId('route-/users/:publicId');
+      expect(within(route).queryByTestId('navigate-to-login')).not.toBeInTheDocument();
+      expect(within(route).getByTestId('public-profile-layout')).toBeInTheDocument();
     });
 
     it('route "/" has correct path attribute', () => {

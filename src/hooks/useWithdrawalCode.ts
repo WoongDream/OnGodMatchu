@@ -1,8 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-import { requestWithdrawalCode, getRetryAfter, mapUserError } from '@/api/user';
+import {
+  requestWithdrawalCode,
+  verifyWithdrawalCode,
+  getRetryAfter,
+  mapUserError,
+} from '@/api/user';
 
 export type WithdrawalCodeErrorCode = 'RATE_LIMITED' | 'UNAUTHORIZED' | 'NETWORK' | null;
+
+export type WithdrawalVerifyErrorCode =
+  | 'INVALID_VERIFICATION_CODE'
+  | 'VERIFICATION_CODE_EXPIRED'
+  | 'RATE_LIMITED'
+  | 'UNAUTHORIZED'
+  | 'NETWORK'
+  | null;
 
 export const WITHDRAWAL_CODE_TTL_SECONDS = 300;
 export const WITHDRAWAL_CODE_RESEND_COOLDOWN_SECONDS = 60;
@@ -22,6 +35,21 @@ const resolveError = (
   return { code: 'NETWORK', retryAfter: 0 };
 };
 
+const resolveVerifyError = (err: unknown): Exclude<WithdrawalVerifyErrorCode, null> => {
+  if (axios.isAxiosError(err)) {
+    const mapped = mapUserError(err);
+    if (
+      mapped === 'INVALID_VERIFICATION_CODE' ||
+      mapped === 'VERIFICATION_CODE_EXPIRED' ||
+      mapped === 'RATE_LIMITED' ||
+      mapped === 'UNAUTHORIZED'
+    ) {
+      return mapped;
+    }
+  }
+  return 'NETWORK';
+};
+
 export type UseWithdrawalCodeReturn = {
   codeSent: boolean;
   isSending: boolean;
@@ -31,7 +59,11 @@ export type UseWithdrawalCodeReturn = {
   canResend: boolean;
   errorCode: WithdrawalCodeErrorCode;
   retryAfter: number;
+  isVerifying: boolean;
+  verifyErrorCode: WithdrawalVerifyErrorCode;
   sendCode: () => Promise<boolean>;
+  verify: (code: string) => Promise<boolean>;
+  clearVerifyError: () => void;
   reset: () => void;
   clearError: () => void;
 };
@@ -43,6 +75,8 @@ const useWithdrawalCode = (): UseWithdrawalCodeReturn => {
   const [resendIn, setResendIn] = useState(0);
   const [errorCode, setErrorCode] = useState<WithdrawalCodeErrorCode>(null);
   const [retryAfter, setRetryAfter] = useState(0);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verifyErrorCode, setVerifyErrorCode] = useState<WithdrawalVerifyErrorCode>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stopTimer = useCallback(() => {
@@ -66,6 +100,7 @@ const useWithdrawalCode = (): UseWithdrawalCodeReturn => {
     setIsSending(true);
     setErrorCode(null);
     setRetryAfter(0);
+    setVerifyErrorCode(null);
     try {
       await requestWithdrawalCode();
       setCodeSent(true);
@@ -87,6 +122,20 @@ const useWithdrawalCode = (): UseWithdrawalCodeReturn => {
     }
   }, [startTimer]);
 
+  const verify = useCallback(async (code: string): Promise<boolean> => {
+    setIsVerifying(true);
+    setVerifyErrorCode(null);
+    try {
+      await verifyWithdrawalCode(code);
+      return true;
+    } catch (err) {
+      setVerifyErrorCode(resolveVerifyError(err));
+      return false;
+    } finally {
+      setIsVerifying(false);
+    }
+  }, []);
+
   const reset = useCallback(() => {
     stopTimer();
     setCodeSent(false);
@@ -95,11 +144,17 @@ const useWithdrawalCode = (): UseWithdrawalCodeReturn => {
     setResendIn(0);
     setErrorCode(null);
     setRetryAfter(0);
+    setIsVerifying(false);
+    setVerifyErrorCode(null);
   }, [stopTimer]);
 
   const clearError = useCallback(() => {
     setErrorCode(null);
     setRetryAfter(0);
+  }, []);
+
+  const clearVerifyError = useCallback(() => {
+    setVerifyErrorCode(null);
   }, []);
 
   const expired = codeSent && secondsLeft === 0;
@@ -114,7 +169,11 @@ const useWithdrawalCode = (): UseWithdrawalCodeReturn => {
     canResend,
     errorCode,
     retryAfter,
+    isVerifying,
+    verifyErrorCode,
     sendCode,
+    verify,
+    clearVerifyError,
     reset,
     clearError,
   };

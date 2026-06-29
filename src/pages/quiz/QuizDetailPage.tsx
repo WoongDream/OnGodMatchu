@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Button from '@/components/button';
 import LoginPromptModal from '@/components/login-prompt-modal';
 import ProfileImage from '@/components/profile-image';
+import ProfileModal from '@/components/profile-modal';
 import QuizPlayOptions, { type StartOption } from '@/components/quiz-play-options';
 import ShareButton from '@/components/share-button';
 import StarButton from '@/components/star-button';
@@ -62,6 +63,7 @@ const QuizDetailPage = memo(() => {
     useComments(quizId);
 
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
+  const [profileModalId, setProfileModalId] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -163,6 +165,8 @@ const QuizDetailPage = memo(() => {
               type="button"
               css={authorProfileButtonStyle}
               aria-label={`${quiz.authorNickname} 프로필 보기`}
+              onClick={() => quiz.authorPublicId && setProfileModalId(quiz.authorPublicId)}
+              disabled={!quiz.authorPublicId}
             >
               <ProfileImage
                 nickname={quiz.authorNickname}
@@ -205,6 +209,7 @@ const QuizDetailPage = memo(() => {
             void remove(commentId);
           }}
           isMutating={isMutating}
+          onAuthorClick={setProfileModalId}
         />
       </section>
 
@@ -214,6 +219,7 @@ const QuizDetailPage = memo(() => {
         title="로그인이 필요해요"
         message="로그인하고 스타를 눌러 좋아하는 퀴즈를 모아보세요."
       />
+      <ProfileModal publicId={profileModalId} onClose={() => setProfileModalId(null)} />
     </div>
   );
 });

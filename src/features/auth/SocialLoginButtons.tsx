@@ -35,13 +35,6 @@ const SocialLoginButtons = memo(() => {
       >
         네이버로 계속하기
       </button>
-      <button
-        type="button"
-        css={socialButtonStyle('kakao')}
-        onClick={() => handleSocialLogin('kakao')}
-      >
-        카카오로 계속하기
-      </button>
       <p css={consentNoticeStyle}>
         로그인 시{' '}
         <Link to="/terms" css={consentLinkStyle}>

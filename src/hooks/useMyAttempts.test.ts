@@ -26,9 +26,16 @@ const MOCK_ITEM: AttemptListItem = {
   quizCategoryLabel: '게임',
   quizThumbnailKey: null,
   quizThumbnailUrl: null,
+  playCount: 100,
+  starCount: 10,
+  commentCount: 5,
+  shareCount: 2,
   score: 3,
   totalQuestions: 5,
   percent: 60,
+  topPercentile: null,
+  timeLimitSec: null,
+  attemptCount: 1,
   completedAt: '2025-01-01T00:00:00Z',
 };
 

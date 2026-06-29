@@ -1,4 +1,5 @@
 - [Vitest Setup & Configuration](vitest_config_reference.md) — Vitest 4.1.2 with jsdom, @testing-library/react, test patterns
+- [SWR / useSWRInfinite Hook Testing](testing_swr_hooks.md) — SWRConfig isolation wrapper, null-key no-fetch branch, loadMore/hasNext, refreshInterval polling via scoped fake timers
 - [Button Component Testing](button_component_testing.md) — 430-line test suite with 55+ cases for variant/size/fullWidth props, disabled state, onClick forwarding
 - [QuizFeedback Component Testing](testing_quizfeedback.md) — Conditional rendering and styling tests, 60+ cases
 - [QuizCard Component Test Generation](quizcard_test_generated.md) — 621-line comprehensive test suite for QuizCard with 60+ cases covering onClick, toLocaleString, thumbnail rendering
